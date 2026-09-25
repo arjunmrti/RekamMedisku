@@ -171,10 +171,9 @@ export default function FollowUpFormPage({
   onNavigate,
   patient,
 }: FollowUpFormPageProps) {
-  const [values, setValues] = useState<FollowUpFormValues>(() => {
-    return loadFollowUpDraft(patient.id) ?? emptyForm();
-  });
-  const [hydrated, setHydrated] = useState(false);
+  const [values, setValues] = useState<FollowUpFormValues>(
+    () => loadFollowUpDraft(patient.id) ?? emptyForm(),
+  );
   const [dirty, setDirty] = useState(false);
   const [saveMessage, setSaveMessage] = useState("Belum ada perubahan tersimpan.");
   const [errorMessage, setErrorMessage] = useState("");
@@ -200,20 +199,7 @@ export default function FollowUpFormPage({
   const latestFollowUp = previousFollowUps[0] ?? null;
 
   useEffect(() => {
-    setHydrated(true);
-
-    const draft = loadFollowUpDraft(patient.id);
-    if (draft) {
-      setValues(draft);
-      setSaveMessage("Draf sebelumnya dipulihkan.");
-      return;
-    }
-
-    setValues(emptyForm());
-  }, [patient.id]);
-
-  useEffect(() => {
-    if (!hydrated || !dirty) return;
+    if (!dirty) return;
 
     const timer = window.setTimeout(() => {
       saveFollowUpDraft(patient.id, values);
@@ -229,7 +215,7 @@ export default function FollowUpFormPage({
     }, 1200);
 
     return () => window.clearTimeout(timer);
-  }, [dirty, hydrated, patient.id, values]);
+  }, [dirty, patient.id, values]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
