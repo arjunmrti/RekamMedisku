@@ -9,7 +9,7 @@ const activities: Array<{
   iconBg: string;
   titleColor: string;
 }> = [
-  { title: "Follow-up disimpan", person: "Andi Pratama", detail: "Follow-up #4", time: "Hari ini, 09:42", icon: "check", iconBg: "bg-emerald-50 text-emerald-600", titleColor: "text-blue-600" },
+  { title: "Follow-up disimpan", person: "Muhammad Fadel", detail: "Follow-up #4", time: "Hari ini, 09:42", icon: "check", iconBg: "bg-emerald-50 text-emerald-600", titleColor: "text-blue-600" },
   { title: "Laporan dibuat", person: "Muhammad Rizky", detail: "Ilmu Penyakit Dalam · Follow-up #3", time: "Hari ini, 08:15", icon: "document", iconBg: "bg-blue-50 text-blue-600", titleColor: "text-blue-600" },
   { title: "Pasien baru ditambahkan", person: "Siti Nurhaliza", detail: "Neurologi", time: "Kemarin, 16:30", icon: "plus-user", iconBg: "bg-purple-50 text-purple-600", titleColor: "text-slate-800" },
   { title: "Follow-up disimpan", person: "Budi Santoso", detail: "Neurologi · Follow-up #2", time: "Kemarin, 13:20", icon: "check", iconBg: "bg-emerald-50 text-emerald-600", titleColor: "text-slate-800" },
