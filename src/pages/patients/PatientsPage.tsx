@@ -191,7 +191,8 @@ export default function PatientsPage({
   };
 
   const handleToggleArchive = (patient: PatientListItem) => {
-    const nextStatus = patient.status === "Aktif" ? "Diarsipkan" : "Aktif";
+    const nextStatus: PatientListItem["status"] =
+      patient.status === "Aktif" ? "Diarsipkan" : "Aktif";
     const action = nextStatus === "Diarsipkan" ? "Arsipkan" : "Pulihkan";
 
     const confirmed = window.confirm(
