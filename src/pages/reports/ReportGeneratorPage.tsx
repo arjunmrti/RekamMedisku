@@ -170,6 +170,7 @@ export default function ReportGeneratorPage({
       onNavigate={onNavigate}
       searchValue=""
       onSearchChange={() => undefined}
+      searchEnabled={false}
     >
       <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-7">
         <div className="mx-auto w-full max-w-[1400px] space-y-6">
