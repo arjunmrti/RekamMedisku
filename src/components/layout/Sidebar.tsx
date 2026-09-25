@@ -1,4 +1,5 @@
 import Icon, { type IconName } from "../ui/Icon";
+import { loadActiveRotation } from "../../data/localRotations";
 
 type SidebarProps = {
   activeItem: string;
@@ -48,6 +49,8 @@ function NavButton({
 }
 
 export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
+  const activeRotation = loadActiveRotation();
+
   return (
     <aside className="sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col overflow-hidden border-r border-[#E5EAF1] bg-[#F8FBFF] lg:flex">
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -92,7 +95,13 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
       <div className="shrink-0 border-t border-[#E5EAF1] bg-[#F8FBFF] p-3">
         <button
           type="button"
-          className="flex min-h-[58px] w-full items-center justify-between rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2.5 text-left transition-colors hover:bg-blue-100/60"
+          onClick={() => onNavigate("Stase Saya")}
+          className={
+            "flex min-h-[58px] w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left transition-colors " +
+            (activeItem === "Stase Saya"
+              ? "border-blue-200 bg-blue-50"
+              : "border-blue-100 bg-blue-50/70 hover:bg-blue-100/60")
+          }
         >
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
@@ -103,7 +112,7 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
                 Stase Aktif
               </span>
               <span className="text-xs font-bold tracking-tight text-slate-800">
-                Neurologi
+                {activeRotation.name}
               </span>
             </div>
           </div>
