@@ -5,7 +5,9 @@ import FollowUpFormPage from "./pages/follow-up/FollowUpFormPage";
 import ReportGeneratorPage from "./pages/reports/ReportGeneratorPage";
 import PatientsPage from "./pages/patients/PatientsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import BackupDataPage from "./pages/backup/BackupDataPage";
 import { mockPatients } from "./data/mockPatients";
+import { loadPatients } from "./data/localPatients";
 import type { PatientListItem } from "./types/patient";
 
 type View =
@@ -20,7 +22,7 @@ type View =
 function App() {
   const [activeItem, setActiveItem] = useState<View>("Beranda");
   const [selectedPatient, setSelectedPatient] = useState<PatientListItem | null>(
-    mockPatients[0] ?? null,
+    () => loadPatients()[0] ?? mockPatients[0] ?? null,
   );
 
   const handleNavigate = (label: string) => {
@@ -100,7 +102,7 @@ function App() {
   }
 
   if (activeItem === "Cadangan & Data") {
-    return <PlaceholderPage title="Cadangan & Data" {...navigationProps} />;
+    return <BackupDataPage {...navigationProps} />;
   }
 
   if (activeItem === "Pengaturan") {
