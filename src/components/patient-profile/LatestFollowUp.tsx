@@ -2,11 +2,34 @@ import type { FollowUpEntry } from "../../types/followUp";
 import Icon from "../ui/Icon";
 
 type LatestFollowUpProps = {
-  followUp: FollowUpEntry;
+  followUp: FollowUpEntry | null;
   onDetail: () => void;
 };
 
-export default function LatestFollowUp({ followUp, onDetail }: LatestFollowUpProps) {
+export default function LatestFollowUp({
+  followUp,
+  onDetail,
+}: LatestFollowUpProps) {
+  if (!followUp) {
+    return (
+      <section className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#1677FF]">
+            <Icon name="document" className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-slate-900">
+              Follow-Up Terakhir
+            </h2>
+            <p className="mt-1 text-xs text-slate-400">
+              Belum ada follow-up tersimpan untuk pasien ini.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const rows = [
     ["Subjective", followUp.subjective],
     ["Objective", followUp.objective],
@@ -26,7 +49,9 @@ export default function LatestFollowUp({ followUp, onDetail }: LatestFollowUpPro
             <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
               <span>{followUp.date} · {followUp.time}</span>
               <span className="text-slate-300">|</span>
-              <span className="font-semibold text-slate-700">Follow-up #{followUp.number}</span>
+              <span className="font-semibold text-slate-700">
+                Follow-up #{followUp.number}
+              </span>
               <span className="rounded-full border border-emerald-200/50 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                 {followUp.status}
               </span>
@@ -46,9 +71,21 @@ export default function LatestFollowUp({ followUp, onDetail }: LatestFollowUpPro
 
       <div className="space-y-3.5 text-xs">
         {rows.map(([label, text]) => (
-          <div key={label} className="grid grid-cols-1 gap-1.5 sm:grid-cols-12 sm:gap-3 sm:items-baseline">
-            <span className="font-bold uppercase tracking-wide text-slate-700 sm:col-span-2">{label}</span>
-            <p className={"leading-relaxed sm:col-span-10 " + (label === "Assessment" ? "font-semibold text-slate-800" : "text-slate-600")}>
+          <div
+            key={label}
+            className="grid grid-cols-1 gap-1.5 sm:grid-cols-12 sm:items-baseline sm:gap-3"
+          >
+            <span className="font-bold uppercase tracking-wide text-slate-700 sm:col-span-2">
+              {label}
+            </span>
+            <p
+              className={
+                "leading-relaxed sm:col-span-10 " +
+                (label === "Assessment"
+                  ? "font-semibold text-slate-800"
+                  : "text-slate-600")
+              }
+            >
               {text}
             </p>
           </div>
