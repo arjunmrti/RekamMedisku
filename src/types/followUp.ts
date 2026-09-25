@@ -1,5 +1,16 @@
 export type FollowUpStatus = "Tersimpan" | "Draf";
 
+export type SupportingExam = {
+  id: string;
+  name: string;
+  examType?: string;
+  date: string;
+  result?: string;
+  attachmentName?: string;
+  attachmentCount?: number;
+  icon: "lab" | "scan" | "image" | "eeg";
+};
+
 export type FollowUpEntry = {
   id: string;
   number: number;
@@ -12,11 +23,5 @@ export type FollowUpEntry = {
   assessment: string;
   plan: string;
   summary: string;
-};
-
-export type SupportingExam = {
-  id: string;
-  name: string;
-  date: string;
-  icon: "lab" | "scan" | "image" | "eeg";
+  supportingExams?: SupportingExam[];
 };
