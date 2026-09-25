@@ -11,6 +11,7 @@ import {
   mockSupportingExamsByPatient,
 } from "../../data/mockFollowUps";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
+import { loadRotations } from "../../data/localRotations";
 import type { PatientListItem } from "../../types/patient";
 import Icon from "../../components/ui/Icon";
 import type { SupportingExam } from "../../types/followUp";
@@ -25,6 +26,8 @@ export default function PatientProfilePage({
   patient,
 }: PatientProfilePageProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>("Ringkasan");
+  const rotation =
+    loadRotations().find((item) => item.id === patient.rotationId) ?? null;
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const examsRef = useRef<HTMLDivElement | null>(null);
   const followUpRef = useRef<HTMLDivElement | null>(null);
@@ -113,6 +116,7 @@ export default function PatientProfilePage({
         <div className="mx-auto w-full max-w-[1400px] space-y-6">
           <PatientProfileHeader
             patient={patient}
+            rotation={rotation}
             onBack={() => onNavigate("Daftar Pasien")}
             onFollowUp={handleFollowUp}
             onReport={handleReport}
@@ -124,6 +128,7 @@ export default function PatientProfilePage({
             <section className="min-w-0 space-y-6 xl:col-span-8">
               <PatientInfoCards
                 patient={patient}
+                rotation={rotation}
                 latestFollowUp={latestFollowUp}
                 onOpenLatest={handleOpenLatest}
               />
