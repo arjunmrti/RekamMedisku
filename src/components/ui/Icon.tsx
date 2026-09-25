@@ -4,7 +4,7 @@ export type IconName =
   | "pulse" | "home" | "users" | "document" | "database" | "settings"
   | "brain" | "chevron" | "search" | "calendar" | "bell" | "user"
   | "arrow" | "people" | "check" | "alert" | "archive" | "clock"
-  | "plus-user" | "bolt" | "stethoscope" | "lightbulb" | "smile" | "menu";
+  | "plus-user" | "bolt" | "stethoscope" | "lightbulb" | "smile" | "menu" | "edit" | "plus";
 
 type IconProps = {
   name: IconName;
@@ -68,6 +68,19 @@ export default function Icon({
         <path d="M4 6h16" />
         <path d="M4 12h16" />
         <path d="M4 18h16" />
+      </>
+    ),
+    edit: (
+      <>
+        <path d="M12.75 6.75H6.375A1.875 1.875 0 0 0 4.5 8.625v9.75a1.875 1.875 0 0 0 1.875 1.875h9.75A1.875 1.875 0 0 0 18 18.375V12" />
+        <path d="m16.5 4.5 3 3" />
+        <path d="m14.25 6.75 5.25-5.25a1.591 1.591 0 0 1 2.25 2.25l-5.25 5.25-2.625.375.375-2.625Z" />
+      </>
+    ),
+    plus: (
+      <>
+        <path d="M12 5v14" />
+        <path d="M5 12h14" />
       </>
     ),
   };
