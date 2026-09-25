@@ -6,7 +6,7 @@ import {
   replaceSavedFollowUps,
 } from "../data/localFollowUps";
 import { mockFollowUpsByPatient } from "../data/mockFollowUps";
-import { savePatients, replacePatients } from "../data/localPatients";
+import { replacePatients } from "../data/localPatients";
 import type { BackupPayload } from "../types/backup";
 import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
@@ -185,8 +185,6 @@ export function formatBackupDate(value: string): string {
   }).format(new Date(value));
 }
 
-export function getPatientRotation(
-  patient: PatientListItem,
-): "Neurologi" | "Ilmu Penyakit Dalam" {
+export function getPatientRotation(): "Neurologi" | "Ilmu Penyakit Dalam" {
   return "Neurologi";
 }
