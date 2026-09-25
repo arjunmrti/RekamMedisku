@@ -27,7 +27,11 @@ function formatDate(value: string) {
 }
 
 function formatPeriod(startDate: string, endDate: string) {
-  return formatDate(startDate) + " — " + formatDate(endDate);
+  const start = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "short",
+  }).format(new Date(startDate + "T00:00:00"));
+  return start + " — " + formatDate(endDate);
 }
 
 function formatLastActivity(value: string) {
@@ -83,11 +87,15 @@ export default function RotationManagementPage({
         .filter((patient) => patient.lastFollowUp !== "Belum ada follow-up")
         .sort((a, b) => b.lastFollowUp.localeCompare(a.lastFollowUp))[0];
 
-      acc[rotation.id] =
-        latestPatient?.lastFollowUp ??
-        (rotation.updatedAt
+      if (latestPatient) {
+        acc[rotation.id] = latestPatient.lastFollowUp;
+      } else if (rotation.status === "Mendatang") {
+        acc[rotation.id] = "Belum ada aktivitas";
+      } else {
+        acc[rotation.id] = rotation.updatedAt
           ? formatLastActivity(rotation.updatedAt)
-          : "Belum ada aktivitas");
+          : "Belum ada aktivitas";
+      }
       return acc;
     }, {});
   }, [patients, rotations]);
@@ -204,7 +212,7 @@ export default function RotationManagementPage({
                   <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div className="rounded-2xl border border-white/80 bg-white/80 p-4">
                       <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                        Pasien Aktif
+                        Pasien
                       </p>
                       <p className="mt-1 text-xl font-bold text-slate-900">
                         {patientCounts[activeRotation.id] ?? 0}
