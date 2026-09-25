@@ -4,6 +4,7 @@ import Icon, { type IconName } from "../ui/Icon";
 type SupportingExamsProps = {
   exams: SupportingExam[];
   onSelect: (exam: SupportingExam) => void;
+  onViewAll: () => void;
 };
 
 const iconMap: Record<SupportingExam["icon"], IconName> = {
@@ -16,6 +17,7 @@ const iconMap: Record<SupportingExam["icon"], IconName> = {
 export default function SupportingExams({
   exams,
   onSelect,
+  onViewAll,
 }: SupportingExamsProps) {
   return (
     <section>
@@ -28,8 +30,9 @@ export default function SupportingExams({
         </div>
         <button
           type="button"
+          onClick={onViewAll}
           disabled={exams.length === 0}
-          className="inline-flex items-center gap-1 self-start text-xs font-semibold text-[#1677FF] hover:text-blue-700 disabled:cursor-default disabled:opacity-40"
+          className="inline-flex items-center gap-1 self-start rounded-lg px-2 py-1 text-xs font-semibold text-[#1677FF] transition hover:bg-blue-50 hover:text-blue-700 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
         >
           Lihat Semua
           <Icon name="arrow" className="h-3.5 w-3.5" />
