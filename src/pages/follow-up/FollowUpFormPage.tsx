@@ -275,17 +275,6 @@ export default function FollowUpFormPage({
   const latestFollowUp = previousFollowUps[0] ?? null;
 
   useEffect(() => {
-    setValues(getInitialValues(patient.id));
-    setDirty(false);
-    setErrorMessage("");
-    setSaveMessage(
-      loadFollowUpDraft(patient.id)
-        ? "Draf sebelumnya tersedia."
-        : "Belum ada perubahan tersimpan.",
-    );
-  }, [patient.id]);
-
-  useEffect(() => {
     if (!dirty) return;
 
     const timer = window.setTimeout(() => {
