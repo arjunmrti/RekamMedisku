@@ -6,7 +6,7 @@ export default function DashboardHeader() {
       <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div>
           <h1 className="text-[24px] font-bold leading-tight tracking-tight text-slate-900 sm:text-[28px] lg:text-[30px]">
-            Selamat pagi, Andi Pratama
+            Selamat pagi, Muhammad Fadel
           </h1>
           <p className="mt-1.5 text-sm font-medium text-slate-500">
             Semangat untuk hari yang produktif!
