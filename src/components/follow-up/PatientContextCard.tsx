@@ -1,9 +1,11 @@
 import type { PatientListItem } from "../../types/patient";
+import type { Rotation } from "../../types/rotation";
 import Icon from "../ui/Icon";
 import StatusBadge from "../ui/StatusBadge";
 
 type PatientContextCardProps = {
   patient: PatientListItem;
+  rotation: Rotation;
   date: string;
   time: string;
   onDateChange: (value: string) => void;
@@ -22,6 +24,7 @@ function getInitials(name: string) {
 
 export default function PatientContextCard({
   patient,
+  rotation,
   date,
   time,
   onDateChange,
@@ -55,8 +58,11 @@ export default function PatientContextCard({
                 DPJP: {patient.doctor}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Icon name="brain" className="h-3.5 w-3.5 text-slate-400" />
-                Neurologi
+                <Icon
+                  name={rotation.specialty === "Neurologi" ? "brain" : "stethoscope"}
+                  className="h-3.5 w-3.5 text-slate-400"
+                />
+                {rotation.name}
               </span>
             </div>
           </div>
