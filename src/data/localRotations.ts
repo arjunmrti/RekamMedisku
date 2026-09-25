@@ -66,15 +66,20 @@ function readJson<T>(key: string, fallback: T): T {
 }
 
 export function loadRotations(): Rotation[] {
-  const stored = readJson<Rotation[]>(ROTATIONS_KEY, []);
+  const raw = window.localStorage.getItem(ROTATIONS_KEY);
 
-  if (stored.length > 0) {
-    return stored;
+  if (!raw) {
+    saveRotations(DEFAULT_ROTATIONS);
+    return DEFAULT_ROTATIONS;
   }
 
-  saveRotations(DEFAULT_ROTATIONS);
+  const stored = readJson<unknown>(ROTATIONS_KEY, null);
+
+  if (Array.isArray(stored) && stored.length > 0) {
+    return stored as Rotation[];
+  }
+
   return DEFAULT_ROTATIONS;
-}
 
 export function saveRotations(rotations: Rotation[]) {
   window.localStorage.setItem(ROTATIONS_KEY, JSON.stringify(rotations));
