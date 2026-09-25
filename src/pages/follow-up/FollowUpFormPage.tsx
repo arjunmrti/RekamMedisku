@@ -14,6 +14,7 @@ import {
   saveFollowUpDraft,
 } from "../../data/localFollowUps";
 import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
+import { loadActiveRotation } from "../../data/localRotations";
 import type { FollowUpEntry, SupportingExam } from "../../types/followUp";
 import type { FollowUpFormValues } from "../../types/followUpForm";
 import type { PatientListItem } from "../../types/patient";
@@ -142,6 +143,7 @@ function countFilled(values: Record<string, unknown>) {
 function buildFollowUpEntry(
   values: FollowUpFormValues,
   number: number,
+  templateType: FollowUpEntry["templateType"],
 ): FollowUpEntry {
   const subjective = [
     "Keluhan: " + values.subjective.keluhan,
@@ -225,7 +227,7 @@ function buildFollowUpEntry(
     isoDate: values.followUpDate,
     time: formatTime(values.followUpTime),
     status: "Tersimpan",
-    templateType: "Neurologi",
+    templateType,
     assessmentCodes: values.assessmentCodes,
     planning: values.planning,
     instruction: values.instruction,
@@ -442,7 +444,7 @@ export default function FollowUpFormPage({
 
     const nextNumber =
       Math.max(0, ...previousFollowUps.map((entry) => entry.number)) + 1;
-    const entry = buildFollowUpEntry(values, nextNumber);
+    const entry = buildFollowUpEntry(values, nextNumber, templateType);
 
     appendSavedFollowUp(patient.id, entry);
     clearFollowUpDraft(patient.id);
@@ -740,7 +742,7 @@ export default function FollowUpFormPage({
                         {patient.name}
                       </h3>
                       <p className="mt-1 text-[10px] font-medium text-slate-400">
-                        Stase aktif · Neurologi
+                        Stase aktif · {activeRotation.name}
                       </p>
                     </div>
                   </div>
@@ -826,7 +828,7 @@ export default function FollowUpFormPage({
               <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
                 <p className="text-[11px] leading-relaxed text-slate-500">
                   Template klinis saat ini:{" "}
-                  <strong className="text-slate-700">Neurologi</strong>. Struktur
+                  <strong className="text-slate-700">{templateType}</strong>. Struktur
                   Follow-Up tetap sama; field tambahan mengikuti kebutuhan stase.
                 </p>
               </section>
