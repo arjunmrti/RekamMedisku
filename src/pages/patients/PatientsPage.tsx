@@ -172,16 +172,13 @@ export default function PatientsPage({
       return "Nomor RM tersebut sudah digunakan pada stase ini.";
     }
 
-    setPatients((current) => {
-      const exists = current.some((item) => item.id === patient.id);
-      const next = exists
-        ? current.map((item) => (item.id === patient.id ? patient : item))
-        : [patient, ...current];
+    const exists = patients.some((item) => item.id === patient.id);
+    const next = exists
+      ? patients.map((item) => (item.id === patient.id ? patient : item))
+      : [patient, ...patients];
 
-      savePatients(next);
-      return next;
-    });
-
+    savePatients(next);
+    setPatients(next);
     setSelectedPatient(patient);
     setEditingPatient(null);
     return null;
@@ -200,13 +197,12 @@ export default function PatientsPage({
 
     if (!confirmed) return;
 
-    setPatients((current) => {
-      const next = current.map((item) =>
-        item.id === patient.id ? { ...item, status: nextStatus } : item,
-      );
-      savePatients(next);
-      return next;
-    });
+    const next = patients.map((item) =>
+      item.id === patient.id ? { ...item, status: nextStatus } : item,
+    );
+
+    savePatients(next);
+    setPatients(next);
 
     setSelectedPatient((current) =>
       current?.id === patient.id ? { ...current, status: nextStatus } : current,
