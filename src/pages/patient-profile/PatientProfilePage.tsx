@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import FollowUpTimeline from "../../components/patient-profile/FollowUpTimeline";
 import LatestFollowUp from "../../components/patient-profile/LatestFollowUp";
@@ -26,13 +26,6 @@ export default function PatientProfilePage({
   const followUpRef = useRef<HTMLDivElement | null>(null);
 
   const latestFollowUp = mockFollowUps[0];
-  const followUpCount = mockFollowUps.length;
-
-  const patientLastFollowUp = patient.lastFollowUp === "Belum ada follow-up"
-    ? null
-    : patient.lastFollowUp;
-
-  const headerSearch = "";
 
   const handleTabChange = (tab: ProfileTab) => {
     setActiveTab(tab);
@@ -67,15 +60,11 @@ export default function PatientProfilePage({
     window.alert(exam.name + " · " + exam.date);
   };
 
-  const summaryLastFollowUp = useMemo(() => {
-    return patientLastFollowUp ?? "Belum ada follow-up";
-  }, [patientLastFollowUp]);
-
   return (
     <AppShell
       activeItem={activeItem}
       onNavigate={onNavigate}
-      searchValue={headerSearch}
+      searchValue=""
       onSearchChange={() => undefined}
     >
       <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-7 lg:pb-8">
@@ -115,7 +104,7 @@ export default function PatientProfilePage({
                   <div className="mb-4 flex items-center justify-between">
                     <div>
                       <h2 className="text-sm font-bold text-slate-900">Ringkasan Riwayat Follow-Up</h2>
-                      <p className="mt-1 text-xs text-slate-400">{followUpCount} catatan pada data contoh pasien.</p>
+                      <p className="mt-1 text-xs text-slate-400">{mockFollowUps.length} catatan pada data contoh pasien.</p>
                     </div>
                     <Icon name="clock" className="h-5 w-5 text-[#1677FF]" />
                   </div>
@@ -153,7 +142,18 @@ export default function PatientProfilePage({
                       >
                         <div className="flex min-w-0 items-center gap-3">
                           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-[#1677FF]">
-                            <Icon name={exam.icon === "lab" ? "stethoscope" : exam.icon === "scan" ? "document" : exam.icon === "image" ? "archive" : "pulse"} className="h-4 w-4" />
+                            <Icon
+                              name={
+                                exam.icon === "lab"
+                                  ? "stethoscope"
+                                  : exam.icon === "scan"
+                                    ? "document"
+                                    : exam.icon === "image"
+                                      ? "archive"
+                                      : "pulse"
+                              }
+                              className="h-4 w-4"
+                            />
                           </span>
                           <span className="min-w-0">
                             <span className="block text-xs font-bold text-slate-800">{exam.name}</span>
