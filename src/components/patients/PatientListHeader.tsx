@@ -3,26 +3,52 @@ import Icon from "../ui/Icon";
 
 type PatientListHeaderProps = {
   rotation: Rotation;
+  totalPatients: number;
+  activePatients: number;
+  archivedPatients: number;
   onAddPatient: () => void;
 };
 
 export default function PatientListHeader({
   rotation,
+  totalPatients,
+  activePatients,
+  archivedPatients,
   onAddPatient,
 }: PatientListHeaderProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
-          Stase Aktif · {rotation.name}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
+            Stase Aktif · {rotation.name}
+          </p>
+          <span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[9px] font-bold text-[#1677FF]">
+            {rotation.specialty}
+          </span>
+        </div>
         <h1 className="mt-1 text-[24px] font-bold leading-tight tracking-tight text-slate-900 lg:text-[30px]">
           Daftar Pasien
         </h1>
         <p className="mt-1 text-sm leading-6 text-slate-500">
-          Kelola pasien pada stase aktif. Lihat status, follow-up terakhir, dan
-          kelola data pasien.
+          Kelola pasien, status, dan riwayat follow-up dalam satu workspace stase.
         </p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {[
+            ["Total", totalPatients, "bg-white border-slate-200 text-slate-700"],
+            ["Aktif", activePatients, "bg-emerald-50 border-emerald-100 text-emerald-700"],
+            ["Diarsipkan", archivedPatients, "bg-slate-50 border-slate-200 text-slate-500"],
+          ].map(([label, value, className]) => (
+            <span
+              key={label as string}
+              className={"inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-[10px] font-semibold " + (className as string)}
+            >
+              <span className="text-base font-bold leading-none text-slate-900">{value as number}</span>
+              <span>{label as string}</span>
+            </span>
+          ))}
+        </div>
       </div>
 
       <button

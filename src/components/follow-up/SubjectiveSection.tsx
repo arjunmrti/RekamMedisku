@@ -9,7 +9,7 @@ type SubjectiveSectionProps = {
 };
 
 const fields = [
-  ["keluhan", "Keluhan Pagi Ini", "Tuliskan keluhan atau perkembangan keluhan pada tanggal follow-up ini...", true, 1000, 4],
+  ["keluhan", "Keluhan / Perkembangan", "Tuliskan keluhan atau perkembangan keluhan pada tanggal follow-up ini...", true, 1000, 4],
   ["riwayatKeluhanSerupa", "Riwayat Keluhan Serupa", "Tuliskan riwayat keluhan serupa atau jika disangkal...", false, 800, 3],
   ["pastHistory", "Riwayat Penyakit Dahulu (RPD)", "Contoh: hipertensi, DM, stroke, penyakit jantung...", false, 500, 3],
   ["medicationHistory", "Riwayat Penggunaan Obat (RPO)", "Nama obat rutin, dosis, atau pengobatan sebelumnya...", false, 500, 3],

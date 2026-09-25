@@ -15,8 +15,8 @@ export default function ProfileTabs({ activeTab, onChange }: ProfileTabsProps) {
   ];
 
   return (
-    <div className="overflow-x-auto border-b border-slate-200/90">
-      <div className="flex min-w-max gap-7 text-sm font-semibold">
+    <div className="overflow-x-auto">
+      <div className="flex min-w-max gap-1 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-1.5">
         {tabs.map((tab) => {
           const active = activeTab === tab;
           return (
@@ -25,10 +25,10 @@ export default function ProfileTabs({ activeTab, onChange }: ProfileTabsProps) {
               key={tab}
               onClick={() => onChange(tab)}
               className={
-                "border-b-2 pb-3.5 pt-1 transition " +
+                "rounded-xl px-3.5 py-2.5 text-xs font-bold transition duration-200 sm:px-4 sm:text-sm " +
                 (active
-                  ? "border-[#1677FF] text-[#1677FF]"
-                  : "border-transparent text-slate-500 hover:text-slate-800")
+                  ? "bg-white text-[#1677FF] shadow-sm ring-1 ring-slate-200/80"
+                  : "text-slate-500 hover:bg-white/70 hover:text-slate-800")
               }
             >
               {tab}

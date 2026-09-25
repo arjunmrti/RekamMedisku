@@ -147,6 +147,7 @@ export default function PatientProfilePage({
                 <SupportingExams
                   exams={latestSupportingExams}
                   onSelect={handleExamSelect}
+                  onViewAll={() => handleTabChange("Riwayat Hasil Pemeriksaan")}
                 />
               </div>
 
