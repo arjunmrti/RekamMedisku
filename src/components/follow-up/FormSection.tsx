@@ -20,7 +20,7 @@ export default function FormSection({
   action,
 }: FormSectionProps) {
   return (
-    <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)] transition-[box-shadow,transform,border-color] duration-300 hover:-translate-y-0.5 hover:border-blue-100 hover:shadow-[0_10px_32px_-18px_rgba(22,119,255,0.28)]">
+    <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)] transition-[box-shadow,border-color] duration-200 hover:border-blue-100 hover:shadow-[0_8px_28px_-18px_rgba(22,119,255,0.22)]">
       <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6">
         <button
           type="button"
