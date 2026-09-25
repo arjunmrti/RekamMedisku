@@ -62,6 +62,7 @@ export default function ReportGeneratorPage({
     useState<ReportTemplateType>(initialTemplate);
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState("");
   const [reportText, setReportText] = useState("");
   const [generatedKey, setGeneratedKey] = useState("");
 
@@ -91,6 +92,7 @@ export default function ReportGeneratorPage({
     );
     setEditing(false);
     setCopied(false);
+    setCopyError("");
   };
 
   const handleFollowUpChange = (id: string) => {
@@ -104,6 +106,7 @@ export default function ReportGeneratorPage({
     setGeneratedKey("");
     setEditing(false);
     setCopied(false);
+    setCopyError("");
   };
 
   const handleCopy = async () => {
@@ -125,8 +128,12 @@ export default function ReportGeneratorPage({
 
       setCopied(true);
       setEditing(false);
+      setCopyError("");
     } catch {
       setCopied(false);
+      setCopyError(
+        "Laporan gagal disalin otomatis. Pilih teks laporan lalu salin secara manual.",
+      );
     }
   };
 
@@ -287,6 +294,7 @@ export default function ReportGeneratorPage({
               templateType={templateType}
               copied={copied}
               hasReport={Boolean(reportText)}
+              copyError={copyError}
               onCopy={handleCopy}
               onRegenerate={() => generateReport()}
             />
