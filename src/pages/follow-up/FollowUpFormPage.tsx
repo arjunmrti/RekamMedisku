@@ -168,7 +168,11 @@ function buildFollowUpEntry(
 
   const objective = [
     "Keadaan Umum: " + values.objective.generalCondition,
-    "TD: " + values.objective.systolic + "/" + values.objective.diastolic + " mmHg",
+    "TD: " +
+      values.objective.systolic +
+      "/" +
+      values.objective.diastolic +
+      " mmHg",
     "Nadi: " + values.objective.pulse + " x/menit",
     "RR: " + values.objective.respiratoryRate + " x/menit",
     "Suhu: " + values.objective.temperature + " °C",
@@ -250,6 +254,12 @@ export default function FollowUpFormPage({
   onNavigate,
   patient,
 }: FollowUpFormPageProps) {
+  const activeRotation = loadActiveRotation();
+  const templateType: FollowUpEntry["templateType"] =
+    activeRotation.specialty === "Ilmu Penyakit Dalam"
+      ? "Ilmu Penyakit Dalam"
+      : "Neurologi";
+
   const [values, setValues] = useState<FollowUpFormValues>(() =>
     getInitialValues(patient.id),
   );
@@ -609,71 +619,86 @@ export default function FollowUpFormPage({
             ) : null}
 
             <div className="space-y-4">
-<div id="follow-up-section-subjective" className="scroll-mt-24 transition-all duration-300">
-              <SubjectiveSection
-                open={openSections.subjective}
-                onToggle={() => toggleSection("subjective")}
-                value={values.subjective}
-                onChange={(subjective) =>
-                  updateValues({ ...values, subjective })
-                }
-              />
+              <div
+                id="follow-up-section-subjective"
+                className="scroll-mt-24 transition-all duration-300"
+              >
+                <SubjectiveSection
+                  open={openSections.subjective}
+                  onToggle={() => toggleSection("subjective")}
+                  value={values.subjective}
+                  onChange={(subjective) =>
+                    updateValues({ ...values, subjective })
+                  }
+                />
               </div>
 
-<div id="follow-up-section-objective" className="scroll-mt-24 transition-all duration-300">
-              <ObjectiveSection
-                open={openSections.objective}
-                onToggle={() => toggleSection("objective")}
-                objective={values.objective}
-                neurology={values.neurology}
-                onObjectiveChange={(objective) =>
-                  updateValues({ ...values, objective })
-                }
-                onNeurologyChange={(neurology) =>
-                  updateValues({ ...values, neurology })
-                }
-              />
+              <div
+                id="follow-up-section-objective"
+                className="scroll-mt-24 transition-all duration-300"
+              >
+                <ObjectiveSection
+                  open={openSections.objective}
+                  onToggle={() => toggleSection("objective")}
+                  objective={values.objective}
+                  neurology={values.neurology}
+                  onObjectiveChange={(objective) =>
+                    updateValues({ ...values, objective })
+                  }
+                  onNeurologyChange={(neurology) =>
+                    updateValues({ ...values, neurology })
+                  }
+                />
               </div>
 
-<div id="follow-up-section-supportingExams" className="scroll-mt-24 transition-all duration-300">
-              <SupportingExamSection
-                open={openSections.supportingExams}
-                onToggle={() => toggleSection("supportingExams")}
-                exams={values.supportingExams}
-                onChange={(supportingExams) =>
-                  updateValues({ ...values, supportingExams })
-                }
-              />
+              <div
+                id="follow-up-section-supportingExams"
+                className="scroll-mt-24 transition-all duration-300"
+              >
+                <SupportingExamSection
+                  open={openSections.supportingExams}
+                  onToggle={() => toggleSection("supportingExams")}
+                  exams={values.supportingExams}
+                  onChange={(supportingExams) =>
+                    updateValues({ ...values, supportingExams })
+                  }
+                />
               </div>
 
-<div id="follow-up-section-assessment" className="scroll-mt-24 transition-all duration-300">
-              <AssessmentSection
-                open={openSections.assessment}
-                onToggle={() => toggleSection("assessment")}
-                values={values.assessments}
-                codes={values.assessmentCodes}
-                onChange={(assessments) =>
-                  updateValues({ ...values, assessments })
-                }
-                onCodesChange={(assessmentCodes) =>
-                  updateValues({ ...values, assessmentCodes })
-                }
-              />
+              <div
+                id="follow-up-section-assessment"
+                className="scroll-mt-24 transition-all duration-300"
+              >
+                <AssessmentSection
+                  open={openSections.assessment}
+                  onToggle={() => toggleSection("assessment")}
+                  values={values.assessments}
+                  codes={values.assessmentCodes}
+                  onChange={(assessments) =>
+                    updateValues({ ...values, assessments })
+                  }
+                  onCodesChange={(assessmentCodes) =>
+                    updateValues({ ...values, assessmentCodes })
+                  }
+                />
               </div>
 
-<div id="follow-up-section-plan" className="scroll-mt-24 transition-all duration-300">
-              <PlanSection
-                open={openSections.plan}
-                onToggle={() => toggleSection("plan")}
-                planning={values.planning}
-                instruction={values.instruction}
-                onPlanningChange={(planning) =>
-                  updateValues({ ...values, planning })
-                }
-                onInstructionChange={(instruction) =>
-                  updateValues({ ...values, instruction })
-                }
-              />
+              <div
+                id="follow-up-section-plan"
+                className="scroll-mt-24 transition-all duration-300"
+              >
+                <PlanSection
+                  open={openSections.plan}
+                  onToggle={() => toggleSection("plan")}
+                  planning={values.planning}
+                  instruction={values.instruction}
+                  onPlanningChange={(planning) =>
+                    updateValues({ ...values, planning })
+                  }
+                  onInstructionChange={(instruction) =>
+                    updateValues({ ...values, instruction })
+                  }
+                />
               </div>
             </div>
 
@@ -828,8 +853,9 @@ export default function FollowUpFormPage({
               <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
                 <p className="text-[11px] leading-relaxed text-slate-500">
                   Template klinis saat ini:{" "}
-                  <strong className="text-slate-700">{templateType}</strong>. Struktur
-                  Follow-Up tetap sama; field tambahan mengikuti kebutuhan stase.
+                  <strong className="text-slate-700">{templateType}</strong>.
+                  Struktur Follow-Up tetap sama; field tambahan mengikuti
+                  kebutuhan stase.
                 </p>
               </section>
             </div>
