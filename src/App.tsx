@@ -1,6 +1,7 @@
 import { useState } from "react";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import PatientProfilePage from "./pages/patient-profile/PatientProfilePage";
+import FollowUpFormPage from "./pages/follow-up/FollowUpFormPage";
 import PatientsPage from "./pages/patients/PatientsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import { mockPatients } from "./data/mockPatients";
@@ -10,6 +11,7 @@ type View =
   | "Beranda"
   | "Daftar Pasien"
   | "Profil Pasien"
+  | "Follow-Up Baru"
   | "Semua Laporan"
   | "Cadangan & Data"
   | "Pengaturan";
@@ -38,7 +40,7 @@ function App() {
     }
 
     if (label === "Follow-Up Baru") {
-      setActiveItem("Profil Pasien");
+      setActiveItem("Follow-Up Baru");
       return;
     }
 
@@ -46,12 +48,23 @@ function App() {
   };
 
   const navigationActiveItem =
-    activeItem === "Profil Pasien" ? "Daftar Pasien" : activeItem;
+    activeItem === "Profil Pasien" || activeItem === "Follow-Up Baru"
+      ? "Daftar Pasien"
+      : activeItem;
 
   const navigationProps = {
     activeItem: navigationActiveItem,
     onNavigate: handleNavigate,
   };
+
+  if (activeItem === "Follow-Up Baru" && selectedPatient) {
+    return (
+      <FollowUpFormPage
+        {...navigationProps}
+        patient={selectedPatient}
+      />
+    );
+  }
 
   if (activeItem === "Profil Pasien" && selectedPatient) {
     return (
