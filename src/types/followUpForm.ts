@@ -4,6 +4,9 @@ export type SupportingExamForm = {
   date: string;
   result: string;
   attachmentName: string;
+  attachmentDataUrl?: string;
+  attachmentType?: string;
+  attachmentSize?: number;
 };
 
 export type NeurologyFormValues = {
