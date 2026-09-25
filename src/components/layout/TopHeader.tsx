@@ -17,7 +17,7 @@ export default function TopHeader({
   };
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur lg:h-20 lg:px-8">
+    <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-[#E5EAF1] bg-white px-4 lg:h-[72px] lg:px-8">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           type="button"
@@ -38,7 +38,7 @@ export default function TopHeader({
             value={searchValue}
             onChange={handleChange}
             placeholder="Cari nama pasien, RM, atau kata kunci..."
-            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/15"
+            className="h-10 w-full rounded-xl border border-[#D7E3F2] bg-white pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#1677FF] focus:ring-2 focus:ring-blue-500/10"
           />
         </label>
       </div>
@@ -63,7 +63,7 @@ export default function TopHeader({
           aria-label="Buka menu profil"
           className="flex items-center gap-2 border-l border-slate-200 pl-3 text-left sm:gap-3"
         >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-white ring-2 ring-slate-100 sm:h-10 sm:w-10">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#60708A] text-xs font-semibold text-white sm:h-10 sm:w-10">
             AP
           </div>
           <div className="hidden min-w-0 sm:block">
