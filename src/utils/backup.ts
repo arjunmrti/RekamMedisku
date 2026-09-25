@@ -208,12 +208,10 @@ export function formatBackupDate(value: string): string {
   }).format(new Date(value));
 }
 
-export function getPatientRotation(
-  patientId: string,
-): string {
+export function getPatientRotation(rotationId: string): string {
   const rotations = loadRotations();
   return (
-    rotations.find((rotation) => rotation.id === patientId)?.name ??
+    rotations.find((rotation) => rotation.id === rotationId)?.name ??
     "Neurologi"
   );
 }
