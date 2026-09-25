@@ -19,6 +19,9 @@ export type FollowUpEntry = {
   time: string;
   status: FollowUpStatus;
   templateType?: "Neurologi" | "Ilmu Penyakit Dalam";
+  assessmentCodes?: string[];
+  planning?: string;
+  instruction?: string;
   subjective: string;
   objective: string;
   assessment: string;
