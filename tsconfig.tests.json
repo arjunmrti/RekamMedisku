@@ -14,6 +14,7 @@
   },
   "include": [
     "tests/**/*.ts",
+    "src/utils/date.ts",
     "src/utils/reportGenerator.ts",
     "src/types/followUp.ts",
     "src/types/patient.ts",

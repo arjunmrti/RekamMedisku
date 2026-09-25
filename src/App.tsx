@@ -36,17 +36,6 @@ function App() {
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(() => getInitialPatient());
 
-  const refreshSelectedPatient = () => {
-    setSelectedPatient((current) => {
-      if (!current) return current;
-
-      return (
-        loadPatients().find((patient) => patient.id === current.id) ??
-        current
-      );
-    });
-  };
-
   const handleNavigate = (label: string) => {
     if (label === "Pasien") {
       setActiveItem("Daftar Pasien");
@@ -62,12 +51,26 @@ function App() {
     ) {
       if (label === "Semua Laporan") {
         const activeRotation = loadActiveRotation();
+        const patients = loadPatients();
+        const currentPatient =
+          selectedPatient &&
+          selectedPatient.rotationId === activeRotation.id &&
+          selectedPatient.status === "Aktif"
+            ? patients.find(
+                (patient) =>
+                  patient.id === selectedPatient.id &&
+                  patient.rotationId === activeRotation.id &&
+                  patient.status === "Aktif",
+              ) ?? null
+            : null;
         const nextPatient =
-          loadPatients().find(
+          currentPatient ??
+          patients.find(
             (patient) =>
               patient.rotationId === activeRotation.id &&
               patient.status === "Aktif",
-          ) ?? null;
+          ) ??
+          null;
 
         if (!nextPatient) {
           setSelectedPatient(null);
@@ -85,17 +88,61 @@ function App() {
     }
 
     if (label === "Profil Pasien") {
-      refreshSelectedPatient();
+      const activeRotation = loadActiveRotation();
+      const patients = loadPatients();
+      const currentPatient =
+        selectedPatient &&
+        selectedPatient.rotationId === activeRotation.id &&
+        selectedPatient.status === "Aktif"
+          ? patients.find(
+              (patient) =>
+                patient.id === selectedPatient.id &&
+                patient.rotationId === activeRotation.id &&
+                patient.status === "Aktif",
+            ) ?? null
+          : null;
+
+      if (!currentPatient) {
+        setSelectedPatient(null);
+        setActiveItem("Daftar Pasien");
+        return;
+      }
+
+      setSelectedPatient(currentPatient);
       setActiveItem("Profil Pasien");
       return;
     }
 
     if (label === "Follow-Up Baru") {
-      if (!selectedPatient) {
+      const activeRotation = loadActiveRotation();
+      const patients = loadPatients();
+      const currentPatient =
+        selectedPatient &&
+        selectedPatient.rotationId === activeRotation.id &&
+        selectedPatient.status === "Aktif"
+          ? patients.find(
+              (patient) =>
+                patient.id === selectedPatient.id &&
+                patient.rotationId === activeRotation.id &&
+                patient.status === "Aktif",
+            ) ?? null
+          : null;
+      const nextPatient =
+        currentPatient ??
+        patients.find(
+          (patient) =>
+            patient.rotationId === activeRotation.id &&
+            patient.status === "Aktif",
+        ) ??
+        null;
+
+      if (!nextPatient) {
+        setSelectedPatient(null);
         setActiveItem("Daftar Pasien");
         return;
       }
 
+      setSelectedPatient(nextPatient);
       setActiveItem("Follow-Up Baru");
       return;
     }

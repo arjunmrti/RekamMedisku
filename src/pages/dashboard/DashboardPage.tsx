@@ -87,7 +87,7 @@ export default function DashboardPage({
   }, [activePatients]);
 
   const pendingFollowUps = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toLocalIsoDate();
 
     return activePatients.filter((patient) => {
       const latest = getFollowUps(patient.id)[0];
