@@ -78,7 +78,9 @@ export default function ReportSummaryCard({
             "mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 " +
             (copied
               ? "bg-emerald-600 shadow-emerald-500/20"
-              : "bg-[#1677FF] shadow-blue-500/20 hover:bg-blue-700")
+              : hasReport
+                ? "bg-[#1677FF] shadow-blue-500/20 hover:bg-blue-700"
+                : "cursor-not-allowed bg-slate-200 text-slate-400 shadow-none hover:translate-y-0")
           }
         >
           <Icon
