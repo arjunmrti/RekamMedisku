@@ -108,17 +108,51 @@ function emptyForm(): FollowUpFormValues {
 
 function getInitialValues(patientId: string) {
   const draft = loadFollowUpDraft(patientId);
+  const fallback = emptyForm();
 
   if (
-    draft &&
-    "keluhan" in draft.subjective &&
-    "planning" in draft &&
-    "instruction" in draft
+    !draft ||
+    !draft.subjective ||
+    !draft.objective ||
+    !draft.neurology ||
+    !draft.assessments
   ) {
-    return draft;
+    return fallback;
   }
 
-  return emptyForm();
+  return {
+    ...fallback,
+    ...draft,
+    subjective: {
+      ...fallback.subjective,
+      ...draft.subjective,
+    },
+    objective: {
+      ...fallback.objective,
+      ...draft.objective,
+    },
+    neurology: {
+      ...fallback.neurology,
+      ...draft.neurology,
+    },
+    internalMedicine: {
+      ...fallback.internalMedicine,
+      ...(draft.internalMedicine ?? {}),
+    },
+    supportingExams: Array.isArray(draft.supportingExams)
+      ? draft.supportingExams
+      : [],
+    assessments: Array.isArray(draft.assessments) && draft.assessments.length
+      ? draft.assessments
+      : [""],
+    assessmentCodes: Array.isArray(draft.assessmentCodes)
+      ? draft.assessmentCodes
+      : [],
+    planning: typeof draft.planning === "string" ? draft.planning : "",
+    instruction: typeof draft.instruction === "string" ? draft.instruction : "",
+    followUpDate: draft.followUpDate || fallback.followUpDate,
+    followUpTime: draft.followUpTime || fallback.followUpTime,
+  };
 }
 
 function getInitials(name: string) {
