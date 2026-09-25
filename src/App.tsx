@@ -2,6 +2,7 @@ import { useState } from "react";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import PatientProfilePage from "./pages/patient-profile/PatientProfilePage";
 import FollowUpFormPage from "./pages/follow-up/FollowUpFormPage";
+import ReportGeneratorPage from "./pages/reports/ReportGeneratorPage";
 import PatientsPage from "./pages/patients/PatientsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import { mockPatients } from "./data/mockPatients";
@@ -88,8 +89,13 @@ function App() {
     );
   }
 
-  if (activeItem === "Semua Laporan") {
-    return <PlaceholderPage title="Semua Laporan" {...navigationProps} />;
+  if (activeItem === "Semua Laporan" && selectedPatient) {
+    return (
+      <ReportGeneratorPage
+        {...navigationProps}
+        patient={selectedPatient}
+      />
+    );
   }
 
   if (activeItem === "Cadangan & Data") {
