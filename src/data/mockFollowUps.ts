@@ -19,6 +19,12 @@ const neurologyFollowUps: FollowUpEntry[] = [
       "Rencana atau instruksi lanjutan yang diinput pengguna.",
     summary:
       "Keluhan utama dan perkembangan kondisi pasien dicatat oleh pengguna.",
+    supportingExams: [
+      { id: "exam-lab", name: "Laboratorium", date: "26 Sep 2026", icon: "lab" },
+      { id: "exam-ct", name: "CT Scan", date: "25 Sep 2026", icon: "scan" },
+      { id: "exam-xray", name: "Rontgen", date: "20 Sep 2026", icon: "image" },
+      { id: "exam-eeg", name: "EEG", date: "18 Sep 2026", icon: "eeg" },
+    ],
   },
   {
     id: "fu-3",
