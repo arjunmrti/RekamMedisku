@@ -8,6 +8,7 @@ type ReportSummaryCardProps = {
   followUp: FollowUpEntry;
   templateType: ReportTemplateType;
   copied: boolean;
+  hasReport: boolean;
   onCopy: () => void;
   onRegenerate: () => void;
 };
@@ -17,6 +18,7 @@ export default function ReportSummaryCard({
   followUp,
   templateType,
   copied,
+  hasReport,
   onCopy,
   onRegenerate,
 }: ReportSummaryCardProps) {
@@ -69,6 +71,7 @@ export default function ReportSummaryCard({
         <button
           type="button"
           onClick={onCopy}
+          disabled={!hasReport}
           className={
             "mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 " +
             (copied
@@ -81,7 +84,11 @@ export default function ReportSummaryCard({
             className="h-4 w-4"
             strokeWidth={copied ? 2.6 : 2}
           />
-          {copied ? "Tersalin ke Clipboard" : "Salin Laporan"}
+          {copied
+            ? "Tersalin ke Clipboard"
+            : hasReport
+              ? "Salin Laporan"
+              : "Generate laporan terlebih dahulu"}
         </button>
 
         <button
@@ -117,8 +124,8 @@ export default function ReportSummaryCard({
           {[
             ["Follow-Up tersimpan", true, "Sumber data sudah tersedia."],
             ["Review", true, "Follow-up dipilih untuk dilaporkan."],
-            ["Generate", true, "Draft dibuat dari data tersimpan."],
-            ["Preview", true, "Hasil dapat ditinjau sebelum disalin."],
+            ["Generate", hasReport, hasReport ? "Draft dibuat dari data tersimpan." : "Belum dibuat; klik Generate Laporan."],
+            ["Preview", hasReport, hasReport ? "Hasil dapat ditinjau sebelum disalin." : "Preview tersedia setelah laporan dibuat."],
             ["Edit", false, "Opsional dan hanya mengubah draft laporan."],
             ["Salin", copied, "Copy ke clipboard untuk paste manual."],
           ].map(([title, done, description]) => (
