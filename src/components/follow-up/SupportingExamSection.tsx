@@ -10,12 +10,17 @@ type SupportingExamSectionProps = {
   onChange: (value: SupportingExamForm[]) => void;
 };
 
+const MAX_ATTACHMENT_SIZE = 2 * 1024 * 1024;
+
 const emptyExam = (): SupportingExamForm => ({
   id: "exam-" + Date.now(),
   examType: "Laboratorium",
   date: "2026-09-26",
   result: "",
   attachmentName: "",
+  attachmentDataUrl: "",
+  attachmentType: "",
+  attachmentSize: 0,
 });
 
 export default function SupportingExamSection({
@@ -27,15 +32,18 @@ export default function SupportingExamSection({
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<SupportingExamForm>(emptyExam());
+  const [attachmentError, setAttachmentError] = useState("");
 
   const resetDraft = () => {
     setDraft(emptyExam());
     setEditingId(null);
     setAdding(false);
+    setAttachmentError("");
   };
 
   const addExam = () => {
     if (!draft.examType.trim() || !draft.date) return;
+    if (attachmentError) return;
     if (editingId) {
       onChange(
         exams.map((exam) =>
@@ -120,17 +128,61 @@ export default function SupportingExamSection({
               </label>
 
               <label className="space-y-1.5 md:col-span-2 xl:col-span-3">
-                <span className="text-[11px] font-semibold text-slate-600">Lampiran (opsional)</span>
+                <span className="flex items-center justify-between gap-2 text-[11px] font-semibold text-slate-600">
+                  <span>Lampiran (opsional)</span>
+                  <span className="font-normal text-slate-400">maks. 2 MB</span>
+                </span>
                 <input
                   type="file"
-                  onChange={(event) =>
-                    setDraft({
-                      ...draft,
-                      attachmentName: event.target.files?.[0]?.name ?? "",
-                    })
-                  }
+                  accept="image/*,.pdf"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    setAttachmentError("");
+
+                    if (!file) {
+                      setDraft({
+                        ...draft,
+                        attachmentName: "",
+                        attachmentDataUrl: "",
+                        attachmentType: "",
+                        attachmentSize: 0,
+                      });
+                      return;
+                    }
+
+                    if (file.size > MAX_ATTACHMENT_SIZE) {
+                      setAttachmentError("Ukuran lampiran maksimal 2 MB.");
+                      return;
+                    }
+
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      setDraft({
+                        ...draft,
+                        attachmentName: file.name,
+                        attachmentDataUrl:
+                          typeof reader.result === "string" ? reader.result : "",
+                        attachmentType: file.type,
+                        attachmentSize: file.size,
+                      });
+                    };
+                    reader.onerror = () => {
+                      setAttachmentError("Lampiran gagal dibaca.");
+                    };
+                    reader.readAsDataURL(file);
+                  }}
                   className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#1677FF]"
                 />
+                {draft.attachmentName ? (
+                  <p className="text-[10px] text-slate-500">
+                    Terpilih: <span className="font-semibold">{draft.attachmentName}</span>
+                  </p>
+                ) : null}
+                {attachmentError ? (
+                  <p role="alert" className="text-[10px] font-medium text-rose-600">
+                    {attachmentError}
+                  </p>
+                ) : null}
               </label>
 
               <div className="flex items-end gap-2 xl:justify-end">
@@ -181,7 +233,21 @@ export default function SupportingExamSection({
                         {exam.result || "Hasil belum diisi."}
                       </p>
                       {exam.attachmentName ? (
-                        <p className="mt-2 text-[11px] text-slate-400">Lampiran: {exam.attachmentName}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                          <span className="text-slate-400">
+                            Lampiran: {exam.attachmentName}
+                          </span>
+                          {exam.attachmentDataUrl ? (
+                            <a
+                              href={exam.attachmentDataUrl}
+                              download={exam.attachmentName}
+                              onClick={(event) => event.stopPropagation()}
+                              className="font-semibold text-[#1677FF] hover:underline"
+                            >
+                              Unduh
+                            </a>
+                          ) : null}
+                        </div>
                       ) : null}
                     </div>
                   </div>
@@ -193,6 +259,7 @@ export default function SupportingExamSection({
                         setDraft(exam);
                         setEditingId(exam.id);
                         setAdding(true);
+                        setAttachmentError("");
                       }}
                       className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#1677FF] hover:bg-blue-50"
                     >
