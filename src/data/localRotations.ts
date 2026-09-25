@@ -67,7 +67,13 @@ function readJson<T>(key: string, fallback: T): T {
 
 export function loadRotations(): Rotation[] {
   const stored = readJson<Rotation[]>(ROTATIONS_KEY, []);
-  return stored.length > 0 ? stored : DEFAULT_ROTATIONS;
+
+  if (stored.length > 0) {
+    return stored;
+  }
+
+  saveRotations(DEFAULT_ROTATIONS);
+  return DEFAULT_ROTATIONS;
 }
 
 export function saveRotations(rotations: Rotation[]) {
