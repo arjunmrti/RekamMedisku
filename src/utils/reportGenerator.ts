@@ -39,6 +39,7 @@ function getTemplateObjective(
     .filter(Boolean);
 
   const neurologyPrefixes = [
+    "Kesadaran:",
     "GCS E/M/V:",
     "FKL:",
     "N. Cranialis:",
