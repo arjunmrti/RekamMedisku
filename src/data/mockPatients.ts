@@ -3,6 +3,7 @@ import type { PatientListItem } from "../types/patient";
 export const mockPatients: PatientListItem[] = [
   {
     id: "p-24012601",
+    rotationId: "rotation-neurologi",
     name: "Andi Pratama",
     age: 24,
     gender: "Laki-laki",
@@ -16,6 +17,7 @@ export const mockPatients: PatientListItem[] = [
   },
   {
     id: "p-24012602",
+    rotationId: "rotation-neurologi",
     name: "Budi Santoso",
     age: 45,
     gender: "Laki-laki",
@@ -29,6 +31,7 @@ export const mockPatients: PatientListItem[] = [
   },
   {
     id: "p-24012603",
+    rotationId: "rotation-neurologi",
     name: "Citra Lestari",
     age: 28,
     gender: "Perempuan",
@@ -42,6 +45,7 @@ export const mockPatients: PatientListItem[] = [
   },
   {
     id: "p-24012604",
+    rotationId: "rotation-neurologi",
     name: "Dewi Anggraini",
     age: 32,
     gender: "Perempuan",
@@ -55,6 +59,7 @@ export const mockPatients: PatientListItem[] = [
   },
   {
     id: "p-24012605",
+    rotationId: "rotation-neurologi",
     name: "Eko Prasetyo",
     age: 51,
     gender: "Laki-laki",
@@ -68,6 +73,7 @@ export const mockPatients: PatientListItem[] = [
   },
   {
     id: "p-24012606",
+    rotationId: "rotation-neurologi",
     name: "Fajar Ramadhan",
     age: 23,
     gender: "Laki-laki",
