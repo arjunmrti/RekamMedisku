@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import Icon from "../ui/Icon";
 import type {
   Rotation,
@@ -37,22 +37,19 @@ export default function RotationFormModal({
   onClose,
   onSubmit,
 }: RotationFormModalProps) {
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => rotation?.name ?? "");
   const [specialty, setSpecialty] =
-    useState<RotationSpecialty>("Neurologi");
-  const [startDate, setStartDate] = useState("2026-09-01");
-  const [endDate, setEndDate] = useState("2026-09-30");
-  const [status, setStatus] = useState<RotationStatus>("Mendatang");
+    useState<RotationSpecialty>(() => rotation?.specialty ?? "Neurologi");
+  const [startDate, setStartDate] = useState(
+    () => rotation?.startDate ?? "2026-09-01",
+  );
+  const [endDate, setEndDate] = useState(
+    () => rotation?.endDate ?? "2026-09-30",
+  );
+  const [status, setStatus] = useState<RotationStatus>(
+    () => rotation?.status ?? "Mendatang",
+  );
 
-  useEffect(() => {
-    if (!open) return;
-
-    setName(rotation?.name ?? "");
-    setSpecialty(rotation?.specialty ?? "Neurologi");
-    setStartDate(rotation?.startDate ?? "2026-09-01");
-    setEndDate(rotation?.endDate ?? "2026-09-30");
-    setStatus(rotation?.status ?? "Mendatang");
-  }, [open, rotation]);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
