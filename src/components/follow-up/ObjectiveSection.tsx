@@ -10,6 +10,23 @@ type ObjectiveSectionProps = {
   onNeurologyChange: (value: FollowUpFormValues["neurology"]) => void;
 };
 
+type ObjectiveField = [
+  keyof FollowUpFormValues["objective"],
+  string,
+  string,
+];
+
+const vitalFields: ReadonlyArray<ObjectiveField> = [
+  ["systolic", "TD Sistol", "mmHg"],
+  ["diastolic", "TD Diastol", "mmHg"],
+  ["pulse", "Nadi", "x/menit"],
+  ["respiratoryRate", "RR", "x/menit"],
+  ["temperature", "Suhu", "°C"],
+  ["spo2", "SpO₂", "%"],
+  ["oxygenVia", "Oksigen via", ""],
+  ["painNrs", "NRS", "0–10"],
+];
+
 const neurologyFields = [
   ["fkl", "Fungsi Kortikal Luhur (FKL)", "Contoh: normal / afasia motorik"],
   ["cranialNerve", "N. Cranialis (I–XII)", "Contoh: pupil isokor, refleks cahaya, parese saraf kranialis..."],
@@ -62,29 +79,26 @@ export default function ObjectiveSection({
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-            {[
-              ["systolic", "TD Sistol", "mmHg"],
-              ["diastolic", "TD Diastol", "mmHg"],
-              ["pulse", "Nadi", "x/menit"],
-              ["respiratoryRate", "RR", "x/menit"],
-              ["temperature", "Suhu", "°C"],
-              ["spo2", "SpO₂", "%"],
-              ["oxygenVia", "Oksigen via", ""],
-              ["painNrs", "NRS", "0–10"],
-            ] satisfies ReadonlyArray<
-              readonly [
-                keyof FollowUpFormValues["objective"],
-                string,
-                string,
-              ]
-            >((([key, label, unit]) => (
-              <label key={key} className={key === "oxygenVia" ? "space-y-1.5 sm:col-span-2 xl:col-span-1" : "space-y-1.5"}>
-                <span className="block text-[11px] font-semibold text-slate-600">{label}</span>
+            {vitalFields.map(([key, label, unit]) => (
+              <label
+                key={key}
+                className={
+                  key === "oxygenVia"
+                    ? "space-y-1.5 sm:col-span-2 xl:col-span-1"
+                    : "space-y-1.5"
+                }
+              >
+                <span className="block text-[11px] font-semibold text-slate-600">
+                  {label}
+                </span>
                 <span className="flex overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#1677FF] focus-within:ring-2 focus-within:ring-blue-500/10">
                   <input
                     value={objective[key]}
                     onChange={(event) =>
-                      onObjectiveChange({ ...objective, [key]: event.target.value })
+                      onObjectiveChange({
+                        ...objective,
+                        [key]: event.target.value,
+                      })
                     }
                     inputMode={key === "oxygenVia" ? "text" : "decimal"}
                     min={key === "painNrs" ? 0 : undefined}
@@ -99,8 +113,7 @@ export default function ObjectiveSection({
                   ) : null}
                 </span>
               </label>
-            )))}
-          </div>
+            ))}          </div>
         </div>
 
         <label className="space-y-1.5">
