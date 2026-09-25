@@ -26,7 +26,9 @@ export default function PatientQuickActions({
           <button
             key={action.label}
             type="button"
-            onClick={action.label === "Tambah Pasien" || action.label === "Follow-Up Baru" ? onAddPatient : undefined}
+            onClick={
+              action.label === "Tambah Pasien" ? onAddPatient : undefined
+            }
             className={
               "flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-colors " +
               (action.primary
