@@ -6,6 +6,15 @@ type DashboardHeaderProps = {
   onChangeRotation: () => void;
 };
 
+function getGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour < 11) return "Selamat pagi";
+  if (hour < 15) return "Selamat siang";
+  if (hour < 18) return "Selamat sore";
+  return "Selamat malam";
+}
+
 function formatPeriod(startDate: string, endDate: string) {
   const start = new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
@@ -31,11 +40,16 @@ export default function DashboardHeader({
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
             Workspace Klinik
           </p>
-          <h1 className="mt-1 text-[24px] font-bold leading-tight tracking-tight text-slate-900 sm:text-[28px] lg:text-[30px]">
-            Selamat pagi, Muhammad Fadel
-          </h1>
-          <p className="mt-1.5 text-sm font-medium text-slate-500">
-            Ringkasan aktivitas pada stase {rotation.name}.
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-[24px] font-bold leading-tight tracking-tight text-slate-900 sm:text-[28px] lg:text-[30px]">
+              {getGreeting()}, Muhammad Fadel
+            </h1>
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-500 shadow-sm">
+              Hari ini
+            </span>
+          </div>
+          <p className="mt-1.5 max-w-2xl text-sm font-medium leading-6 text-slate-500">
+            Ringkasan aktivitas dan catatan follow-up pada stase {rotation.name}.
           </p>
         </div>
 
@@ -43,7 +57,7 @@ export default function DashboardHeader({
           <button
             type="button"
             onClick={onChangeRotation}
-            className="flex min-h-11 min-w-[240px] items-center justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50/80 px-4 py-2.5 text-left transition-colors hover:bg-blue-100/70"
+            className="group flex min-h-[58px] min-w-[240px] items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-blue-50/80 px-4 py-3 text-left shadow-sm shadow-blue-100/40 transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-100/70 hover:shadow-md"
             aria-label="Buka manajemen stase"
           >
             <div className="flex items-center gap-3">
@@ -61,17 +75,20 @@ export default function DashboardHeader({
                   {rotation.name}
                 </span>
                 <span className="block text-[10px] font-medium text-slate-400">
-                  {formatPeriod(rotation.startDate, rotation.endDate)}
+                  {rotation.specialty} · {formatPeriod(rotation.startDate, rotation.endDate)}
                 </span>
               </div>
             </div>
-            <Icon name="chevron" className="h-4 w-4 text-slate-400" />
+            <Icon
+              name="chevron"
+              className="h-4 w-4 text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5"
+            />
           </button>
 
           <button
             type="button"
             onClick={onChangeRotation}
-            className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-blue-600 shadow-sm transition-colors hover:bg-slate-50"
+            className="min-h-11 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-blue-600 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50/40"
           >
             Ganti Stase
           </button>
