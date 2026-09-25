@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import ReportPatientContext from "../../components/report/ReportPatientContext";
 import ReportPreview from "../../components/report/ReportPreview";
@@ -37,40 +37,32 @@ export default function ReportGeneratorPage({
   patient,
 }: ReportGeneratorPageProps) {
   const followUps = useMemo(() => getFollowUps(patient.id), [patient.id]);
-  const [selectedFollowUpId, setSelectedFollowUpId] = useState("");
+  const initialFollowUp = followUps[0] ?? null;
+  const initialTemplate: ReportTemplateType =
+    initialFollowUp?.templateType ?? "Neurologi";
+
+  const [selectedFollowUpId, setSelectedFollowUpId] = useState(
+    initialFollowUp?.id ?? "",
+  );
   const [templateType, setTemplateType] =
-    useState<ReportTemplateType>("Neurologi");
+    useState<ReportTemplateType>(initialTemplate);
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [reportText, setReportText] = useState("");
-  const [generatedKey, setGeneratedKey] = useState("");
+  const [reportText, setReportText] = useState(
+    initialFollowUp
+      ? buildWhatsAppReport(patient, initialFollowUp, initialTemplate)
+      : "",
+  );
+  const [generatedKey, setGeneratedKey] = useState(
+    initialFollowUp ? initialFollowUp.id + ":" + initialTemplate : "",
+  );
 
   const selectedFollowUp =
     followUps.find((entry) => entry.id === selectedFollowUpId) ??
-    followUps[0] ??
-    null;
+    initialFollowUp;
 
   const sourceTemplate: ReportTemplateType =
     selectedFollowUp?.templateType ?? "Neurologi";
-
-  useEffect(() => {
-    if (!followUps.length) {
-      setSelectedFollowUpId("");
-      setReportText("");
-      return;
-    }
-
-    const next = followUps.find((entry) => entry.id === selectedFollowUpId) ??
-      followUps[0];
-    const nextTemplate = next.templateType ?? "Neurologi";
-
-    setSelectedFollowUpId(next.id);
-    setTemplateType(nextTemplate);
-    setReportText(buildWhatsAppReport(patient, next, nextTemplate));
-    setGeneratedKey(next.id + ":" + nextTemplate);
-    setEditing(false);
-    setCopied(false);
-  }, [patient, followUps]);
 
   const activeStep: ReportStep = copied ? 6 : editing ? 5 : 4;
 
