@@ -12,14 +12,10 @@ type SupportingExamSectionProps = {
 
 const MAX_ATTACHMENT_SIZE = 2 * 1024 * 1024;
 
-function getTodayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
-}
-
 const emptyExam = (): SupportingExamForm => ({
   id: "exam-" + Date.now(),
   examType: "Laboratorium",
-  date: getTodayIsoDate(),
+  date: toLocalIsoDate(),
   result: "",
   attachmentName: "",
   attachmentDataUrl: "",
