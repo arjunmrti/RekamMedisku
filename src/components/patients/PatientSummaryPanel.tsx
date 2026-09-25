@@ -1,15 +1,22 @@
 import type { PatientListItem } from "../../types/patient";
+import type { Rotation } from "../../types/rotation";
 import Icon from "../ui/Icon";
 import StatusBadge from "../ui/StatusBadge";
 
 type PatientSummaryPanelProps = {
   patient: PatientListItem | null;
+  rotation: Rotation;
   onOpenProfile: (patient: PatientListItem) => void;
+  onEditPatient: (patient: PatientListItem) => void;
+  onToggleArchive: (patient: PatientListItem) => void;
 };
 
 export default function PatientSummaryPanel({
   patient,
+  rotation,
   onOpenProfile,
+  onEditPatient,
+  onToggleArchive,
 }: PatientSummaryPanelProps) {
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
@@ -42,8 +49,11 @@ export default function PatientSummaryPanel({
               <p className="mt-0.5 text-[11px] text-slate-400">
                 RM {patient.rm} · {patient.age} tahun · {patient.gender}
               </p>
-              <div className="mt-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <StatusBadge status={patient.status} />
+                <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-[#1677FF]">
+                  {rotation.name}
+                </span>
               </div>
             </div>
           </div>
@@ -53,17 +63,13 @@ export default function PatientSummaryPanel({
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 Ruangan
               </p>
-              <p className="mt-1 font-semibold text-slate-700">
-                {patient.room}
-              </p>
+              <p className="mt-1 font-semibold text-slate-700">{patient.room}</p>
             </div>
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 Bed
               </p>
-              <p className="mt-1 font-semibold text-slate-700">
-                {patient.bed}
-              </p>
+              <p className="mt-1 font-semibold text-slate-700">{patient.bed}</p>
             </div>
             <div className="col-span-2">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
@@ -76,8 +82,11 @@ export default function PatientSummaryPanel({
           </div>
 
           <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
-            <Metric label="Follow-Up" value={String(patient.followUpNumber)} />
-            <Metric label="Stase" value="Neurologi" icon="brain" />
+            <Metric
+              label="Follow-Up"
+              value={String(patient.followUpNumber)}
+            />
+            <Metric label="Stase" value={rotation.name} icon="brain" />
             <Metric
               label="Terakhir"
               value={
@@ -88,13 +97,37 @@ export default function PatientSummaryPanel({
             />
           </div>
 
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => onOpenProfile(patient)}
+              className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Buka Profil
+              <Icon name="arrow" className="h-4 w-4 text-slate-400" />
+            </button>
+            <button
+              type="button"
+              onClick={() => onEditPatient(patient)}
+              className="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Edit Pasien
+            </button>
+          </div>
+
           <button
             type="button"
-            onClick={() => onOpenProfile(patient)}
-            className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            onClick={() => onToggleArchive(patient)}
+            className={
+              "w-full rounded-xl border px-4 py-2.5 text-xs font-semibold transition " +
+              (patient.status === "Aktif"
+                ? "border-rose-100 text-rose-600 hover:bg-rose-50"
+                : "border-emerald-100 text-emerald-600 hover:bg-emerald-50")
+            }
           >
-            Buka Profil Pasien
-            <Icon name="arrow" className="h-4 w-4 text-slate-400" />
+            {patient.status === "Aktif"
+              ? "Arsipkan Pasien"
+              : "Pulihkan Pasien"}
           </button>
         </div>
       )}
