@@ -10,6 +10,7 @@ import {
   mockFollowUpsByPatient,
   mockSupportingExamsByPatient,
 } from "../../data/mockFollowUps";
+import { loadSavedFollowUps } from "../../data/localFollowUps";
 import type { PatientListItem } from "../../types/patient";
 import Icon from "../../components/ui/Icon";
 import type { SupportingExam } from "../../types/followUp";
@@ -28,14 +29,33 @@ export default function PatientProfilePage({
   const examsRef = useRef<HTMLDivElement | null>(null);
   const followUpRef = useRef<HTMLDivElement | null>(null);
 
-  const followUps = useMemo(
-    () => mockFollowUpsByPatient[patient.id] ?? [],
-    [patient.id],
-  );
-  const supportingExams = useMemo(
-    () => mockSupportingExamsByPatient[patient.id] ?? [],
-    [patient.id],
-  );
+  const followUps = useMemo(() => {
+    const mock = mockFollowUpsByPatient[patient.id] ?? [];
+    const local = loadSavedFollowUps()[patient.id] ?? [];
+    const seen = new Set<string>();
+
+    return [...local, ...mock]
+      .filter((entry) => {
+        if (seen.has(entry.id)) return false;
+        seen.add(entry.id);
+        return true;
+      })
+      .sort((a, b) =>
+        (b.isoDate + b.time).localeCompare(a.isoDate + a.time),
+      );
+  }, [patient.id]);
+
+  const supportingExams = useMemo(() => {
+    const latestSavedExams = followUps.flatMap(
+      (entry) => entry.supportingExams ?? [],
+    );
+
+    if (latestSavedExams.length > 0) {
+      return latestSavedExams;
+    }
+
+    return mockSupportingExamsByPatient[patient.id] ?? [];
+  }, [followUps, patient.id]);
   const latestFollowUp = followUps[0] ?? null;
 
   const handleTabChange = (tab: ProfileTab) => {
