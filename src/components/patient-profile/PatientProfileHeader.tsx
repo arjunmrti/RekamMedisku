@@ -1,9 +1,11 @@
 import type { PatientListItem } from "../../types/patient";
+import type { Rotation } from "../../types/rotation";
 import Icon from "../ui/Icon";
 import StatusBadge from "../ui/StatusBadge";
 
 type PatientProfileHeaderProps = {
   patient: PatientListItem;
+  rotation: Rotation | null;
   onBack: () => void;
   onFollowUp: () => void;
   onReport: () => void;
@@ -21,6 +23,7 @@ function getInitials(name: string) {
 
 export default function PatientProfileHeader({
   patient,
+  rotation,
   onBack,
   onFollowUp,
   onReport,
@@ -66,10 +69,19 @@ export default function PatientProfileHeader({
                   DPJP: {patient.doctor}
                 </span>
                 <span className="hidden text-slate-300 sm:inline">•</span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Icon name="brain" className="h-3.5 w-3.5 text-slate-400" />
-                  Stase aktif: Neurologi
-                </span>
+                {rotation ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Icon
+                      name={
+                        rotation.specialty === "Neurologi"
+                          ? "brain"
+                          : "stethoscope"
+                      }
+                      className="h-3.5 w-3.5 text-slate-400"
+                    />
+                    Stase: {rotation.name}
+                  </span>
+                ) : null}
               </div>
             </div>
           </div>
@@ -91,13 +103,7 @@ export default function PatientProfileHeader({
               <Icon name="document" className="h-4 w-4 text-slate-500" />
               Buat Laporan
             </button>
-            <button
-              type="button"
-              aria-label="Opsi pasien"
-              className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
-            >
-              <span aria-hidden="true" className="tracking-[0.2em]">•••</span>
-            </button>
+            <span className="hidden h-10 w-10 xl:block" aria-hidden="true" />
           </div>
         </div>
       </section>
