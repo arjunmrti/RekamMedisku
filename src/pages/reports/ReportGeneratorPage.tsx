@@ -19,6 +19,43 @@ type ReportGeneratorPageProps = NavigationProps & {
   patient: PatientListItem;
 };
 
+async function copyTextToClipboard(text: string) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Fall back to the legacy DOM copy path when the modern API is unavailable
+      // or rejected by browser permissions/context.
+    }
+  }
+
+  if (typeof document.execCommand !== "function") {
+    throw new Error("Clipboard API tidak tersedia.");
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+
+  try {
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+
+    if (!document.execCommand("copy")) {
+      throw new Error("Perintah copy ditolak browser.");
+    }
+  } finally {
+    textarea.remove();
+  }
+}
+
 function getFollowUps(
   patientId: string,
   fallbackTemplate: ReportTemplateType,
@@ -120,23 +157,7 @@ export default function ReportGeneratorPage({
     if (!reportText) return;
 
     try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(reportText);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = reportText;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        const copied = document.execCommand("copy");
-        document.body.removeChild(textarea);
-
-        if (!copied) {
-          throw new Error("Clipboard command was rejected.");
-        }
-      }
-
+      await copyTextToClipboard(reportText);
       setCopied(true);
       setEditing(false);
       setCopyError("");
