@@ -13,6 +13,7 @@ export type NavigationProps = {
 type AppShellProps = NavigationProps & {
   searchValue: string;
   onSearchChange: (value: string) => void;
+  searchEnabled?: boolean;
   children: ReactNode;
 };
 
@@ -21,6 +22,7 @@ export default function AppShell({
   onNavigate,
   searchValue,
   onSearchChange,
+  searchEnabled = true,
   children,
 }: AppShellProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -39,6 +41,7 @@ export default function AppShell({
           <TopHeader
             searchValue={searchValue}
             onSearchChange={onSearchChange}
+            searchEnabled={searchEnabled}
             onMenuClick={() => setMobileMenuOpen(true)}
           />
           {children}
@@ -93,17 +96,18 @@ export default function AppShell({
                     key={item.label}
                     type="button"
                     onClick={() => navigate(item.label)}
-                    className={"flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm " + (
-                      active
+                    className={
+                      "flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm " +
+                      (active
                         ? "bg-blue-50 font-semibold text-blue-600"
-                        : "font-medium text-slate-600 hover:bg-slate-50"
-                    )}
+                        : "font-medium text-slate-600 hover:bg-slate-50")
+                    }
                   >
                     <Icon
                       name={item.icon}
-                      className={"h-5 w-5 " + (
-                        active ? "text-blue-600" : "text-slate-400"
-                      )}
+                      className={
+                        "h-5 w-5 " + (active ? "text-blue-600" : "text-slate-400")
+                      }
                     />
                     {item.label}
                   </button>
