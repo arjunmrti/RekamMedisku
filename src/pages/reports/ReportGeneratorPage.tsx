@@ -49,43 +49,6 @@ export default function ReportGeneratorPage({
       ? "Ilmu Penyakit Dalam"
       : "Neurologi";
 
-  if (!patientMatchesRotation) {
-    return (
-      <AppShell
-        activeItem={activeItem}
-        onNavigate={onNavigate}
-        searchValue=""
-        onSearchChange={() => undefined}
-        searchEnabled={false}
-      >
-        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-24">
-          <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
-              <Icon name="alert" className="h-5 w-5" />
-            </div>
-            <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-600">
-              Konteks Stase Berubah
-            </p>
-            <h1 className="mt-2 text-xl font-bold text-slate-900">
-              Pasien tidak berada pada stase aktif
-            </h1>
-            <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-500">
-              Laporan hanya dapat dibuat dari pasien pada stase aktif agar
-              konteks laporan tetap sesuai dengan workspace saat ini.
-            </p>
-            <button
-              type="button"
-              onClick={() => onNavigate("Daftar Pasien")}
-              className="mt-6 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700"
-            >
-              Kembali ke Daftar Pasien
-            </button>
-          </section>
-        </main>
-      </AppShell>
-    );
-  }
-
   const followUps = useMemo(
     () => getFollowUps(patient.id, fallbackTemplate),
     [fallbackTemplate, patient.id],
@@ -175,6 +138,43 @@ export default function ReportGeneratorPage({
       );
     }
   };
+
+  if (!patientMatchesRotation) {
+    return (
+      <AppShell
+        activeItem={activeItem}
+        onNavigate={onNavigate}
+        searchValue=""
+        onSearchChange={() => undefined}
+        searchEnabled={false}
+      >
+        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-24">
+          <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+              <Icon name="alert" className="h-5 w-5" />
+            </div>
+            <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-amber-600">
+              Konteks Stase Berubah
+            </p>
+            <h1 className="mt-2 text-xl font-bold text-slate-900">
+              Pasien tidak berada pada stase aktif
+            </h1>
+            <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-500">
+              Laporan hanya dapat dibuat dari pasien pada stase aktif agar
+              konteks laporan tetap sesuai dengan workspace saat ini.
+            </p>
+            <button
+              type="button"
+              onClick={() => onNavigate("Daftar Pasien")}
+              className="mt-6 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700"
+            >
+              Kembali ke Daftar Pasien
+            </button>
+          </section>
+        </main>
+      </AppShell>
+    );
+  }
 
   if (!selectedFollowUp) {
     return (
