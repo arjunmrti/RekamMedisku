@@ -6,8 +6,10 @@ import ReportGeneratorPage from "./pages/reports/ReportGeneratorPage";
 import PatientsPage from "./pages/patients/PatientsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import BackupDataPage from "./pages/backup/BackupDataPage";
+import RotationManagementPage from "./pages/rotations/RotationManagementPage";
 import { mockPatients } from "./data/mockPatients";
 import { loadPatients } from "./data/localPatients";
+import type { Rotation } from "./types/rotation";
 import type { PatientListItem } from "./types/patient";
 
 type View =
@@ -17,6 +19,7 @@ type View =
   | "Follow-Up Baru"
   | "Semua Laporan"
   | "Cadangan & Data"
+  | "Stase Saya"
   | "Pengaturan";
 
 function App() {
@@ -36,6 +39,7 @@ function App() {
       label === "Daftar Pasien" ||
       label === "Semua Laporan" ||
       label === "Cadangan & Data" ||
+      label === "Stase Saya" ||
       label === "Pengaturan"
     ) {
       setActiveItem(label);
@@ -103,6 +107,22 @@ function App() {
 
   if (activeItem === "Cadangan & Data") {
     return <BackupDataPage {...navigationProps} />;
+  }
+
+
+  if (activeItem === "Stase Saya") {
+    return (
+      <RotationManagementPage
+        {...navigationProps}
+        onRotationChange={(rotation: Rotation) => {
+          const nextPatient =
+            loadPatients().find(
+              (patient) => patient.rotationId === rotation.id,
+            ) ?? null;
+          setSelectedPatient(nextPatient);
+        }}
+      />
+    );
   }
 
   if (activeItem === "Pengaturan") {
