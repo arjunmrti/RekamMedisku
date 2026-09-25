@@ -138,7 +138,10 @@ export default function BackupDataPage({
   }, [history, historySearch, operationFilter]);
 
   const summary = {
-    patients: backupPreview.patients.length,
+    patients:
+      dataScope === "Follow-Up"
+        ? 0
+        : backupPreview.patients.length,
     followUps:
       dataScope === "Pasien" || dataScope === "Draf"
         ? 0
@@ -146,7 +149,10 @@ export default function BackupDataPage({
             (total, entries) => total + entries.length,
             0,
           ),
-    drafts: Object.keys(backupPreview.followUpDrafts).length,
+    drafts:
+      dataScope === "Pasien" || dataScope === "Follow-Up"
+        ? 0
+        : Object.keys(backupPreview.followUpDrafts).length,
   };
 
   const refreshPageData = () => {
