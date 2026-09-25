@@ -493,13 +493,13 @@ export default function FollowUpFormPage({
       Math.max(0, ...previousFollowUps.map((entry) => entry.number)) + 1;
     const entry = buildFollowUpEntry(values, nextNumber, templateType);
 
+    appendSavedFollowUp(patient.id, entry);
     updatePatient(patient.id, {
       lastFollowUp: entry.date + " · " + entry.time,
       followUpNumber: entry.number,
       lastFollowUpAt:
         entry.isoDate + "T" + entry.time.replace(".", ":") + ":00",
     });
-    appendSavedFollowUp(patient.id, entry);
     clearFollowUpDraft(patient.id);
     setDirty(false);
     setErrorMessage("");
