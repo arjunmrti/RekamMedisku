@@ -68,7 +68,7 @@ export default function TopHeader({
           </div>
           <div className="hidden min-w-0 sm:block">
             <span className="block truncate text-sm font-bold leading-tight text-slate-800">
-              Andi Pratama
+              Muhammad Fadel
             </span>
             <span className="block text-[11px] font-medium text-slate-400">
               Mahasiswa Kedokteran
