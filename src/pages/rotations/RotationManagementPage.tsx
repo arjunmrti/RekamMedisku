@@ -85,7 +85,15 @@ export default function RotationManagementPage({
 
       const latestPatient = [...rotationPatients]
         .filter((patient) => patient.lastFollowUp !== "Belum ada follow-up")
-        .sort((a, b) => b.lastFollowUp.localeCompare(a.lastFollowUp))[0];
+        .sort((a, b) => {
+          const aTime = a.lastFollowUpAt
+            ? new Date(a.lastFollowUpAt).getTime()
+            : 0;
+          const bTime = b.lastFollowUpAt
+            ? new Date(b.lastFollowUpAt).getTime()
+            : 0;
+          return bTime - aTime;
+        })[0];
 
       if (latestPatient) {
         acc[rotation.id] = latestPatient.lastFollowUp;
