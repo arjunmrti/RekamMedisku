@@ -111,4 +111,5 @@ export default function QuickActions({ onNavigate }: QuickActionsProps) {
         </button>
       </div>
     </section>
-  
+  );
+}
