@@ -71,7 +71,13 @@ export default function ObjectiveSection({
               ["spo2", "SpO₂", "%"],
               ["oxygenVia", "Oksigen via", ""],
               ["painNrs", "NRS", "0–10"],
-            ].map(([key, label, unit]) => (
+            ] satisfies ReadonlyArray<
+              readonly [
+                keyof FollowUpFormValues["objective"],
+                string,
+                string,
+              ]
+            >).map(([key, label, unit]) => (
               <label key={key} className={key === "oxygenVia" ? "space-y-1.5 sm:col-span-2 xl:col-span-1" : "space-y-1.5"}>
                 <span className="block text-[11px] font-semibold text-slate-600">{label}</span>
                 <span className="flex overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-[#1677FF] focus-within:ring-2 focus-within:ring-blue-500/10">
