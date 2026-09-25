@@ -221,12 +221,20 @@ function isRotation(value: unknown): value is Rotation {
   ];
   const statuses = ["Aktif", "Selesai", "Mendatang"];
 
+  const validDates =
+    typeof value.startDate === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(value.startDate) &&
+    typeof value.endDate === "string" &&
+    /^\d{4}-\d{2}-\d{2}$/.test(value.endDate) &&
+    new Date(value.startDate + "T00:00:00").getTime() <=
+      new Date(value.endDate + "T00:00:00").getTime();
+
   return (
     typeof value.id === "string" &&
     typeof value.name === "string" &&
+    value.name.trim().length > 0 &&
     specialties.includes(value.specialty as string) &&
-    typeof value.startDate === "string" &&
-    typeof value.endDate === "string" &&
+    validDates &&
     statuses.includes(value.status as string) &&
     typeof value.createdAt === "string" &&
     typeof value.updatedAt === "string"
@@ -399,6 +407,17 @@ export function parseBackupText(
         !rotationIds.has(parsed.activeRotationId)
       ) {
         return { ok: false, error: "Stase aktif pada backup tidak ditemukan." };
+      }
+
+      if (
+        parsed.activeRotationId !== undefined &&
+        parsed.rotations.find((rotation) => rotation.id === parsed.activeRotationId)
+          ?.status !== "Aktif"
+      ) {
+        return {
+          ok: false,
+          error: "Stase aktif pada backup harus berstatus Aktif.",
+        };
       }
 
       for (const patient of patients) {
