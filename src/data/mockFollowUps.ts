@@ -1,6 +1,6 @@
 import type { FollowUpEntry, SupportingExam } from "../types/followUp";
 
-export const mockFollowUps: FollowUpEntry[] = [
+const neurologyFollowUps: FollowUpEntry[] = [
   {
     id: "fu-4",
     number: 4,
@@ -9,14 +9,15 @@ export const mockFollowUps: FollowUpEntry[] = [
     time: "09.30",
     status: "Tersimpan",
     subjective:
-      "Keluhan utama: kelemahan ekstremitas kanan sejak 3 hari yang lalu memberat mendadak saat beraktivitas pagi. Pasien juga mengeluhkan bicara pelo ringan.",
+      "Keluhan utama dan perkembangan kondisi pasien dicatat oleh pengguna.",
     objective:
-      "Kesadaran compos mentis, GCS 15 (E4M6V5), TD 140/90 mmHg, HR 82x/m, RR 18x/m, Tax 36.6°C. Motorik ekstremitas kanan 4/5, ekstremitas kiri 5/5. Refleks fisiologis biseps/triseps +2/+2.",
-    assessment: "Suspek stroke iskemik (dd: TIA)",
+      "Hasil observasi dan pemeriksaan yang dicatat oleh pengguna.",
+    assessment:
+      "Assessment yang diinput pengguna.",
     plan:
-      "CT Scan kepala non-kontras, kontrol vital sign per 4 jam, cek laboratorium rutin lengkap, terapi medikamentosa antiplatelet dan neuroprotektor sesuai instruksi DPJP.",
+      "Rencana atau instruksi lanjutan yang diinput pengguna.",
     summary:
-      "Keluhan utama: kelemahan ekstremitas kanan ...",
+      "Keluhan utama dan perkembangan kondisi pasien dicatat oleh pengguna.",
   },
   {
     id: "fu-3",
@@ -25,11 +26,11 @@ export const mockFollowUps: FollowUpEntry[] = [
     isoDate: "2026-09-24",
     time: "08.40",
     status: "Tersimpan",
-    subjective: "Evaluasi progres kondisi pasien.",
-    objective: "Pemeriksaan lanjutan dicatat pada kunjungan.",
-    assessment: "Evaluasi progres.",
-    plan: "Lanjutkan terapi sesuai instruksi DPJP.",
-    summary: "Evaluasi progres, lanjutkan terapi ...",
+    subjective: "Perkembangan kondisi pasien dicatat oleh pengguna.",
+    objective: "Observasi dan pemeriksaan lanjutan dicatat oleh pengguna.",
+    assessment: "Assessment yang diinput pengguna.",
+    plan: "Rencana lanjutan yang diinput pengguna.",
+    summary: "Evaluasi progres dan catatan lanjutan tersimpan.",
   },
   {
     id: "fu-2",
@@ -38,11 +39,11 @@ export const mockFollowUps: FollowUpEntry[] = [
     isoDate: "2026-09-22",
     time: "10.15",
     status: "Draf",
-    subjective: "Pasien masih mengeluh pusing.",
-    objective: "Observasi dan pemeriksaan dicatat.",
+    subjective: "Keluhan saat ini yang masih dalam proses pencatatan.",
+    objective: "Observasi dan pemeriksaan yang masih berupa draft.",
     assessment: "Assessment belum difinalkan.",
     plan: "Rencana tindak lanjut masih berupa draft.",
-    summary: "Pasien masih mengeluh pusing ...",
+    summary: "Catatan follow-up masih dalam status draf.",
   },
   {
     id: "fu-1",
@@ -51,17 +52,55 @@ export const mockFollowUps: FollowUpEntry[] = [
     isoDate: "2026-09-18",
     time: "09.20",
     status: "Tersimpan",
-    subjective: "Keluhan awal pasien dicatat.",
-    objective: "Dilakukan pemeriksaan awal.",
-    assessment: "Assessment awal dicatat.",
-    plan: "Rencana tindak lanjut awal dicatat.",
-    summary: "Keluhan awal, dilakukan pemeriksaan ...",
+    subjective: "Keluhan awal pasien dicatat oleh pengguna.",
+    objective: "Pemeriksaan awal dicatat oleh pengguna.",
+    assessment: "Assessment awal dicatat oleh pengguna.",
+    plan: "Rencana tindak lanjut awal dicatat oleh pengguna.",
+    summary: "Catatan follow-up awal pasien tersimpan.",
   },
 ];
 
-export const mockSupportingExams: SupportingExam[] = [
+const otherPatientFollowUps: FollowUpEntry[] = [
+  {
+    id: "fu-demo-1",
+    number: 1,
+    date: "25 September 2026",
+    isoDate: "2026-09-25",
+    time: "14.20",
+    status: "Tersimpan",
+    subjective: "Keluhan dan perkembangan pasien dicatat oleh pengguna.",
+    objective: "Hasil pemeriksaan dicatat oleh pengguna.",
+    assessment: "Assessment yang diinput pengguna.",
+    plan: "Rencana atau instruksi lanjutan yang diinput pengguna.",
+    summary: "Catatan follow-up pertama tersimpan.",
+  },
+];
+
+export const mockFollowUpsByPatient: Record<string, FollowUpEntry[]> = {
+  "p-24012601": neurologyFollowUps,
+  "p-24012602": otherPatientFollowUps,
+  "p-24012603": [],
+  "p-24012604": [],
+  "p-24012605": [],
+  "p-24012606": [],
+};
+
+export const mockFollowUps = neurologyFollowUps;
+
+const neurologySupportingExams: SupportingExam[] = [
   { id: "exam-lab", name: "Laboratorium", date: "26 Sep 2026", icon: "lab" },
   { id: "exam-ct", name: "CT Scan", date: "25 Sep 2026", icon: "scan" },
   { id: "exam-xray", name: "Rontgen", date: "20 Sep 2026", icon: "image" },
   { id: "exam-eeg", name: "EEG", date: "18 Sep 2026", icon: "eeg" },
 ];
+
+export const mockSupportingExamsByPatient: Record<string, SupportingExam[]> = {
+  "p-24012601": neurologySupportingExams,
+  "p-24012602": [],
+  "p-24012603": [],
+  "p-24012604": [],
+  "p-24012605": [],
+  "p-24012606": [],
+};
+
+export const mockSupportingExams = neurologySupportingExams;
