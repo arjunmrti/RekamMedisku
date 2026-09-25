@@ -7,6 +7,7 @@ import ReportSummaryCard from "../../components/report/ReportSummaryCard";
 import ReportTemplateSelector from "../../components/report/ReportTemplateSelector";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
 import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
+import { loadRotations } from "../../data/localRotations";
 import { buildWhatsAppReport } from "../../utils/reportGenerator";
 import type { PatientListItem } from "../../types/patient";
 import type { ReportStep, ReportTemplateType } from "../../types/report";
@@ -16,7 +17,10 @@ type ReportGeneratorPageProps = NavigationProps & {
   patient: PatientListItem;
 };
 
-function getFollowUps(patientId: string) {
+function getFollowUps(
+  patientId: string,
+  fallbackTemplate: ReportTemplateType,
+) {
   const local = loadSavedFollowUps()[patientId] ?? [];
   const mock = mockFollowUpsByPatient[patientId] ?? [];
   const seen = new Set<string>();
@@ -28,6 +32,10 @@ function getFollowUps(patientId: string) {
       return true;
     })
     .filter((entry) => entry.status === "Tersimpan")
+    .map((entry) => ({
+      ...entry,
+      templateType: entry.templateType ?? fallbackTemplate,
+    }))
     .sort((a, b) => (b.isoDate + b.time).localeCompare(a.isoDate + a.time));
 }
 
@@ -36,7 +44,18 @@ export default function ReportGeneratorPage({
   onNavigate,
   patient,
 }: ReportGeneratorPageProps) {
-  const followUps = useMemo(() => getFollowUps(patient.id), [patient.id]);
+  const patientRotation = loadRotations().find(
+    (rotation) => rotation.id === patient.rotationId,
+  );
+  const fallbackTemplate: ReportTemplateType =
+    patientRotation?.specialty === "Ilmu Penyakit Dalam"
+      ? "Ilmu Penyakit Dalam"
+      : "Neurologi";
+
+  const followUps = useMemo(
+    () => getFollowUps(patient.id, fallbackTemplate),
+    [fallbackTemplate, patient.id],
+  );
   const initialFollowUp = followUps[0] ?? null;
   const initialTemplate: ReportTemplateType =
     initialFollowUp?.templateType ?? "Neurologi";
