@@ -7,6 +7,7 @@ import PatientQuickActions from "../../components/patients/PatientQuickActions";
 import PatientSummaryPanel from "../../components/patients/PatientSummaryPanel";
 import PatientTips from "../../components/patients/PatientTips";
 import AddPatientModal from "../../components/patients/AddPatientModal";
+import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients, savePatients } from "../../data/localPatients";
 import type { PatientListItem } from "../../types/patient";
 
@@ -28,15 +29,22 @@ export default function PatientsPage({
   const [sort, setSort] = useState<
     "newest" | "oldest" | "name" | "bed"
   >("newest");
+  const activeRotation = loadActiveRotation();
   const [patients, setPatients] = useState(() => loadPatients());
   const [selectedPatient, setSelectedPatient] =
-    useState<PatientListItem | null>(() => loadPatients()[0] ?? null);
+    useState<PatientListItem | null>(() =>
+      loadPatients().find((patient) => patient.rotationId === activeRotation.id) ??
+      null,
+    );
   const [modalOpen, setModalOpen] = useState(false);
 
   const filteredPatients = useMemo(() => {
     const query = (globalSearch + " " + filterSearch).trim().toLowerCase();
 
     const result = patients.filter((patient) => {
+      const matchesRotation = patient.rotationId === activeRotation.id;
+      if (!matchesRotation) return false;
+
       const searchable =
         patient.name +
         " " +
@@ -71,7 +79,7 @@ export default function PatientsPage({
       }
       return a.lastFollowUp.localeCompare(b.lastFollowUp);
     });
-  }, [filterSearch, globalSearch, patients, room, sort, status]);
+  }, [activeRotation.id, filterSearch, globalSearch, patients, room, sort, status]);
 
   const resetFilters = () => {
     setGlobalSearch("");
@@ -161,6 +169,7 @@ export default function PatientsPage({
 
       <AddPatientModal
         open={modalOpen}
+        rotation={activeRotation}
         onClose={() => setModalOpen(false)}
         onSubmit={handleAddPatient}
       />
