@@ -1,16 +1,19 @@
 import type { FollowUpEntry } from "../../types/followUp";
 import type { PatientListItem } from "../../types/patient";
+import type { Rotation } from "../../types/rotation";
 import Icon from "../ui/Icon";
 import StatusBadge from "../ui/StatusBadge";
 
 type PatientInfoCardsProps = {
   patient: PatientListItem;
+  rotation: Rotation | null;
   latestFollowUp: FollowUpEntry | null;
   onOpenLatest: () => void;
 };
 
 export default function PatientInfoCards({
   patient,
+  rotation,
   latestFollowUp,
   onOpenLatest,
 }: PatientInfoCardsProps) {
@@ -26,7 +29,7 @@ export default function PatientInfoCards({
           <InfoRow label="Usia" value={patient.age + " tahun"} />
           <InfoRow label="Nomor RM" value={patient.rm} />
           <InfoRow label="Jenis Kelamin" value={patient.gender} />
-          <InfoRow label="Tanggal Masuk" value="1 Sep 2026" />
+          <InfoRow label="Tanggal Masuk" value={patient.admissionDate ?? "Belum diisi"} />
         </div>
         <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
           <span className="text-slate-400">Status</span>
@@ -43,8 +46,8 @@ export default function PatientInfoCards({
           <InfoRow label="Ruangan" value={patient.room} />
           <InfoRow label="Bed" value={patient.bed} />
           <InfoRow label="DPJP" value={patient.doctor} align="right" />
-          <InfoRow label="Stase" value="Neurologi" />
-          <InfoRow label="Tanggal Masuk" value="1 Sep 2026" />
+          <InfoRow label="Stase" value={rotation?.name ?? "Stase tidak ditemukan"} />
+          <InfoRow label="Tanggal Masuk" value={patient.admissionDate ?? "Belum diisi"} />
         </div>
       </section>
 
