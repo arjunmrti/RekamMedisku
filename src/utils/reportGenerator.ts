@@ -11,6 +11,67 @@ export function formatReportDate(date: string) {
   return date || "Tanggal belum tersedia";
 }
 
+function getTemplateObjective(
+  objective: string,
+  templateType: ReportTemplateType,
+) {
+  const lines = objective
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  const neurologyPrefixes = [
+    "GCS E/M/V:",
+    "FKL:",
+    "N. Cranialis:",
+    "Pupil:",
+    "Kaku Kuduk:",
+    "Brudzinski I & II:",
+    "Kernig:",
+    "Pergerakan:",
+    "Tonus:",
+    "Sensorik:",
+    "Kekuatan Ekstremitas Superior:",
+    "Kekuatan Ekstremitas Inferior:",
+    "Refleks Fisiologis:",
+    "Refleks Patologis:",
+    "Otonom BAB/BAK:",
+    "Tes Provokasi Saraf:",
+  ];
+
+  const internalMedicinePrefixes = [
+    "Kesadaran:",
+    "Kepala & Leher:",
+    "Thoraks:",
+    "Abdomen:",
+    "Ekstremitas:",
+    "Temuan Sistemik Relevan:",
+  ];
+
+  const prefixes =
+    templateType === "Neurologi"
+      ? neurologyPrefixes
+      : internalMedicinePrefixes;
+
+  return lines.filter((line) => prefixes.some((prefix) => line.startsWith(prefix)));
+}
+
+function getObjectiveWithoutTemplateSection(
+  objective: string,
+  templateType: ReportTemplateType,
+) {
+  const templateLines = new Set(
+    getTemplateObjective(objective, templateType),
+  );
+
+  return objective
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter((line) => !templateLines.has(line))
+    .join("\n");
+}
+
 export function buildWhatsAppReport(
   patient: PatientListItem,
   followUp: FollowUpEntry,
@@ -50,6 +111,25 @@ export function buildWhatsAppReport(
         ? "Data pemeriksaan penunjang mengikuti catatan pada follow-up."
         : "Belum ada pemeriksaan penunjang.";
 
+  const templateObjective = getTemplateObjective(
+    followUp.objective,
+    templateType,
+  );
+  const generalObjective = getObjectiveWithoutTemplateSection(
+    followUp.objective,
+    templateType,
+  );
+  const templateHeading =
+    templateType === "Neurologi"
+      ? "Pemeriksaan neurologis:"
+      : "Pemeriksaan sistemik Ilmu Penyakit Dalam:";
+  const templateBlock =
+    templateObjective.length > 0
+      ? templateHeading +
+        "\n" +
+        templateObjective.map((line) => "- " + line).join("\n")
+      : templateHeading + "\nBelum ada catatan.";
+
   return [
     "Selamat pagi Dok, izin melaporkan follow-up pasien:",
     "",
@@ -71,7 +151,9 @@ export function buildWhatsAppReport(
     cleanBlock(followUp.subjective),
     "",
     "O:",
-    cleanBlock(followUp.objective),
+    cleanBlock(generalObjective),
+    "",
+    templateBlock,
     "",
     "Pemeriksaan penunjang:",
     supportingBlock,
