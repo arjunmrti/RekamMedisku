@@ -17,7 +17,16 @@ function readJson<T>(key: string, fallback: T): T {
 }
 
 export function loadBackupHistory(): BackupHistoryEntry[] {
-  return readJson<BackupHistoryEntry[]>(HISTORY_KEY, []);
+  const parsed = readJson<unknown>(HISTORY_KEY, null);
+
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed.filter(
+    (entry): entry is BackupHistoryEntry =>
+      typeof entry === "object" && entry !== null,
+  ); 
 }
 
 export function appendBackupHistory(entry: BackupHistoryEntry) {
