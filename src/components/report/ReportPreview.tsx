@@ -37,7 +37,8 @@ export default function ReportPreview({
         <button
           type="button"
           onClick={onToggleEdit}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-[11px] font-semibold text-[#1677FF] transition hover:bg-blue-100"
+          disabled={!text}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2 text-[11px] font-semibold text-[#1677FF] transition hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-blue-50/60"
         >
           <Icon name="document" className="h-3.5 w-3.5" />
           {editing ? "Tutup Edit" : "Edit Laporan"}
