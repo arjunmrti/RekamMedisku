@@ -10,7 +10,6 @@ const groups: Array<{ label: string; item: string; icon: IconName }> = [
   { label: "Pasien", item: "Daftar Pasien", icon: "users" },
   { label: "Laporan", item: "Semua Laporan", icon: "document" },
   { label: "Data", item: "Cadangan & Data", icon: "database" },
-  { label: "Pengaturan", item: "Pengaturan", icon: "settings" },
 ];
 
 function NavButton({
