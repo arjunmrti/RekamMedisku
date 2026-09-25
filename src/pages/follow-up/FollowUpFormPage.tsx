@@ -230,6 +230,9 @@ function buildFollowUpEntry(
       date: formatDate(exam.date),
       result: exam.result,
       attachmentName: exam.attachmentName,
+      attachmentDataUrl: exam.attachmentDataUrl,
+      attachmentType: exam.attachmentType,
+      attachmentSize: exam.attachmentSize,
       icon:
         exam.examType === "CT Scan"
           ? "scan"
