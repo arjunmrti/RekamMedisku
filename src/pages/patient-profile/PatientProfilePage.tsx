@@ -26,6 +26,7 @@ export default function PatientProfilePage({
   patient,
 }: PatientProfilePageProps) {
   const [activeTab, setActiveTab] = useState<ProfileTab>("Ringkasan");
+  const [selectedExam, setSelectedExam] = useState<SupportingExam | null>(null);
   const rotation =
     loadRotations().find((item) => item.id === patient.rotationId) ?? null;
   const timelineRef = useRef<HTMLDivElement | null>(null);
@@ -102,7 +103,7 @@ export default function PatientProfilePage({
   };
 
   const handleExamSelect = (exam: SupportingExam) => {
-    window.alert(exam.name + " · " + exam.date);
+    setSelectedExam(exam);
   };
 
   return (
@@ -285,5 +286,86 @@ export default function PatientProfilePage({
         </div>
       </main>
     </AppShell>
+
+    {selectedExam ? (
+      <div
+        className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="exam-detail-title"
+        onMouseDown={(event) => {
+          if (event.target === event.currentTarget) setSelectedExam(null);
+        }}
+      >
+        <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+          <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1677FF]">
+                Pemeriksaan Penunjang
+              </p>
+              <h2 id="exam-detail-title" className="mt-1 text-lg font-bold text-slate-900">
+                {selectedExam.name}
+              </h2>
+              <p className="mt-1 text-xs text-slate-400">{selectedExam.date}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedExam(null)}
+              aria-label="Tutup detail pemeriksaan"
+              className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50"
+            >
+              ×
+            </button>
+          </div>
+
+          <div className="mt-5 space-y-4">
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                Hasil yang dicatat
+              </p>
+              <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-slate-700">
+                {selectedExam.result || "Tidak ada hasil yang dicatat."}
+              </p>
+            </div>
+
+            {selectedExam.attachmentDataUrl ? (
+              <div className="rounded-2xl border border-slate-200 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="min-w-0 truncate text-xs font-semibold text-slate-700">
+                    {selectedExam.attachmentName || "Lampiran"}
+                  </p>
+                  {selectedExam.attachmentName ? (
+                    <a
+                      href={selectedExam.attachmentDataUrl}
+                      download={selectedExam.attachmentName}
+                      className="shrink-0 text-xs font-semibold text-[#1677FF] hover:underline"
+                    >
+                      Unduh
+                    </a>
+                  ) : null}
+                </div>
+                {selectedExam.attachmentType?.startsWith("image/") ? (
+                  <img
+                    src={selectedExam.attachmentDataUrl}
+                    alt={selectedExam.attachmentName || "Lampiran pemeriksaan"}
+                    className="mt-4 max-h-[420px] w-full rounded-xl border border-slate-200 object-contain"
+                  />
+                ) : (
+                  <iframe
+                    src={selectedExam.attachmentDataUrl}
+                    title={selectedExam.attachmentName || "Lampiran pemeriksaan"}
+                    className="mt-4 h-[420px] w-full rounded-xl border border-slate-200"
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
+                Tidak ada file lampiran yang tersimpan untuk pemeriksaan ini.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    ) : null}
   );
 }
