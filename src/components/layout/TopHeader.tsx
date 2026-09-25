@@ -1,0 +1,82 @@
+import type { ChangeEvent } from "react";
+import Icon from "../ui/Icon";
+
+type TopHeaderProps = {
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  onMenuClick: () => void;
+};
+
+export default function TopHeader({
+  searchValue,
+  onSearchChange,
+  onMenuClick,
+}: TopHeaderProps) {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onSearchChange(event.target.value);
+  };
+
+  return (
+    <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur lg:h-20 lg:px-8">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label="Buka menu navigasi"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 lg:hidden"
+        >
+          <Icon name="menu" className="h-5 w-5" />
+        </button>
+
+        <label className="relative block w-full max-w-md">
+          <span className="sr-only">Cari pasien</span>
+          <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+            <Icon name="search" className="h-4 w-4" />
+          </span>
+          <input
+            type="search"
+            value={searchValue}
+            onChange={handleChange}
+            placeholder="Cari nama pasien, RM, atau kata kunci..."
+            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/15"
+          />
+        </label>
+      </div>
+
+      <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
+        <div className="hidden items-center gap-2 text-xs font-medium text-slate-600 xl:flex">
+          <Icon name="calendar" className="h-4 w-4 text-slate-400" />
+          <span>Sabtu, 26 September 2026</span>
+        </div>
+
+        <button
+          type="button"
+          aria-label="Notifikasi"
+          className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+        >
+          <Icon name="bell" className="h-5 w-5" />
+          <span className="absolute right-2.5 top-2.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
+        </button>
+
+        <button
+          type="button"
+          aria-label="Buka menu profil"
+          className="flex items-center gap-2 border-l border-slate-200 pl-3 text-left sm:gap-3"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-semibold text-white ring-2 ring-slate-100 sm:h-10 sm:w-10">
+            AP
+          </div>
+          <div className="hidden min-w-0 sm:block">
+            <span className="block truncate text-sm font-bold leading-tight text-slate-800">
+              Andi Pratama
+            </span>
+            <span className="block text-[11px] font-medium text-slate-400">
+              Mahasiswa Kedokteran
+            </span>
+          </div>
+          <Icon name="chevron" className="hidden h-4 w-4 text-slate-400 sm:block" />
+        </button>
+      </div>
+    </header>
+  );
+}
