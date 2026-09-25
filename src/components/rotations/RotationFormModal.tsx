@@ -49,14 +49,24 @@ export default function RotationFormModal({
   const [status, setStatus] = useState<RotationStatus>(
     () => rotation?.status ?? "Mendatang",
   );
+  const [errorMessage, setErrorMessage] = useState("");
 
+  const isActiveRotation = rotation?.status === "Aktif";
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!name.trim() || !startDate || !endDate) return;
+    if (!name.trim() || !startDate || !endDate) {
+      setErrorMessage("Nama stase, tanggal mulai, dan tanggal selesai wajib diisi.");
+      return;
+    }
 
-    if (new Date(startDate) > new Date(endDate)) return;
+    if (new Date(startDate) > new Date(endDate)) {
+      setErrorMessage("Tanggal selesai tidak boleh lebih awal dari tanggal mulai.");
+      return;
+    }
+
+    setErrorMessage("");
 
     onSubmit({
       id: rotation?.id,
@@ -172,16 +182,32 @@ export default function RotationFormModal({
             </span>
             <select
               value={status}
+              disabled={isActiveRotation}
               onChange={(event) =>
                 setStatus(event.target.value as RotationStatus)
               }
-              className="field-control"
+              className="field-control disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             >
               {statuses.map((item) => (
                 <option key={item}>{item}</option>
               ))}
             </select>
           </label>
+
+          {isActiveRotation ? (
+            <p className="rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
+              Stase aktif harus tetap berstatus Aktif. Pilih stase lain dari halaman Stase Saya untuk berpindah konteks.
+            </p>
+          ) : null}
+
+          {errorMessage ? (
+            <p
+              role="alert"
+              className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2.5 text-[11px] leading-relaxed text-rose-700"
+            >
+              {errorMessage}
+            </p>
+          ) : null}
 
           <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
             <button
