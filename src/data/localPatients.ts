@@ -23,9 +23,15 @@ function normalizePatient(patient: PatientListItem): PatientListItem {
 }
 
 export function loadPatients(): PatientListItem[] {
-  return readJson<PatientListItem[]>(PATIENTS_KEY, mockPatients).map(
-    normalizePatient,
-  );
+  const stored = window.localStorage.getItem(PATIENTS_KEY);
+
+  if (!stored) {
+    const seeded = mockPatients.map(normalizePatient);
+    savePatients(seeded);
+    return seeded;
+  }
+
+  return readJson<PatientListItem[]>(PATIENTS_KEY, []).map(normalizePatient);
 }
 
 export function savePatients(patients: PatientListItem[]) {
