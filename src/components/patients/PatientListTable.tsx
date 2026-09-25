@@ -37,7 +37,10 @@ export default function PatientListTable({
         </span>
         <button
           type="button"
-          onClick={() => onSelectPatient(patients[0])}
+          onClick={() => {
+            const firstPatient = patients[0];
+            if (firstPatient) onSelectPatient(firstPatient);
+          }}
           disabled={patients.length === 0}
           className="hidden min-h-10 px-2 text-xs font-semibold text-[#1677FF] disabled:cursor-not-allowed disabled:opacity-40 lg:block"
         >
