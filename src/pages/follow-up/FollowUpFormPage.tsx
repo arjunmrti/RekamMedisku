@@ -13,7 +13,6 @@ import {
   loadSavedFollowUps,
   saveFollowUpDraft,
 } from "../../data/localFollowUps";
-import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
 import { loadActiveRotation } from "../../data/localRotations";
 import { updatePatient } from "../../data/localPatients";
 import { toLocalIsoDate, toLocalTimeInput } from "../../utils/date";
@@ -348,14 +347,10 @@ export default function FollowUpFormPage({
 
   const previousFollowUps = useMemo(() => {
     const local = loadSavedFollowUps()[patient.id] ?? [];
-    const mock = mockFollowUpsByPatient[patient.id] ?? [];
-    const seen = new Set<string>();
 
-    return [...local, ...mock]
-      .filter((entry) => {
-        if (seen.has(entry.id)) return false;
-        seen.add(entry.id);
-        return true;
+    return [...local]
+      .filter((entry, index, entries) => {
+        return entries.findIndex((candidate) => candidate.id === entry.id) === index;
       })
       .sort((a, b) =>
         (b.isoDate + b.time).localeCompare(a.isoDate + a.time),
