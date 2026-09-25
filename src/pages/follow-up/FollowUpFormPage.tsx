@@ -16,6 +16,7 @@ import {
 import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
 import { loadActiveRotation } from "../../data/localRotations";
 import { updatePatient } from "../../data/localPatients";
+import { toLocalIsoDate, toLocalTimeInput } from "../../utils/date";
 import type { FollowUpEntry, SupportingExam } from "../../types/followUp";
 import type { FollowUpFormValues } from "../../types/followUpForm";
 import type { PatientListItem } from "../../types/patient";
@@ -33,12 +34,12 @@ type SectionKey =
   | "plan";
 
 function getTodayIsoDate() {
-  return new Date().toISOString().slice(0, 10);
+  return toLocalIsoDate();
 }
 
 function getCurrentTime() {
   const now = new Date();
-  return now.toTimeString().slice(0, 5);
+  return toLocalTimeInput(now);
 }
 
 function emptyForm(): FollowUpFormValues {
