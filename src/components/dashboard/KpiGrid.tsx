@@ -1,13 +1,19 @@
 import KpiCard from "./KpiCard";
+import type { IconName } from "../ui/Icon";
 
-const cards = [
-  { title: "Pasien Aktif", value: "6", description: "dari total 18 pasien", icon: "users", iconClassName: "bg-blue-50 text-blue-600", hoverIconClassName: "group-hover:text-blue-500" },
-  { title: "Follow-Up Hari Ini", value: "4", description: "dari total 6 follow-up", icon: "calendar", iconClassName: "bg-emerald-50 text-emerald-600", hoverIconClassName: "group-hover:text-emerald-500" },
-  { title: "Perlu Ditindaklanjuti", value: "2", description: "follow-up menunggu", icon: "alert", iconClassName: "bg-amber-50 text-amber-500", hoverIconClassName: "group-hover:text-amber-500" },
-  { title: "Pasien Diarsipkan", value: "12", description: "dari total 18", icon: "archive", iconClassName: "bg-purple-50 text-purple-600", hoverIconClassName: "group-hover:text-purple-500" },
-] as const;
+type KpiCardData = {
+  title: string;
+  value: string;
+  description: string;
+  icon: IconName;
+  iconClassName: string;
+};
 
-export default function KpiGrid() {
+type KpiGridProps = {
+  cards: KpiCardData[];
+};
+
+export default function KpiGrid({ cards }: KpiGridProps) {
   return (
     <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
       {cards.map((card) => (
