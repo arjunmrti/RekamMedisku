@@ -2,16 +2,38 @@ import Icon from "../ui/Icon";
 
 type PatientQuickActionsProps = {
   onAddPatient: () => void;
+  onNavigate: (label: string) => void;
 };
 
 export default function PatientQuickActions({
   onAddPatient,
+  onNavigate,
 }: PatientQuickActionsProps) {
   const actions = [
-    { label: "Follow-Up Baru", icon: "plus-user" as const, primary: true },
-    { label: "Buat Laporan", icon: "document" as const, primary: false },
-    { label: "Tambah Pasien", icon: "plus-user" as const, primary: false },
-    { label: "Lihat Semua Pasien", icon: "users" as const, primary: false },
+    {
+      label: "Follow-Up Baru",
+      icon: "plus-user" as const,
+      primary: true,
+      onClick: () => onNavigate("Follow-Up Baru"),
+    },
+    {
+      label: "Buat Laporan",
+      icon: "document" as const,
+      primary: false,
+      onClick: () => onNavigate("Semua Laporan"),
+    },
+    {
+      label: "Tambah Pasien",
+      icon: "plus-user" as const,
+      primary: false,
+      onClick: onAddPatient,
+    },
+    {
+      label: "Lihat Semua Pasien",
+      icon: "users" as const,
+      primary: false,
+      onClick: () => onNavigate("Daftar Pasien"),
+    },
   ];
 
   return (
@@ -26,9 +48,7 @@ export default function PatientQuickActions({
           <button
             key={action.label}
             type="button"
-            onClick={
-              action.label === "Tambah Pasien" ? onAddPatient : undefined
-            }
+            onClick={action.onClick}
             className={
               "flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-colors " +
               (action.primary
