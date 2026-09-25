@@ -31,7 +31,18 @@ export function loadPatients(): PatientListItem[] {
     return seeded;
   }
 
-  return readJson<PatientListItem[]>(PATIENTS_KEY, []).map(normalizePatient);
+  const parsed = readJson<unknown>(PATIENTS_KEY, null);
+
+  if (!Array.isArray(parsed)) {
+    return [];
+  }
+
+  return parsed
+    .filter(
+      (patient): patient is PatientListItem =>
+        typeof patient === "object" && patient !== null,
+    )
+    .map(normalizePatient);
 }
 
 export function savePatients(patients: PatientListItem[]) {
