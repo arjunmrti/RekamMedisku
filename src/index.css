@@ -1,6 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+}
+
 :root {
   font-family: "Plus Jakarta Sans", sans-serif;
   color: #172b4d;
@@ -11,23 +15,25 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-html {
+html,
+body {
   min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  font-family: "Plus Jakarta Sans", sans-serif;
   background: #f7f9fc;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background: #f7f9fc;
+  color: #172b4d;
 }
 
 button,
 input,
 textarea,
-select {
-  font: inherit;
+select,
+option {
+  font-family: "Plus Jakarta Sans", sans-serif;
 }
 
 button {
