@@ -7,6 +7,12 @@ import {
 } from "../data/localFollowUps";
 import { mockFollowUpsByPatient } from "../data/mockFollowUps";
 import { replacePatients } from "../data/localPatients";
+import {
+  loadActiveRotationId,
+  loadRotations,
+  saveRotations,
+  setActiveRotationId,
+} from "../data/localRotations";
 import type { BackupPayload } from "../types/backup";
 import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
@@ -55,6 +61,8 @@ export function buildBackupPayload(
     patients,
     followUpsByPatient,
     followUpDrafts,
+    rotations: loadRotations(),
+    activeRotationId: loadActiveRotationId(),
   };
 }
 
@@ -124,6 +132,13 @@ export function parseBackupText(
           parsed.followUpsByPatient as Record<string, FollowUpEntry[]>,
         followUpDrafts:
           parsed.followUpDrafts as Record<string, FollowUpFormValues>,
+        rotations: Array.isArray(parsed.rotations)
+          ? (parsed.rotations as BackupPayload["rotations"])
+          : undefined,
+        activeRotationId:
+          typeof parsed.activeRotationId === "string"
+            ? parsed.activeRotationId
+            : undefined,
       },
     };
   } catch {
@@ -134,6 +149,14 @@ export function parseBackupText(
 export function restoreBackupPayload(payload: BackupPayload) {
   replacePatients(payload.patients);
   replaceSavedFollowUps(payload.followUpsByPatient);
+
+  if (payload.rotations && payload.rotations.length > 0) {
+    saveRotations(payload.rotations);
+    if (payload.activeRotationId) {
+      setActiveRotationId(payload.activeRotationId);
+    }
+  }
+
   clearAllFollowUpDrafts();
 
   for (const [patientId, draft] of Object.entries(payload.followUpDrafts)) {
@@ -185,6 +208,12 @@ export function formatBackupDate(value: string): string {
   }).format(new Date(value));
 }
 
-export function getPatientRotation(): "Neurologi" | "Ilmu Penyakit Dalam" {
-  return "Neurologi";
+export function getPatientRotation(
+  patientId: string,
+): string {
+  const rotations = loadRotations();
+  return (
+    rotations.find((rotation) => rotation.id === patientId)?.name ??
+    "Neurologi"
+  );
 }
