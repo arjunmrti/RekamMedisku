@@ -670,11 +670,16 @@ export default function FollowUpFormPage({
                   onToggle={() => toggleSection("objective")}
                   objective={values.objective}
                   neurology={values.neurology}
+                  internalMedicine={values.internalMedicine}
+                  templateType={templateType}
                   onObjectiveChange={(objective) =>
                     updateValues({ ...values, objective })
                   }
                   onNeurologyChange={(neurology) =>
                     updateValues({ ...values, neurology })
+                  }
+                  onInternalMedicineChange={(internalMedicine) =>
+                    updateValues({ ...values, internalMedicine })
                   }
                 />
               </div>
