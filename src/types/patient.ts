@@ -1,0 +1,15 @@
+export type PatientStatus = "Aktif" | "Diarsipkan";
+
+export type PatientListItem = {
+  id: string;
+  name: string;
+  age: number;
+  gender: "Laki-laki" | "Perempuan";
+  rm: string;
+  room: string;
+  bed: string;
+  doctor: string;
+  lastFollowUp: string;
+  followUpNumber: number;
+  status: PatientStatus;
+};
