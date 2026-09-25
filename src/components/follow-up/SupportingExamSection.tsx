@@ -1,6 +1,7 @@
 import { useState } from "react";
 import FormSection from "./FormSection";
 import Icon from "../ui/Icon";
+import { toLocalIsoDate } from "../../utils/date";
 import type { SupportingExamForm } from "../../types/followUpForm";
 
 type SupportingExamSectionProps = {
