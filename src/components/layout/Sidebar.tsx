@@ -28,15 +28,19 @@ function NavButton({
       type="button"
       onClick={onClick}
       aria-current={active ? "page" : undefined}
-      className={"flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm transition-colors " + (
-        active
+      className={
+        "flex min-h-10 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-[13px] transition-colors " +
+        (active
           ? "bg-[#EAF4FF] font-semibold text-[#1677FF]"
-          : "font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-      )}
+          : "font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900")
+      }
     >
       <Icon
         name={icon}
-        className={"h-5 w-5 " + (active ? "text-[#1677FF]" : "text-slate-400")}
+        className={
+          "h-[18px] w-[18px] " +
+          (active ? "text-[#1677FF]" : "text-slate-400")
+        }
       />
       <span>{label}</span>
     </button>
@@ -45,8 +49,8 @@ function NavButton({
 
 export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
   return (
-    <aside className="hidden w-[252px] shrink-0 border-r border-[#E5EAF1] bg-[#F8FBFF] lg:flex lg:flex-col">
-      <div className="flex-1">
+    <aside className="sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col overflow-hidden border-r border-[#E5EAF1] bg-[#F8FBFF] lg:flex">
+      <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex h-[72px] items-center gap-3 px-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1677FF] text-white shadow-sm shadow-blue-500/20">
             <Icon name="pulse" className="h-6 w-6" strokeWidth={2.5} />
@@ -61,7 +65,7 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
           </div>
         </div>
 
-        <nav className="space-y-6 px-3 py-4" aria-label="Navigasi utama">
+        <nav className="space-y-4 px-3 py-3" aria-label="Navigasi utama">
           <NavButton
             label="Beranda"
             icon="home"
@@ -71,7 +75,7 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
 
           {groups.map((group) => (
             <div key={group.label}>
-              <div className="px-3.5 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+              <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">
                 {group.label}
               </div>
               <NavButton
@@ -85,17 +89,17 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
         </nav>
       </div>
 
-      <div className="p-4">
+      <div className="shrink-0 border-t border-[#E5EAF1] bg-[#F8FBFF] p-3">
         <button
           type="button"
-          className="flex min-h-14 w-full items-center justify-between rounded-xl border border-blue-100 bg-blue-50/70 p-3 text-left transition-colors hover:bg-blue-100/60"
+          className="flex min-h-[58px] w-full items-center justify-between rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2.5 text-left transition-colors hover:bg-blue-100/60"
         >
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
               <Icon name="brain" className="h-4 w-4" />
             </div>
             <div>
-              <span className="block text-[10px] font-bold uppercase leading-none tracking-wider text-slate-400">
+              <span className="block text-[9px] font-bold uppercase leading-none tracking-wider text-slate-400">
                 Stase Aktif
               </span>
               <span className="text-xs font-bold tracking-tight text-slate-800">
