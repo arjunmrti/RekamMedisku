@@ -1,13 +1,14 @@
-import type { Patient } from "../../types/dashboard";
+import type { PatientListItem } from "../../types/patient";
 import Icon from "../ui/Icon";
 import StatusBadge from "../ui/StatusBadge";
 
 type PatientTableProps = {
-  patients: Patient[];
+  patients: PatientListItem[];
+  onOpenPatient: (patient: PatientListItem) => void;
   onViewAll?: () => void;
 };
 
-function PatientIdentity({ patient }: { patient: Patient }) {
+function PatientIdentity({ patient }: { patient: PatientListItem }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
@@ -22,6 +23,7 @@ function PatientIdentity({ patient }: { patient: Patient }) {
 
 export default function PatientTable({
   patients,
+  onOpenPatient,
   onViewAll,
 }: PatientTableProps) {
   return (
@@ -36,7 +38,7 @@ export default function PatientTable({
               Pasien Terbaru
             </h2>
             <p className="mt-0.5 text-[11px] text-slate-400">
-              Pasien pada stase aktif
+              Pasien aktif pada stase saat ini
             </p>
           </div>
         </div>
@@ -59,23 +61,18 @@ export default function PatientTable({
               <th className="px-3 py-3 font-semibold">RM</th>
               <th className="px-3 py-3 font-semibold">Ruangan</th>
               <th className="px-3 py-3 font-semibold">Bed</th>
-              <th className="hidden px-3 py-3 font-semibold lg:table-cell">
-                DPJP
-              </th>
-              <th className="hidden px-3 py-3 font-semibold xl:table-cell">
-                Follow-Up Terakhir
-              </th>
-              <th className="px-5 py-3 text-right font-semibold xl:px-6">
-                Status
-              </th>
+              <th className="hidden px-3 py-3 font-semibold lg:table-cell">DPJP</th>
+              <th className="hidden px-3 py-3 font-semibold xl:table-cell">Follow-Up Terakhir</th>
+              <th className="px-5 py-3 text-right font-semibold xl:px-6">Status</th>
             </tr>
           </thead>
 
           <tbody className="divide-y divide-slate-100">
             {patients.map((patient) => (
               <tr
-                key={patient.rm}
-                className="transition-colors hover:bg-slate-50/70"
+                key={patient.id}
+                onClick={() => onOpenPatient(patient)}
+                className="cursor-pointer transition-colors hover:bg-slate-50/70"
               >
                 <td className="px-5 py-3 xl:px-6">
                   <PatientIdentity patient={patient} />
@@ -83,21 +80,11 @@ export default function PatientTable({
                 <td className="whitespace-nowrap px-3 py-3 text-xs font-medium text-slate-500">
                   {patient.rm}
                 </td>
-                <td className="px-3 py-3 text-xs font-medium text-slate-500">
-                  {patient.room}
-                </td>
-                <td className="px-3 py-3 text-xs font-medium text-slate-500">
-                  {patient.bed}
-                </td>
-                <td className="hidden px-3 py-3 text-xs font-medium text-slate-600 lg:table-cell">
-                  {patient.doctor}
-                </td>
-                <td className="hidden whitespace-nowrap px-3 py-3 text-xs text-slate-500 xl:table-cell">
-                  {patient.lastFollowUp}
-                </td>
-                <td className="px-5 py-3 text-right xl:px-6">
-                  <StatusBadge status={patient.status} />
-                </td>
+                <td className="px-3 py-3 text-xs font-medium text-slate-500">{patient.room}</td>
+                <td className="px-3 py-3 text-xs font-medium text-slate-500">{patient.bed}</td>
+                <td className="hidden px-3 py-3 text-xs font-medium text-slate-600 lg:table-cell">{patient.doctor}</td>
+                <td className="hidden whitespace-nowrap px-3 py-3 text-xs text-slate-500 xl:table-cell">{patient.lastFollowUp}</td>
+                <td className="px-5 py-3 text-right xl:px-6"><StatusBadge status={patient.status} /></td>
               </tr>
             ))}
           </tbody>
@@ -108,8 +95,8 @@ export default function PatientTable({
         {patients.map((patient) => (
           <button
             type="button"
-            key={patient.rm}
-            onClick={onViewAll}
+            key={patient.id}
+            onClick={() => onOpenPatient(patient)}
             className="block w-full p-4 text-left transition-colors hover:bg-slate-50"
           >
             <div className="flex items-start justify-between gap-3">
@@ -119,25 +106,15 @@ export default function PatientTable({
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
               <div>
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  Ruangan / Bed
-                </p>
-                <p className="font-semibold text-slate-700">
-                  {patient.room} / {patient.bed}
-                </p>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Ruangan / Bed</p>
+                <p className="font-semibold text-slate-700">{patient.room} / {patient.bed}</p>
               </div>
               <div>
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  Follow-Up
-                </p>
-                <p className="font-medium text-slate-600">
-                  {patient.lastFollowUp}
-                </p>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Follow-Up</p>
+                <p className="font-medium text-slate-600">{patient.lastFollowUp}</p>
               </div>
               <div className="col-span-2">
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  DPJP
-                </p>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">DPJP</p>
                 <p className="font-medium text-slate-600">{patient.doctor}</p>
               </div>
             </div>
@@ -145,23 +122,15 @@ export default function PatientTable({
         ))}
       </div>
 
-      {patients.length === 0 && (
+      {patients.length === 0 ? (
         <div className="px-6 py-12 text-center">
-          <p className="text-sm font-semibold text-slate-700">
-            Belum ada pasien pada stase ini.
-          </p>
-          <p className="mt-1 text-xs text-slate-400">
-            Tambahkan pasien untuk mulai membuat dokumentasi follow-up.
-          </p>
-          <button
-            type="button"
-            onClick={onViewAll}
-            className="mt-4 min-h-11 rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white"
-          >
+          <p className="text-sm font-semibold text-slate-700">Belum ada pasien aktif pada stase ini.</p>
+          <p className="mt-1 text-xs text-slate-400">Tambahkan pasien untuk mulai membuat dokumentasi follow-up.</p>
+          <button type="button" onClick={onViewAll} className="mt-4 min-h-11 rounded-xl bg-blue-600 px-4 text-xs font-semibold text-white">
             Lihat Daftar Pasien
           </button>
         </div>
-      )}
+      ) : null}
     </section>
   );
 }
