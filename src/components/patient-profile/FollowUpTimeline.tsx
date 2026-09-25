@@ -221,7 +221,7 @@ export default function FollowUpTimeline({
         onClick={onOpenDetail}
         className="mt-5 w-full rounded-xl border border-slate-200 py-2.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
       >
-        Buka detail follow-up
+        Lihat follow-up terbaru
       </button>
     </section>
   );
