@@ -657,6 +657,7 @@ export default function FollowUpFormPage({
                 <div className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-500 shadow-sm">
                   <Icon name="clock" className="h-3.5 w-3.5 text-[#1677FF]" />
                   Draf tersimpan otomatis
+                </div>
               </div>
             </div>
 
