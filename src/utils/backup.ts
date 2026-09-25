@@ -6,7 +6,7 @@ import {
   replaceSavedFollowUps,
 } from "../data/localFollowUps";
 import { mockFollowUpsByPatient } from "../data/mockFollowUps";
-import { replacePatients } from "../data/localPatients";
+import { loadPatients, replacePatients } from "../data/localPatients";
 import {
   loadActiveRotationId,
   loadRotations,
@@ -458,20 +458,51 @@ export function parseBackupText(
 }
 
 export function restoreBackupPayload(payload: BackupPayload) {
-  replacePatients(payload.patients);
-  replaceSavedFollowUps(payload.followUpsByPatient);
+  const previousPatients = loadPatients();
+  const previousFollowUps = loadSavedFollowUps();
+  const previousRotations = loadRotations();
+  const previousActiveRotationId = loadActiveRotationId();
+  const previousDrafts: Record<string, FollowUpFormValues> = {};
 
-  if (payload.rotations && payload.rotations.length > 0) {
-    saveRotations(payload.rotations);
-    if (payload.activeRotationId) {
-      setActiveRotationId(payload.activeRotationId);
+  for (const patient of previousPatients) {
+    const draft = loadFollowUpDraft(patient.id);
+    if (draft) {
+      previousDrafts[patient.id] = draft;
     }
   }
 
-  clearAllFollowUpDrafts();
+  try {
+    replacePatients(payload.patients);
+    replaceSavedFollowUps(payload.followUpsByPatient);
 
-  for (const [patientId, draft] of Object.entries(payload.followUpDrafts)) {
-    saveFollowUpDraft(patientId, draft);
+    if (payload.rotations && payload.rotations.length > 0) {
+      saveRotations(payload.rotations);
+      if (payload.activeRotationId) {
+        setActiveRotationId(payload.activeRotationId);
+      }
+    }
+
+    clearAllFollowUpDrafts();
+
+    for (const [patientId, draft] of Object.entries(payload.followUpDrafts)) {
+      saveFollowUpDraft(patientId, draft);
+    }
+  } catch (error) {
+    try {
+      replacePatients(previousPatients);
+      replaceSavedFollowUps(previousFollowUps);
+      saveRotations(previousRotations);
+      setActiveRotationId(previousActiveRotationId);
+      clearAllFollowUpDrafts();
+
+      for (const [patientId, draft] of Object.entries(previousDrafts)) {
+        saveFollowUpDraft(patientId, draft);
+      }
+    } catch {
+      // Preserve the original restore error when rollback itself fails.
+    }
+
+    throw error;
   }
 
   return {
