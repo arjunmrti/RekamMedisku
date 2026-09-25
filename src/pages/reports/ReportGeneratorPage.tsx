@@ -6,7 +6,6 @@ import ReportStepTracker from "../../components/report/ReportStepTracker";
 import ReportSummaryCard from "../../components/report/ReportSummaryCard";
 import ReportTemplateSelector from "../../components/report/ReportTemplateSelector";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
-import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
 import { loadRotations } from "../../data/localRotations";
 import { buildWhatsAppReport } from "../../utils/reportGenerator";
 import type { PatientListItem } from "../../types/patient";
@@ -22,14 +21,10 @@ function getFollowUps(
   fallbackTemplate: ReportTemplateType,
 ) {
   const local = loadSavedFollowUps()[patientId] ?? [];
-  const mock = mockFollowUpsByPatient[patientId] ?? [];
-  const seen = new Set<string>();
 
-  return [...local, ...mock]
-    .filter((entry) => {
-      if (seen.has(entry.id)) return false;
-      seen.add(entry.id);
-      return true;
+  return [...local]
+    .filter((entry, index, entries) => {
+      return entries.findIndex((candidate) => candidate.id === entry.id) === index;
     })
     .filter((entry) => entry.status === "Tersimpan")
     .map((entry) => ({
