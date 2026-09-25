@@ -6,10 +6,6 @@ import PatientInfoCards from "../../components/patient-profile/PatientInfoCards"
 import PatientProfileHeader from "../../components/patient-profile/PatientProfileHeader";
 import ProfileTabs, { type ProfileTab } from "../../components/patient-profile/ProfileTabs";
 import SupportingExams from "../../components/patient-profile/SupportingExams";
-import {
-  mockFollowUpsByPatient,
-  mockSupportingExamsByPatient,
-} from "../../data/mockFollowUps";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
 import { loadRotations } from "../../data/localRotations";
 import type { PatientListItem } from "../../types/patient";
@@ -34,15 +30,11 @@ export default function PatientProfilePage({
   const followUpRef = useRef<HTMLDivElement | null>(null);
 
   const followUps = useMemo(() => {
-    const mock = mockFollowUpsByPatient[patient.id] ?? [];
     const local = loadSavedFollowUps()[patient.id] ?? [];
-    const seen = new Set<string>();
 
-    return [...local, ...mock]
-      .filter((entry) => {
-        if (seen.has(entry.id)) return false;
-        seen.add(entry.id);
-        return true;
+    return [...local]
+      .filter((entry, index, entries) => {
+        return entries.findIndex((candidate) => candidate.id === entry.id) === index;
       })
       .sort((a, b) =>
         (b.isoDate + b.time).localeCompare(a.isoDate + a.time),
@@ -58,7 +50,7 @@ export default function PatientProfilePage({
       return latestSavedExams;
     }
 
-    return mockSupportingExamsByPatient[patient.id] ?? [];
+    return [];
   }, [latestFollowUp, patient.id]);
 
   const handleTabChange = (tab: ProfileTab) => {
