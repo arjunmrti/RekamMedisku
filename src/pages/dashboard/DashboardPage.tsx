@@ -3,12 +3,8 @@ import AppShell, { type NavigationProps } from "../../components/layout/AppShell
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import KpiGrid from "../../components/dashboard/KpiGrid";
 import PatientTable from "../../components/dashboard/PatientTable";
-import RecentActivity from "../../components/dashboard/RecentActivity";
 import RotationHistory from "../../components/dashboard/RotationHistory";
 import QuickActions from "../../components/dashboard/QuickActions";
-import QuoteWidget from "../../components/dashboard/QuoteWidget";
-import TipsWidget from "../../components/dashboard/TipsWidget";
-import EncouragementBanner from "../../components/dashboard/EncouragementBanner";
 import type { Patient } from "../../types/dashboard";
 
 const patients: Patient[] = [
@@ -73,7 +69,8 @@ export default function DashboardPage({
     }
 
     return patients.filter((patient) =>
-      (patient.name +
+      (
+        patient.name +
         " " +
         patient.rm +
         " " +
@@ -81,7 +78,8 @@ export default function DashboardPage({
         " " +
         patient.bed +
         " " +
-        patient.doctor)
+        patient.doctor
+      )
         .toLowerCase()
         .includes(query),
     );
@@ -99,21 +97,19 @@ export default function DashboardPage({
           <DashboardHeader />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <div className="min-w-0 space-y-6 lg:col-span-9">
+            <section className="min-w-0 space-y-6 lg:col-span-9">
               <KpiGrid />
-              <PatientTable patients={filteredPatients} />
 
-              <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                <RecentActivity />
-                <RotationHistory />
-              </div>
-            </div>
+              <PatientTable
+                patients={filteredPatients}
+                onViewAll={() => onNavigate("Daftar Pasien")}
+              />
 
-            <aside className="space-y-5 lg:col-span-3">
-              <QuickActions />
-              <QuoteWidget />
-              <TipsWidget />
-              <EncouragementBanner />
+              <RotationHistory />
+            </section>
+
+            <aside className="lg:col-span-3">
+              <QuickActions onNavigate={onNavigate} />
             </aside>
           </div>
         </div>
