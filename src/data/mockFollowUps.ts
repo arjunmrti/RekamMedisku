@@ -8,6 +8,7 @@ const neurologyFollowUps: FollowUpEntry[] = [
     isoDate: "2026-09-26",
     time: "09.30",
     status: "Tersimpan",
+    templateType: "Neurologi",
     subjective:
       "Keluhan utama dan perkembangan kondisi pasien dicatat oleh pengguna.",
     objective:
@@ -39,6 +40,7 @@ const neurologyFollowUps: FollowUpEntry[] = [
     isoDate: "2026-09-22",
     time: "10.15",
     status: "Draf",
+    templateType: "Neurologi",
     subjective: "Keluhan saat ini yang masih dalam proses pencatatan.",
     objective: "Observasi dan pemeriksaan yang masih berupa draft.",
     assessment: "Assessment belum difinalkan.",
@@ -68,6 +70,7 @@ const otherPatientFollowUps: FollowUpEntry[] = [
     isoDate: "2026-09-25",
     time: "14.20",
     status: "Tersimpan",
+    templateType: "Neurologi",
     subjective: "Keluhan dan perkembangan pasien dicatat oleh pengguna.",
     objective: "Hasil pemeriksaan dicatat oleh pengguna.",
     assessment: "Assessment yang diinput pengguna.",
