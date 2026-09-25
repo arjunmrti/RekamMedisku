@@ -36,17 +36,6 @@ function App() {
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(() => getInitialPatient());
 
-  const refreshSelectedPatient = () => {
-    setSelectedPatient((current) => {
-      if (!current) return current;
-
-      return (
-        loadPatients().find((patient) => patient.id === current.id) ??
-        current
-      );
-    });
-  };
-
   const handleNavigate = (label: string) => {
     if (label === "Pasien") {
       setActiveItem("Daftar Pasien");
