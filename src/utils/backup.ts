@@ -85,6 +85,38 @@ function isTemplateType(
   return value === undefined || value === "Neurologi" || value === "Ilmu Penyakit Dalam";
 }
 
+function isSupportingExam(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+
+  const validIcon =
+    value.icon === "lab" ||
+    value.icon === "scan" ||
+    value.icon === "image" ||
+    value.icon === "eeg";
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.name === "string" &&
+    (value.examType === undefined || typeof value.examType === "string") &&
+    typeof value.date === "string" &&
+    (value.result === undefined || typeof value.result === "string") &&
+    (value.attachmentName === undefined ||
+      typeof value.attachmentName === "string") &&
+    (value.attachmentType === undefined ||
+      typeof value.attachmentType === "string") &&
+    (value.attachmentSize === undefined ||
+      (typeof value.attachmentSize === "number" &&
+        Number.isFinite(value.attachmentSize) &&
+        value.attachmentSize >= 0)) &&
+    (value.attachmentDataUrl === undefined ||
+      (typeof value.attachmentDataUrl === "string" &&
+        (value.attachmentDataUrl.startsWith("data:image/") ||
+          value.attachmentDataUrl.startsWith("data:application/pdf")))) &&
+    validIcon
+  );
+}
+
+
 function isFollowUp(value: unknown): value is FollowUpEntry {
   if (!isRecord(value)) return false;
 
@@ -106,7 +138,9 @@ function isFollowUp(value: unknown): value is FollowUpEntry {
     (value.assessmentCodes === undefined || Array.isArray(value.assessmentCodes)) &&
     (value.planning === undefined || typeof value.planning === "string") &&
     (value.instruction === undefined || typeof value.instruction === "string") &&
-    (value.supportingExams === undefined || Array.isArray(value.supportingExams))
+    (value.supportingExams === undefined ||
+      (Array.isArray(value.supportingExams) &&
+        value.supportingExams.every(isSupportingExam)))
   );
 }
 
@@ -205,13 +239,22 @@ function validateFollowUpMap(
 ): value is Record<string, FollowUpEntry[]> {
   if (!isRecord(value)) return false;
 
+  const allEntryIds = new Set<string>();
+
   for (const [patientId, entries] of Object.entries(value)) {
     if (!patientIds.has(patientId) || !Array.isArray(entries)) return false;
 
     const seen = new Set<string>();
     for (const entry of entries) {
-      if (!isFollowUp(entry) || seen.has(entry.id)) return false;
+      if (
+        !isFollowUp(entry) ||
+        seen.has(entry.id) ||
+        allEntryIds.has(entry.id)
+      ) {
+        return false;
+      }
       seen.add(entry.id);
+      allEntryIds.add(entry.id);
 
       if (
         !/^\d{4}-\d{2}-\d{2}$/.test(entry.isoDate) ||
