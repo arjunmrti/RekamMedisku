@@ -7,7 +7,7 @@ import PatientsPage from "./pages/patients/PatientsPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import BackupDataPage from "./pages/backup/BackupDataPage";
 import RotationManagementPage from "./pages/rotations/RotationManagementPage";
-import { mockPatients } from "./data/mockPatients";
+import { loadActiveRotation } from "./data/localRotations";
 import { loadPatients } from "./data/localPatients";
 import type { Rotation } from "./types/rotation";
 import type { PatientListItem } from "./types/patient";
@@ -22,11 +22,32 @@ type View =
   | "Stase Saya"
   | "Pengaturan";
 
+function getInitialPatient() {
+  const activeRotation = loadActiveRotation();
+
+  return (
+    loadPatients().find(
+      (patient) =>
+        patient.rotationId === activeRotation.id && patient.status === "Aktif",
+    ) ?? null
+  );
+}
+
 function App() {
   const [activeItem, setActiveItem] = useState<View>("Beranda");
-  const [selectedPatient, setSelectedPatient] = useState<PatientListItem | null>(
-    () => loadPatients()[0] ?? mockPatients[0] ?? null,
-  );
+  const [selectedPatient, setSelectedPatient] =
+    useState<PatientListItem | null>(() => getInitialPatient());
+
+  const refreshSelectedPatient = () => {
+    setSelectedPatient((current) => {
+      if (!current) return current;
+
+      return (
+        loadPatients().find((patient) => patient.id === current.id) ??
+        current
+      );
+    });
+  };
 
   const handleNavigate = (label: string) => {
     if (label === "Pasien") {
@@ -42,11 +63,25 @@ function App() {
       label === "Stase Saya" ||
       label === "Pengaturan"
     ) {
+      if (label === "Semua Laporan") {
+        refreshSelectedPatient();
+      }
       setActiveItem(label);
       return;
     }
 
+    if (label === "Profil Pasien") {
+      refreshSelectedPatient();
+      setActiveItem("Profil Pasien");
+      return;
+    }
+
     if (label === "Follow-Up Baru") {
+      if (!selectedPatient) {
+        setActiveItem("Daftar Pasien");
+        return;
+      }
+
       setActiveItem("Follow-Up Baru");
       return;
     }
@@ -109,7 +144,6 @@ function App() {
     return <BackupDataPage {...navigationProps} />;
   }
 
-
   if (activeItem === "Stase Saya") {
     return (
       <RotationManagementPage
@@ -117,8 +151,11 @@ function App() {
         onRotationChange={(rotation: Rotation) => {
           const nextPatient =
             loadPatients().find(
-              (patient) => patient.rotationId === rotation.id,
+              (patient) =>
+                patient.rotationId === rotation.id &&
+                patient.status === "Aktif",
             ) ?? null;
+
           setSelectedPatient(nextPatient);
         }}
       />
@@ -129,7 +166,15 @@ function App() {
     return <PlaceholderPage title="Pengaturan" {...navigationProps} />;
   }
 
-  return <DashboardPage {...navigationProps} />;
+  return (
+    <DashboardPage
+      {...navigationProps}
+      onOpenPatientProfile={(patient) => {
+        setSelectedPatient(patient);
+        setActiveItem("Profil Pasien");
+      }}
+    />
+  );
 }
 
 export default App;
