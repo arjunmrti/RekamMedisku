@@ -4,7 +4,6 @@ import PatientProfilePage from "./pages/patient-profile/PatientProfilePage";
 import FollowUpFormPage from "./pages/follow-up/FollowUpFormPage";
 import ReportGeneratorPage from "./pages/reports/ReportGeneratorPage";
 import PatientsPage from "./pages/patients/PatientsPage";
-import PlaceholderPage from "./pages/PlaceholderPage";
 import BackupDataPage from "./pages/backup/BackupDataPage";
 import RotationManagementPage from "./pages/rotations/RotationManagementPage";
 import { loadActiveRotation } from "./data/localRotations";
@@ -19,8 +18,7 @@ type View =
   | "Follow-Up Baru"
   | "Semua Laporan"
   | "Cadangan & Data"
-  | "Stase Saya"
-  | "Pengaturan";
+  | "Stase Saya";
 
 function getInitialPatient() {
   const activeRotation = loadActiveRotation();
@@ -60,8 +58,7 @@ function App() {
       label === "Daftar Pasien" ||
       label === "Semua Laporan" ||
       label === "Cadangan & Data" ||
-      label === "Stase Saya" ||
-      label === "Pengaturan"
+      label === "Stase Saya"
     ) {
       if (label === "Semua Laporan") {
         refreshSelectedPatient();
@@ -160,10 +157,6 @@ function App() {
         }}
       />
     );
-  }
-
-  if (activeItem === "Pengaturan") {
-    return <PlaceholderPage title="Pengaturan" {...navigationProps} />;
   }
 
   return (
