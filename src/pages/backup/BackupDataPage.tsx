@@ -7,6 +7,7 @@ import {
   saveBackupSnapshot,
 } from "../../data/backupHistory";
 import { loadPatients } from "../../data/localPatients";
+import { loadRotations } from "../../data/localRotations";
 import type { BackupHistoryEntry, BackupPayload } from "../../types/backup";
 import {
   buildBackupPayload,
@@ -25,7 +26,7 @@ type BackupDataPageProps = NavigationProps;
 
 type DataScope = "Semua" | "Pasien" | "Follow-Up" | "Draf";
 type OperationFilter = "Semua" | "Export" | "Restore";
-type RotationFilter = "Semua" | "Neurologi" | "Ilmu Penyakit Dalam";
+type RotationFilter = "Semua" | string;
 type StatusFilter = "Semua" | "Aktif" | "Diarsipkan";
 
 type RestoreState =
@@ -54,6 +55,7 @@ export default function BackupDataPage({
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("Semua");
   const [operationFilter, setOperationFilter] =
     useState<OperationFilter>("Semua");
+  const rotations = useMemo(() => loadRotations(), []);
   const [historySearch, setHistorySearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [restoreOpen, setRestoreOpen] = useState(false);
@@ -623,10 +625,11 @@ export default function BackupDataPage({
                       className="field-control !min-h-10 !bg-slate-50/70 !text-xs"
                     >
                       <option value="Semua">Semua stase</option>
-                      <option value="Neurologi">Neurologi</option>
-                      <option value="Ilmu Penyakit Dalam">
-                        Ilmu Penyakit Dalam
-                      </option>
+                      {rotations.map((rotation) => (
+                        <option key={rotation.id} value={rotation.name}>
+                          {rotation.name}
+                        </option>
+                      ))}
                     </select>
                   </label>
 
@@ -646,6 +649,10 @@ export default function BackupDataPage({
                       <option value="Diarsipkan">Diarsipkan</option>
                     </select>
                   </label>
+
+                  <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-[10px] leading-relaxed text-slate-500">
+                    Filter di panel ini hanya mengatur tampilan dan ringkasan. Export JSON tetap mencadangkan seluruh workspace agar proses restore tetap utuh.
+                  </p>
 
                   <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-3">
                     <div className="grid grid-cols-3 gap-2 text-center">
