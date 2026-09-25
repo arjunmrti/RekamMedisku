@@ -4,10 +4,12 @@ import StatusBadge from "../ui/StatusBadge";
 
 type PatientSummaryPanelProps = {
   patient: PatientListItem | null;
+  onOpenProfile: (patient: PatientListItem) => void;
 };
 
 export default function PatientSummaryPanel({
   patient,
+  onOpenProfile,
 }: PatientSummaryPanelProps) {
   return (
     <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
@@ -75,19 +77,20 @@ export default function PatientSummaryPanel({
 
           <div className="grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
             <Metric label="Follow-Up" value={String(patient.followUpNumber)} />
-            <Metric
-              label="Stase"
-              value="Neurologi"
-              icon="brain"
-            />
+            <Metric label="Stase" value="Neurologi" icon="brain" />
             <Metric
               label="Terakhir"
-              value={patient.lastFollowUp === "Belum ada follow-up" ? "—" : patient.lastFollowUp.split("·")[0].trim()}
+              value={
+                patient.lastFollowUp === "Belum ada follow-up"
+                  ? "—"
+                  : patient.lastFollowUp.split("·")[0].trim()
+              }
             />
           </div>
 
           <button
             type="button"
+            onClick={() => onOpenProfile(patient)}
             className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
           >
             Buka Profil Pasien
@@ -110,7 +113,9 @@ function Metric({
 }) {
   return (
     <div className="rounded-lg bg-slate-50 p-2.5">
-      {icon ? <Icon name={icon} className="mb-1 h-3.5 w-3.5 text-blue-600" /> : null}
+      {icon ? (
+        <Icon name={icon} className="mb-1 h-3.5 w-3.5 text-blue-600" />
+      ) : null}
       <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
         {label}
       </p>
