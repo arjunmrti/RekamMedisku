@@ -223,6 +223,7 @@ function buildFollowUpEntry(
             values.internalMedicine.relevantSystemicFindings,
         ]
       : [
+          "Kesadaran: " + values.neurology.consciousness,
           "GCS E/M/V: " + gcs,
           "FKL: " + values.neurology.fkl,
           "N. Cranialis: " + values.neurology.cranialNerve,
