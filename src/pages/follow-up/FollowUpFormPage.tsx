@@ -156,6 +156,7 @@ function buildFollowUpEntry(
     isoDate: values.followUpDate,
     time: formatTime(values.followUpTime),
     status: "Tersimpan",
+    templateType: "Neurologi",
     subjective,
     objective,
     assessment,
