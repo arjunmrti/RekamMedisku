@@ -60,6 +60,7 @@ function App() {
   if (activeItem === "Follow-Up Baru" && selectedPatient) {
     return (
       <FollowUpFormPage
+        key={selectedPatient.id}
         {...navigationProps}
         patient={selectedPatient}
       />
