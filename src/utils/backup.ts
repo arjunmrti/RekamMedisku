@@ -399,6 +399,17 @@ export function parseBackupText(
         return { ok: false, error: "Backup memiliki ID stase yang duplikat." };
       }
 
+      const activeRotations = parsed.rotations.filter(
+        (rotation) => rotation.status === "Aktif",
+      );
+
+      if (activeRotations.length > 1) {
+        return {
+          ok: false,
+          error: "Backup tidak boleh memiliki lebih dari satu stase Aktif.",
+        };
+      }
+
       if (
         parsed.activeRotationId !== undefined &&
         !rotationIds.has(parsed.activeRotationId)
