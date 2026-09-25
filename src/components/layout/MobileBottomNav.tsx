@@ -7,9 +7,10 @@ type MobileBottomNavProps = {
 
 const items: Array<{ label: string; icon: IconName; match: string[] }> = [
   { label: "Beranda", icon: "home", match: ["Beranda"] },
-  { label: "Pasien", icon: "users", match: ["Pasien", "Daftar Pasien"] },
+  { label: "Pasien", icon: "users", match: ["Pasien", "Daftar Pasien", "Profil Pasien", "Follow-Up Baru"] },
   { label: "Laporan", icon: "document", match: ["Laporan", "Semua Laporan"] },
   { label: "Data", icon: "database", match: ["Data", "Cadangan & Data"] },
+  { label: "Stase", icon: "brain", match: ["Stase Saya"] },
 ];
 
 export default function MobileBottomNav({
@@ -17,8 +18,8 @@ export default function MobileBottomNav({
   onNavigate,
 }: MobileBottomNavProps) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur lg:hidden">
-      <div className="mx-auto grid max-w-md grid-cols-4 gap-1">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 px-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur lg:hidden">
+      <div className="mx-auto grid max-w-lg grid-cols-5 gap-1">
         {items.map((item) => {
           const active = item.match.includes(activeItem);
 
@@ -28,11 +29,12 @@ export default function MobileBottomNav({
               type="button"
               onClick={() => onNavigate(item.label)}
               aria-current={active ? "page" : undefined}
-              className={`flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-semibold transition-colors ${
-                active
+              className={
+                "flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl text-[9px] font-semibold transition-colors " +
+                (active
                   ? "bg-blue-50 text-blue-600"
-                  : "text-slate-400 hover:bg-slate-50 hover:text-slate-600"
-              }`}
+                  : "text-slate-400 hover:bg-slate-50 hover:text-slate-600")
+              }
             >
               <Icon
                 name={item.icon}
