@@ -230,6 +230,17 @@ export default function PatientsPage({
               <section className="min-w-0 space-y-5 xl:col-span-9">
                 <PatientListHeader
                   rotation={activeRotation}
+                  totalPatients={activeRotationPatients.length}
+                  activePatients={
+                    activeRotationPatients.filter(
+                      (patient) => patient.status === "Aktif",
+                    ).length
+                  }
+                  archivedPatients={
+                    activeRotationPatients.filter(
+                      (patient) => patient.status === "Diarsipkan",
+                    ).length
+                  }
                   onAddPatient={openAddPatient}
                 />
 
