@@ -317,7 +317,8 @@ function validateDraftMap(
       !isRecord(draft.subjective) ||
       !isRecord(draft.objective) ||
       !isRecord(draft.neurology) ||
-      !isRecord(draft.internalMedicine) ||
+      (draft.internalMedicine !== undefined &&
+        !isRecord(draft.internalMedicine)) ||
       !Array.isArray(draft.supportingExams) ||
       !Array.isArray(draft.assessments) ||
       !Array.isArray(draft.assessmentCodes) ||
