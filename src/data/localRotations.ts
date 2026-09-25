@@ -80,6 +80,7 @@ export function loadRotations(): Rotation[] {
   }
 
   return DEFAULT_ROTATIONS;
+}
 
 export function saveRotations(rotations: Rotation[]) {
   window.localStorage.setItem(ROTATIONS_KEY, JSON.stringify(rotations));
