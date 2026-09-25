@@ -97,7 +97,6 @@ function formatTime(value: string) {
 }
 
 function buildFollowUpEntry(
-  patient: PatientListItem,
   values: FollowUpFormValues,
   number: number,
 ): FollowUpEntry {
@@ -295,7 +294,7 @@ export default function FollowUpFormPage({
 
     const nextNumber =
       Math.max(0, ...previousFollowUps.map((entry) => entry.number)) + 1;
-    const entry = buildFollowUpEntry(patient, values, nextNumber);
+    const entry = buildFollowUpEntry(values, nextNumber);
 
     appendSavedFollowUp(patient.id, entry);
     clearFollowUpDraft(patient.id);
