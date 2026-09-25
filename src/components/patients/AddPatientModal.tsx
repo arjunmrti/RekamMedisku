@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import type { PatientListItem } from "../../types/patient";
 import Icon from "../ui/Icon";
 
@@ -26,14 +26,10 @@ export default function AddPatientModal({
   const [bed, setBed] = useState("");
 
   useEffect(() => {
-    if (!open) {
-      return;
-    }
+    if (!open) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
+      if (event.key === "Escape") onClose();
     };
 
     document.addEventListener("keydown", onKeyDown);
@@ -50,13 +46,11 @@ export default function AddPatientModal({
     setBed("");
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const parsedAge = Number(age);
-    if (!name.trim() || !rm.trim() || !parsedAge || !bed.trim()) {
-      return;
-    }
+    if (!name.trim() || !rm.trim() || !parsedAge || !bed.trim()) return;
 
     onSubmit({
       id: "p-" + rm.trim(),
@@ -76,9 +70,7 @@ export default function AddPatientModal({
     onClose();
   };
 
-  if (!open) {
-    return null;
-  }
+  if (!open) return null;
 
   return (
     <div
@@ -87,9 +79,7 @@ export default function AddPatientModal({
       aria-modal="true"
       aria-labelledby="add-patient-title"
       onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose();
-        }
+        if (event.target === event.currentTarget) onClose();
       }}
     >
       <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:max-w-lg sm:rounded-2xl sm:p-6">
@@ -227,7 +217,7 @@ function Field({
   children,
 }: {
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <label className="block">
