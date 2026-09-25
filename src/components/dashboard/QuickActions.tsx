@@ -13,7 +13,7 @@ const actions: Array<{
   {
     label: "Follow-Up Baru",
     icon: "plus-user",
-    target: "Daftar Pasien",
+    target: "Follow-Up Baru",
     primary: true,
   },
   {
