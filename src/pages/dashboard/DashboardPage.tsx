@@ -12,51 +12,11 @@ import EncouragementBanner from "../../components/dashboard/EncouragementBanner"
 import type { Patient } from "../../types/dashboard";
 
 const patients: Patient[] = [
-  {
-    name: "Andi Pratama",
-    rm: "24012601",
-    room: "3A",
-    bed: "12",
-    doctor: "dr. Budi Santoso, Sp.N",
-    lastFollowUp: "26 Sep 2026 · 09:30",
-    status: "Aktif",
-  },
-  {
-    name: "Budi Santoso",
-    rm: "24012602",
-    room: "3A",
-    bed: "14",
-    doctor: "dr. Budi Santoso, Sp.N",
-    lastFollowUp: "25 Sep 2026 · 14:20",
-    status: "Aktif",
-  },
-  {
-    name: "Citra Lestari",
-    rm: "24012603",
-    room: "3B",
-    bed: "07",
-    doctor: "dr. Sari Dewi, Sp.N",
-    lastFollowUp: "25 Sep 2026 · 10:15",
-    status: "Aktif",
-  },
-  {
-    name: "Dewi Anggraini",
-    rm: "24012604",
-    room: "3B",
-    bed: "08",
-    doctor: "dr. Sari Dewi, Sp.N",
-    lastFollowUp: "24 Sep 2026 · 16:45",
-    status: "Aktif",
-  },
-  {
-    name: "Eko Prasetyo",
-    rm: "24012605",
-    room: "4A",
-    bed: "03",
-    doctor: "dr. Budi Santoso, Sp.N",
-    lastFollowUp: "24 Sep 2026 · 11:30",
-    status: "Aktif",
-  },
+  { name: "Andi Pratama", rm: "24012601", room: "3A", bed: "12", doctor: "dr. Budi Santoso, Sp.N", lastFollowUp: "26 Sep 2026 · 09:30", status: "Aktif" },
+  { name: "Budi Santoso", rm: "24012602", room: "3A", bed: "14", doctor: "dr. Budi Santoso, Sp.N", lastFollowUp: "25 Sep 2026 · 14:20", status: "Aktif" },
+  { name: "Citra Lestari", rm: "24012603", room: "3B", bed: "07", doctor: "dr. Sari Dewi, Sp.N", lastFollowUp: "25 Sep 2026 · 10:15", status: "Aktif" },
+  { name: "Dewi Anggraini", rm: "24012604", room: "3B", bed: "08", doctor: "dr. Sari Dewi, Sp.N", lastFollowUp: "24 Sep 2026 · 16:45", status: "Aktif" },
+  { name: "Eko Prasetyo", rm: "24012605", room: "4A", bed: "03", doctor: "dr. Budi Santoso, Sp.N", lastFollowUp: "24 Sep 2026 · 11:30", status: "Aktif" },
 ];
 
 export default function DashboardPage() {
@@ -64,30 +24,24 @@ export default function DashboardPage() {
 
   const filteredPatients = useMemo(() => {
     const query = searchValue.trim().toLowerCase();
-
-    if (!query) {
-      return patients;
-    }
+    if (!query) return patients;
 
     return patients.filter((patient) =>
-      `${patient.name} ${patient.rm} ${patient.room} ${patient.bed} ${patient.doctor}`
+      (patient.name + " " + patient.rm + " " + patient.room + " " + patient.bed + " " + patient.doctor)
         .toLowerCase()
         .includes(query),
     );
   }, [searchValue]);
 
   return (
-    <AppShell
-      searchValue={searchValue}
-      onSearchChange={setSearchValue}
-    >
-      <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-8 lg:pb-8">
+    <AppShell searchValue={searchValue} onSearchChange={setSearchValue}>
+      <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-7 lg:pb-8">
         <div className="mx-auto w-full max-w-[1400px]">
           <DashboardHeader />
-          <KpiGrid />
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <div className="space-y-6 lg:col-span-8 xl:col-span-9">
+            <div className="min-w-0 space-y-6 lg:col-span-9">
+              <KpiGrid />
               <PatientTable patients={filteredPatients} />
 
               <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
@@ -96,7 +50,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <aside className="space-y-6 lg:col-span-4 xl:col-span-3">
+            <aside className="space-y-5 lg:col-span-3">
               <QuickActions />
               <QuoteWidget />
               <TipsWidget />
