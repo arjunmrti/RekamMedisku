@@ -133,6 +133,12 @@ function formatTime(value: string) {
   return value ? value.replace(":", ".") : "—";
 }
 
+function countFilled(values: Record<string, unknown>) {
+  return Object.values(values).filter((value) =>
+    typeof value === "string" ? value.trim().length > 0 : Boolean(value),
+  ).length;
+}
+
 function buildFollowUpEntry(
   values: FollowUpFormValues,
   number: number,
@@ -279,6 +285,75 @@ export default function FollowUpFormPage({
 
   const latestFollowUp = previousFollowUps[0] ?? null;
 
+  const sectionStats = useMemo(() => {
+    const subjectiveFilled = countFilled(values.subjective);
+    const objectiveFilled =
+      countFilled(values.objective) + countFilled(values.neurology);
+    const assessmentFilled = values.assessments.filter((item) =>
+      item.trim(),
+    ).length;
+    const planFilled = [values.planning, values.instruction].filter((item) =>
+      item.trim(),
+    ).length;
+    const supportingFilled = values.supportingExams.length > 0 ? 1 : 0;
+
+    const stats = {
+      subjective: {
+        filled: subjectiveFilled,
+        total: Object.keys(values.subjective).length,
+      },
+      objective: {
+        filled: objectiveFilled,
+        total:
+          Object.keys(values.objective).length +
+          Object.keys(values.neurology).length,
+      },
+      supportingExams: { filled: supportingFilled, total: 1 },
+      assessment: {
+        filled: assessmentFilled,
+        total: Math.max(1, values.assessments.length),
+      },
+      plan: { filled: planFilled, total: 2 },
+    };
+
+    const filled = Object.values(stats).reduce(
+      (sum, stat) => sum + stat.filled,
+      0,
+    );
+    const total = Object.values(stats).reduce(
+      (sum, stat) => sum + stat.total,
+      0,
+    );
+
+    return {
+      stats,
+      filled,
+      total,
+      percent: total ? Math.round((filled / total) * 100) : 0,
+    };
+  }, [values]);
+
+  const sectionNav: Array<{
+    key: SectionKey;
+    label: string;
+    number: string;
+  }> = [
+    { key: "subjective", label: "Subjective", number: "01" },
+    { key: "objective", label: "Objective", number: "02" },
+    { key: "supportingExams", label: "Penunjang", number: "03" },
+    { key: "assessment", label: "Assessment", number: "04" },
+    { key: "plan", label: "P & I", number: "05" },
+  ];
+
+  const jumpToSection = (section: SectionKey) => {
+    setOpenSections((current) => ({ ...current, [section]: true }));
+    window.requestAnimationFrame(() => {
+      document
+        .getElementById("follow-up-section-" + section)
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
   useEffect(() => {
     if (!dirty) return;
 
@@ -411,22 +486,101 @@ export default function FollowUpFormPage({
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
                   <button
                     type="button"
                     onClick={handleSaveDraft}
-                    className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 sm:px-4 sm:text-xs"
                   >
                     Simpan Draf
                   </button>
                   <button
                     type="button"
                     onClick={handleSaveFollowUp}
-                    className="inline-flex items-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700"
+                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#1677FF] px-3 py-2.5 text-[11px] font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700 sm:px-4 sm:text-xs"
                   >
-                    <span className="text-sm">＋</span>
+                    <span className="text-sm">✓</span>
                     Simpan Follow-Up
                   </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-blue-100 bg-white shadow-[0_8px_30px_-18px_rgba(22,119,255,0.25)]">
+              <div className="bg-gradient-to-r from-[#F4F9FF] via-white to-white px-4 py-4 sm:px-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-[#1677FF]">
+                      <Icon name="document" className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#1677FF]">
+                        Workspace Follow-Up
+                      </p>
+                      <p className="mt-0.5 truncate text-xs font-semibold text-slate-700">
+                        {sectionStats.filled} field terisi dari {sectionStats.total}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="min-w-0 lg:w-[320px]">
+                    <div className="flex items-center justify-between gap-3 text-[10px]">
+                      <span className="font-semibold text-slate-500">
+                        Progress pengisian
+                      </span>
+                      <span className="font-bold text-[#1677FF]">
+                        {sectionStats.percent}%
+                      </span>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-[#1677FF] transition-[width] duration-500 ease-out"
+                        style={{ width: sectionStats.percent + "%" }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-100 bg-white px-3 py-2.5 sm:px-4">
+                <div className="flex gap-2 overflow-x-auto pb-0.5">
+                  {sectionNav.map((item) => {
+                    const stat = sectionStats.stats[item.key];
+                    const isOpen = openSections[item.key];
+
+                    return (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => jumpToSection(item.key)}
+                        className={
+                          "group flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-left transition " +
+                          (isOpen
+                            ? "border-blue-200 bg-blue-50 text-[#1677FF]"
+                            : "border-slate-200 bg-white text-slate-500 hover:border-blue-100 hover:bg-blue-50/50")
+                        }
+                      >
+                        <span
+                          className={
+                            "flex h-6 w-6 items-center justify-center rounded-lg text-[10px] font-bold " +
+                            (stat.filled > 0
+                              ? "bg-blue-100 text-[#1677FF]"
+                              : "bg-slate-100 text-slate-400")
+                          }
+                        >
+                          {item.number}
+                        </span>
+                        <span>
+                          <span className="block text-[11px] font-bold">
+                            {item.label}
+                          </span>
+                          <span className="block text-[9px] font-medium text-slate-400">
+                            {stat.filled}/{stat.total} terisi
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -453,18 +607,23 @@ export default function FollowUpFormPage({
             ) : null}
 
             <div className="space-y-4">
+<div id="follow-up-section-subjective" className="scroll-mt-24 transition-all duration-300">
               <SubjectiveSection
                 open={openSections.subjective}
                 onToggle={() => toggleSection("subjective")}
+                meta={sectionStats.stats.subjective.filled + "/" + sectionStats.stats.subjective.total + " field terisi"}
                 value={values.subjective}
                 onChange={(subjective) =>
                   updateValues({ ...values, subjective })
                 }
               />
+              </div>
 
+<div id="follow-up-section-objective" className="scroll-mt-24 transition-all duration-300">
               <ObjectiveSection
                 open={openSections.objective}
                 onToggle={() => toggleSection("objective")}
+                meta={sectionStats.stats.objective.filled + "/" + sectionStats.stats.objective.total + " field terisi"}
                 objective={values.objective}
                 neurology={values.neurology}
                 onObjectiveChange={(objective) =>
@@ -474,19 +633,25 @@ export default function FollowUpFormPage({
                   updateValues({ ...values, neurology })
                 }
               />
+              </div>
 
+<div id="follow-up-section-supportingExams" className="scroll-mt-24 transition-all duration-300">
               <SupportingExamSection
                 open={openSections.supportingExams}
                 onToggle={() => toggleSection("supportingExams")}
+                meta={sectionStats.stats.supportingExams.filled ? sectionStats.stats.supportingExams.filled + " pemeriksaan ditambahkan" : "Opsional · belum ada pemeriksaan"}
                 exams={values.supportingExams}
                 onChange={(supportingExams) =>
                   updateValues({ ...values, supportingExams })
                 }
               />
+              </div>
 
+<div id="follow-up-section-assessment" className="scroll-mt-24 transition-all duration-300">
               <AssessmentSection
                 open={openSections.assessment}
                 onToggle={() => toggleSection("assessment")}
+                meta={sectionStats.stats.assessment.filled ? sectionStats.stats.assessment.filled + " assessment ditambahkan" : "Belum ada assessment"}
                 values={values.assessments}
                 codes={values.assessmentCodes}
                 onChange={(assessments) =>
@@ -496,10 +661,13 @@ export default function FollowUpFormPage({
                   updateValues({ ...values, assessmentCodes })
                 }
               />
+              </div>
 
+<div id="follow-up-section-plan" className="scroll-mt-24 transition-all duration-300">
               <PlanSection
                 open={openSections.plan}
                 onToggle={() => toggleSection("plan")}
+                meta={sectionStats.stats.plan.filled + "/2 bagian terisi"}
                 planning={values.planning}
                 instruction={values.instruction}
                 onPlanningChange={(planning) =>
@@ -509,6 +677,7 @@ export default function FollowUpFormPage({
                   updateValues({ ...values, instruction })
                 }
               />
+              </div>
             </div>
 
             <section className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
