@@ -96,7 +96,7 @@ export default function BackupDataPage({
       const matchesSearch = !query || searchable.includes(query);
       const matchesRotation =
         rotationFilter === "Semua" ||
-        getPatientRotation(patient) === rotationFilter;
+        getPatientRotation() === rotationFilter;
       const matchesStatus =
         statusFilter === "Semua" || patient.status === statusFilter;
 
