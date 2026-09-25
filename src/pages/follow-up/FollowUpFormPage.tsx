@@ -226,7 +226,12 @@ function buildFollowUpEntry(
     subjective,
     objective,
     assessment,
-    plan: values.instruction,
+    plan: [
+      values.planning ? "P/: " + values.planning : "",
+      values.instruction ? "I/: " + values.instruction : "",
+    ]
+      .filter(Boolean)
+      .join("\n"),
     summary: values.subjective.keluhan || "Follow-up baru tersimpan.",
     supportingExams,
   };
