@@ -18,6 +18,7 @@ export type FollowUpEntry = {
   isoDate: string;
   time: string;
   status: FollowUpStatus;
+  templateType?: "Neurologi" | "Ilmu Penyakit Dalam";
   subjective: string;
   objective: string;
   assessment: string;
