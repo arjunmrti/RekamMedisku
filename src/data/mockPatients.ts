@@ -2,6 +2,23 @@ import type { PatientListItem } from "../types/patient";
 
 export const mockPatients: PatientListItem[] = [
   {
+    id: "p-rotation-interna-24012607-demo",
+    rotationId: "rotation-interna",
+    name: "Ahmad Fauzan",
+    age: 58,
+    gender: "Laki-laki",
+    rm: "24012607",
+    room: "2B",
+    bed: "08",
+    doctor: "dr. Sari Dewi, Sp.PD",
+    lastFollowUp: "29 Agu 2026 · 11:10",
+    lastFollowUpAt: "2026-08-29T11:10:00",
+    createdAt: "2026-08-02T08:00:00.000Z",
+    admissionDate: "2026-08-02",
+    followUpNumber: 2,
+    status: "Aktif",
+  },
+  {
     id: "p-24012601",
     rotationId: "rotation-neurologi",
     name: "Andi Pratama",
