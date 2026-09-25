@@ -9,6 +9,7 @@ type ReportSummaryCardProps = {
   templateType: ReportTemplateType;
   copied: boolean;
   hasReport: boolean;
+  copyError: string;
   onCopy: () => void;
   onRegenerate: () => void;
 };
@@ -19,6 +20,7 @@ export default function ReportSummaryCard({
   templateType,
   copied,
   hasReport,
+  copyError,
   onCopy,
   onRegenerate,
 }: ReportSummaryCardProps) {
@@ -104,7 +106,11 @@ export default function ReportSummaryCard({
           {hasReport ? "Generate Ulang" : "Generate Laporan"}
         </button>
 
-        {copied ? (
+        {copyError ? (
+          <div className="mt-3 rounded-xl border border-rose-100 bg-rose-50 px-3 py-3 text-[11px] leading-relaxed text-rose-700">
+            {copyError}
+          </div>
+        ) : copied ? (
           <div className="mt-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-3 text-[11px] leading-relaxed text-emerald-800">
             <p className="font-bold">Laporan berhasil disalin.</p>
             <p className="mt-0.5">
