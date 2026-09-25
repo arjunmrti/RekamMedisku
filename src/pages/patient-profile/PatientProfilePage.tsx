@@ -43,15 +43,17 @@ export default function PatientProfilePage({
 
   const latestFollowUp = followUps[0] ?? null;
 
-  const supportingExams = useMemo(() => {
-    const latestSavedExams = latestFollowUp?.supportingExams ?? [];
+  const allSupportingExams = useMemo(
+    () => followUps.flatMap((entry) => entry.supportingExams ?? []),
+    [followUps],
+  );
 
-    if (latestSavedExams.length > 0) {
-      return latestSavedExams;
-    }
-
-    return [];
-  }, [latestFollowUp, patient.id]);
+  const latestSupportingExams = useMemo(
+    () =>
+      followUps.find((entry) => (entry.supportingExams?.length ?? 0) > 0)
+        ?.supportingExams ?? [],
+    [followUps],
+  );
 
   const handleTabChange = (tab: ProfileTab) => {
     setActiveTab(tab);
@@ -210,13 +212,13 @@ export default function PatientProfilePage({
                     </h2>
                   </div>
 
-                  {supportingExams.length === 0 ? (
+                  {allSupportingExams.length === 0 ? (
                     <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-xs text-slate-500">
                       Belum ada hasil pemeriksaan penunjang yang tersimpan.
                     </p>
                   ) : (
                     <div className="divide-y divide-slate-100">
-                      {supportingExams.map((exam) => (
+                      {allSupportingExams.map((exam) => (
                         <button
                           type="button"
                           key={exam.id}
