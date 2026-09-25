@@ -49,18 +49,17 @@ export default function PatientProfilePage({
       );
   }, [patient.id]);
 
+  const latestFollowUp = followUps[0] ?? null;
+
   const supportingExams = useMemo(() => {
-    const latestSavedExams = followUps.flatMap(
-      (entry) => entry.supportingExams ?? [],
-    );
+    const latestSavedExams = latestFollowUp?.supportingExams ?? [];
 
     if (latestSavedExams.length > 0) {
       return latestSavedExams;
     }
 
     return mockSupportingExamsByPatient[patient.id] ?? [];
-  }, [followUps, patient.id]);
-  const latestFollowUp = followUps[0] ?? null;
+  }, [latestFollowUp, patient.id]);
 
   const handleTabChange = (tab: ProfileTab) => {
     setActiveTab(tab);
