@@ -1,15 +1,13 @@
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ChangeEvent } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
-import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
 import {
   appendBackupHistory,
   createBackupHistoryEntry,
-  getLastSuccessfulBackup,
   loadBackupHistory,
   saveBackupSnapshot,
 } from "../../data/backupHistory";
 import { loadPatients } from "../../data/localPatients";
-import type { BackupHistoryEntry } from "../../types/backup";
+import type { BackupHistoryEntry, BackupPayload } from "../../types/backup";
 import {
   buildBackupPayload,
   formatBackupDate,
@@ -37,9 +35,7 @@ type RestoreState =
       status: "valid";
       fileName: string;
       size: number;
-      data: ReturnType<typeof parseBackupText> extends { ok: true; data: infer T }
-        ? T
-        : never;
+      data: BackupPayload;
       error: "";
     };
 
@@ -74,7 +70,7 @@ export default function BackupDataPage({
     () =>
       history.find(
         (entry) => entry.type === "Export" && entry.status === "Berhasil",
-      ) ?? getLastSuccessfulBackup(),
+      ) ?? null,
     [history],
   );
 
@@ -104,14 +100,8 @@ export default function BackupDataPage({
     });
   }, [globalSearch, patients, rotationFilter, statusFilter]);
 
-  const storedFollowUpCount = useMemo(
-    () =>
-      filteredPatients.reduce(
-        (total, patient) =>
-          total +
-          (mockFollowUpsByPatient[patient.id]?.length ?? 0),
-        0,
-      ),
+  const backupPreview = useMemo(
+    () => buildBackupPayload(filteredPatients),
     [filteredPatients],
   );
 
@@ -143,25 +133,17 @@ export default function BackupDataPage({
       );
   }, [history, historySearch, operationFilter]);
 
-  const summary = useMemo(() => {
-    const allFollowUps = Object.values(mockFollowUpsByPatient).reduce(
-      (total, entries) => total + entries.length,
-      0,
-    );
-    const draftCount = 0;
-
-    return {
-      patients: filteredPatients.length,
-      followUps:
-        dataScope === "Pasien"
-          ? 0
-          : dataScope === "Draf"
-            ? draftCount
-            : storedFollowUpCount,
-      drafts: draftCount,
-      allFollowUps,
-    };
-  }, [dataScope, filteredPatients.length, storedFollowUpCount]);
+  const summary = {
+    patients: backupPreview.patients.length,
+    followUps:
+      dataScope === "Pasien" || dataScope === "Draf"
+        ? 0
+        : Object.values(backupPreview.followUpsByPatient).reduce(
+            (total, entries) => total + entries.length,
+            0,
+          ),
+    drafts: Object.keys(backupPreview.followUpDrafts).length,
+  };
 
   const refreshPageData = () => {
     setPatients(loadPatients());
@@ -260,7 +242,7 @@ export default function BackupDataPage({
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       void readRestoreFile(file);
@@ -306,22 +288,18 @@ export default function BackupDataPage({
     }
   };
 
-  const handleRetry = () => {
-    if (history[0]?.type === "Export") {
-      handleExport();
-    } else {
-      openRestore();
+  const handleHistoryAction = (entry: BackupHistoryEntry) => {
+    if (entry.status === "Gagal") {
+      if (entry.type === "Export") {
+        handleExport();
+      } else {
+        openRestore();
+      }
+      return;
     }
-  };
 
-  const dataScopeLabel =
-    dataScope === "Semua"
-      ? "Semua data"
-      : dataScope === "Pasien"
-        ? "Pasien"
-        : dataScope === "Follow-Up"
-          ? "Follow-Up"
-          : "Draf";
+    setToast(entry.fileName + " · " + entry.note);
+  };
 
   return (
     <>
@@ -548,7 +526,7 @@ export default function BackupDataPage({
                             <td className="px-4 py-4 text-right">
                               <button
                                 type="button"
-                                onClick={handleRetry}
+                                onClick={() => handleHistoryAction(entry)}
                                 className={
                                   "rounded-lg border px-2.5 py-1 text-[10px] font-semibold transition " +
                                   (entry.status === "Gagal"
