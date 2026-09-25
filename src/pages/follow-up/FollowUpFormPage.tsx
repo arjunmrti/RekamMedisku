@@ -501,6 +501,7 @@ export default function FollowUpFormPage({
       onNavigate={guardedNavigate}
       searchValue=""
       onSearchChange={() => undefined}
+      searchEnabled={false}
     >
       <div className="flex-1 overflow-y-auto pb-24">
         <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 items-start xl:grid-cols-[minmax(0,1040px)_320px]">
