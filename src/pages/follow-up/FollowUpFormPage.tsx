@@ -611,7 +611,6 @@ export default function FollowUpFormPage({
               <SubjectiveSection
                 open={openSections.subjective}
                 onToggle={() => toggleSection("subjective")}
-                meta={sectionStats.stats.subjective.filled + "/" + sectionStats.stats.subjective.total + " field terisi"}
                 value={values.subjective}
                 onChange={(subjective) =>
                   updateValues({ ...values, subjective })
@@ -623,7 +622,6 @@ export default function FollowUpFormPage({
               <ObjectiveSection
                 open={openSections.objective}
                 onToggle={() => toggleSection("objective")}
-                meta={sectionStats.stats.objective.filled + "/" + sectionStats.stats.objective.total + " field terisi"}
                 objective={values.objective}
                 neurology={values.neurology}
                 onObjectiveChange={(objective) =>
@@ -639,7 +637,6 @@ export default function FollowUpFormPage({
               <SupportingExamSection
                 open={openSections.supportingExams}
                 onToggle={() => toggleSection("supportingExams")}
-                meta={sectionStats.stats.supportingExams.filled ? sectionStats.stats.supportingExams.filled + " pemeriksaan ditambahkan" : "Opsional · belum ada pemeriksaan"}
                 exams={values.supportingExams}
                 onChange={(supportingExams) =>
                   updateValues({ ...values, supportingExams })
@@ -651,7 +648,6 @@ export default function FollowUpFormPage({
               <AssessmentSection
                 open={openSections.assessment}
                 onToggle={() => toggleSection("assessment")}
-                meta={sectionStats.stats.assessment.filled ? sectionStats.stats.assessment.filled + " assessment ditambahkan" : "Belum ada assessment"}
                 values={values.assessments}
                 codes={values.assessmentCodes}
                 onChange={(assessments) =>
@@ -667,7 +663,6 @@ export default function FollowUpFormPage({
               <PlanSection
                 open={openSections.plan}
                 onToggle={() => toggleSection("plan")}
-                meta={sectionStats.stats.plan.filled + "/2 bagian terisi"}
                 planning={values.planning}
                 instruction={values.instruction}
                 onPlanningChange={(planning) =>
