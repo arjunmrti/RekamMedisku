@@ -122,7 +122,6 @@ export const mockFollowUpsByPatient: Record<string, FollowUpEntry[]> = {
   "p-24012604": [],
   "p-24012605": [],
   "p-24012606": [],
-  "p-rotation-interna-24012607-demo": [],
   "p-rotation-interna-24012607-demo": internalMedicineFollowUps,
 };
 
@@ -137,6 +136,14 @@ const neurologySupportingExams: SupportingExam[] = [
 
 export const mockSupportingExamsByPatient: Record<string, SupportingExam[]> = {
   "p-24012601": neurologySupportingExams,
+  "p-rotation-interna-24012607-demo": [
+    {
+      id: "exam-interna-lab",
+      name: "Laboratorium",
+      date: "29 Agu 2026",
+      icon: "lab",
+    },
+  ],
   "p-24012602": [],
   "p-24012603": [],
   "p-24012604": [],
