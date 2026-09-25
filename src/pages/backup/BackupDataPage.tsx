@@ -49,13 +49,14 @@ export default function BackupDataPage({
   const [history, setHistory] = useState<BackupHistoryEntry[]>(() =>
     loadBackupHistory(),
   );
+  const [rotations, setRotations] = useState(() => loadRotations());
   const [dataScope, setDataScope] = useState<DataScope>("Semua");
   const [rotationFilter, setRotationFilter] =
     useState<RotationFilter>("Semua");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("Semua");
   const [operationFilter, setOperationFilter] =
     useState<OperationFilter>("Semua");
-  const rotations = useMemo(() => loadRotations(), []);
+
   const [historySearch, setHistorySearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [restoreOpen, setRestoreOpen] = useState(false);
@@ -274,6 +275,8 @@ export default function BackupDataPage({
       appendBackupHistory(entry);
       setHistory((current) => [entry, ...current].slice(0, 30));
       refreshPageData();
+      setRotations(loadRotations());
+      setRotationFilter("Semua");
       setRestoreOpen(false);
       setToast("Data berhasil dipulihkan dari " + restoreState.fileName);
     } catch {
