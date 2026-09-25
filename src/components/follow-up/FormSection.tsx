@@ -8,6 +8,7 @@ type FormSectionProps = {
   onToggle: () => void;
   children: ReactNode;
   action?: ReactNode;
+  meta?: string;
 };
 
 export default function FormSection({
@@ -18,6 +19,7 @@ export default function FormSection({
   onToggle,
   children,
   action,
+  meta,
 }: FormSectionProps) {
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
@@ -31,17 +33,24 @@ export default function FormSection({
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-xs font-bold text-[#1677FF]">
             {icon}
           </span>
-          <span className="flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#1677FF]">
-              {number}
+          <span className="min-w-0 flex-1">
+            <span className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#1677FF]">
+                {number}
+              </span>
+              <span className="truncate text-sm font-bold text-slate-800">
+                {title}
+              </span>
             </span>
-            <span className="truncate text-sm font-bold text-slate-800">
-              {title}
-            </span>
+            {meta ? (
+              <span className="mt-1 block text-[10px] font-medium text-slate-400">
+                {meta}
+              </span>
+            ) : null}
           </span>
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {action}
           <button
             type="button"
