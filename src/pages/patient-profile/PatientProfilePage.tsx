@@ -107,7 +107,8 @@ export default function PatientProfilePage({
   };
 
   return (
-    <AppShell
+    <>
+      <AppShell
       activeItem={activeItem}
       onNavigate={onNavigate}
       searchValue=""
@@ -285,9 +286,9 @@ export default function PatientProfilePage({
           </section>
         </div>
       </main>
-    </AppShell>
+      </AppShell>
 
-    {selectedExam ? (
+      {selectedExam ? (
       <div
         className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
         role="dialog"
@@ -366,6 +367,7 @@ export default function PatientProfilePage({
           </div>
         </div>
       </div>
-    ) : null}
+      ) : null}
+    </>
   );
 }
