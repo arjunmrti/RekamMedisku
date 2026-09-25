@@ -57,3 +57,4 @@ export default function FollowUpTimeline({
       );
     });
   }, [entries, filter, selectedDate]);
+}
