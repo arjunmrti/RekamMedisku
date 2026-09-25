@@ -1,10 +1,12 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import type { PatientListItem } from "../../types/patient";
+import type { Rotation } from "../../types/rotation";
 import Icon from "../ui/Icon";
 
 type AddPatientModalProps = {
   open: boolean;
   onClose: () => void;
+  rotation: Rotation;
   onSubmit: (patient: PatientListItem) => void;
 };
 
@@ -14,6 +16,7 @@ const rooms = ["3A", "3B", "4A"];
 export default function AddPatientModal({
   open,
   onClose,
+  rotation,
   onSubmit,
 }: AddPatientModalProps) {
   const [name, setName] = useState("");
@@ -54,6 +57,7 @@ export default function AddPatientModal({
 
     onSubmit({
       id: "p-" + rm.trim(),
+      rotationId: rotation.id,
       name: name.trim(),
       age: parsedAge,
       gender,
@@ -89,7 +93,7 @@ export default function AddPatientModal({
               Tambah Pasien Baru
             </h2>
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Masukkan data pasien pada stase Neurologi.
+              Masukkan data pasien pada stase {rotation.name}.
             </p>
           </div>
 
