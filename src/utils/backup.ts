@@ -302,6 +302,26 @@ function validateDraftMap(
     if (!draft.assessmentCodes.every((item) => typeof item === "string")) {
       return false;
     }
+
+    if (
+      !draft.supportingExams.every(
+        (exam) => isRecord(exam) && isSupportingExam({
+          ...exam,
+          name: typeof exam.examType === "string" ? exam.examType : "",
+          date: typeof exam.date === "string" ? exam.date : "",
+          icon: "lab",
+        }),
+      )
+    ) {
+      return false;
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.followUpDate)) {
+      return false;
+    }
+    if (!/^\d{2}:\d{2}$/.test(draft.followUpTime)) {
+      return false;
+    }
   }
 
   return true;
