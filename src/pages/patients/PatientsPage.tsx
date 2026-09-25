@@ -10,10 +10,15 @@ import AddPatientModal from "../../components/patients/AddPatientModal";
 import { mockPatients } from "../../data/mockPatients";
 import type { PatientListItem } from "../../types/patient";
 
+type PatientsPageProps = NavigationProps & {
+  onOpenPatientProfile: (patient: PatientListItem) => void;
+};
+
 export default function PatientsPage({
   activeItem,
   onNavigate,
-}: NavigationProps) {
+  onOpenPatientProfile,
+}: PatientsPageProps) {
   const [globalSearch, setGlobalSearch] = useState("");
   const [filterSearch, setFilterSearch] = useState("");
   const [status, setStatus] = useState<
@@ -139,7 +144,10 @@ export default function PatientsPage({
                 <PatientQuickActions
                   onAddPatient={() => setModalOpen(true)}
                 />
-                <PatientSummaryPanel patient={selectedPatient} />
+                <PatientSummaryPanel
+                  patient={selectedPatient}
+                  onOpenProfile={onOpenPatientProfile}
+                />
                 <PatientTips />
               </aside>
             </div>
