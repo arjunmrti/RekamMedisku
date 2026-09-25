@@ -5,22 +5,28 @@ import Sidebar from "./Sidebar";
 import TopHeader from "./TopHeader";
 import Icon, { type IconName } from "../ui/Icon";
 
-type AppShellProps = {
+export type NavigationProps = {
+  activeItem: string;
+  onNavigate: (label: string) => void;
+};
+
+type AppShellProps = NavigationProps & {
   searchValue: string;
   onSearchChange: (value: string) => void;
   children: ReactNode;
 };
 
 export default function AppShell({
+  activeItem,
+  onNavigate,
   searchValue,
   onSearchChange,
   children,
 }: AppShellProps) {
-  const [activeItem, setActiveItem] = useState("Beranda");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigate = (label: string) => {
-    setActiveItem(label);
+    onNavigate(label);
     setMobileMenuOpen(false);
   };
 
@@ -39,10 +45,7 @@ export default function AppShell({
         </div>
       </div>
 
-      <MobileBottomNav
-        activeItem={activeItem}
-        onNavigate={navigate}
-      />
+      <MobileBottomNav activeItem={activeItem} onNavigate={navigate} />
 
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
@@ -89,17 +92,17 @@ export default function AppShell({
                     key={item.label}
                     type="button"
                     onClick={() => navigate(item.label)}
-                    className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm ${
+                    className={"flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm " + (
                       active
                         ? "bg-blue-50 font-semibold text-blue-600"
                         : "font-medium text-slate-600 hover:bg-slate-50"
-                    }`}
+                    )}
                   >
                     <Icon
                       name={item.icon}
-                      className={`h-5 w-5 ${
+                      className={"h-5 w-5 " + (
                         active ? "text-blue-600" : "text-slate-400"
-                      }`}
+                      )}
                     />
                     {item.label}
                   </button>
