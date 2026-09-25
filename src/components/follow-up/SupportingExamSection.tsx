@@ -157,14 +157,14 @@ export default function SupportingExamSection({
 
                     const reader = new FileReader();
                     reader.onload = () => {
-                      setDraft({
-                        ...draft,
+                      setDraft((current) => ({
+                        ...current,
                         attachmentName: file.name,
                         attachmentDataUrl:
                           typeof reader.result === "string" ? reader.result : "",
                         attachmentType: file.type,
                         attachmentSize: file.size,
-                      });
+                      }));
                     };
                     reader.onerror = () => {
                       setAttachmentError("Lampiran gagal dibaca.");
