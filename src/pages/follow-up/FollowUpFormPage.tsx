@@ -15,6 +15,7 @@ import {
 } from "../../data/localFollowUps";
 import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
 import { loadActiveRotation } from "../../data/localRotations";
+import { updatePatient } from "../../data/localPatients";
 import type { FollowUpEntry, SupportingExam } from "../../types/followUp";
 import type { FollowUpFormValues } from "../../types/followUpForm";
 import type { PatientListItem } from "../../types/patient";
@@ -166,6 +167,37 @@ function buildFollowUpEntry(
       values.neurology.gcsVerbal
     : "";
 
+  const templateObjective =
+    templateType === "Ilmu Penyakit Dalam"
+      ? [
+          "Keadaan Umum: " + values.internalMedicine.generalCondition,
+          "Kesadaran: " + values.internalMedicine.consciousness,
+          "Kepala & Leher: " + values.internalMedicine.headNeck,
+          "Thoraks: " + values.internalMedicine.thorax,
+          "Abdomen: " + values.internalMedicine.abdomen,
+          "Ekstremitas: " + values.internalMedicine.extremities,
+          "Temuan Sistemik Relevan: " +
+            values.internalMedicine.relevantSystemicFindings,
+        ]
+      : [
+          "GCS E/M/V: " + gcs,
+          "FKL: " + values.neurology.fkl,
+          "N. Cranialis: " + values.neurology.cranialNerve,
+          "Pupil: " + values.neurology.pupil,
+          "Kaku Kuduk: " + values.neurology.neckStiffness,
+          "Brudzinski I & II: " + values.neurology.brudzinski,
+          "Kernig: " + values.neurology.kernig,
+          "Pergerakan: " + values.neurology.movement,
+          "Tonus: " + values.neurology.tone,
+          "Sensorik: " + values.neurology.sensory,
+          "Kekuatan Ekstremitas Superior: " + values.neurology.upperStrength,
+          "Kekuatan Ekstremitas Inferior: " + values.neurology.lowerStrength,
+          "Refleks Fisiologis: " + values.neurology.physiologicReflex,
+          "Refleks Patologis: " + values.neurology.pathologicReflex,
+          "Otonom BAB/BAK: " + values.neurology.autonomic,
+          "Tes Provokasi Saraf: " + values.neurology.provocation,
+        ];
+
   const objective = [
     "Keadaan Umum: " + values.objective.generalCondition,
     "TD: " +
@@ -180,22 +212,7 @@ function buildFollowUpEntry(
     "Oksigen via: " + values.objective.oxygenVia,
     "NRS: " + values.objective.painNrs,
     "Pemeriksaan/Temuan Fisik: " + values.objective.physicalFindings,
-    "GCS E/M/V: " + gcs,
-    "FKL: " + values.neurology.fkl,
-    "N. Cranialis: " + values.neurology.cranialNerve,
-    "Pupil: " + values.neurology.pupil,
-    "Kaku Kuduk: " + values.neurology.neckStiffness,
-    "Brudzinski I & II: " + values.neurology.brudzinski,
-    "Kernig: " + values.neurology.kernig,
-    "Pergerakan: " + values.neurology.movement,
-    "Tonus: " + values.neurology.tone,
-    "Sensorik: " + values.neurology.sensory,
-    "Kekuatan Ekstremitas Superior: " + values.neurology.upperStrength,
-    "Kekuatan Ekstremitas Inferior: " + values.neurology.lowerStrength,
-    "Refleks Fisiologis: " + values.neurology.physiologicReflex,
-    "Refleks Patologis: " + values.neurology.pathologicReflex,
-    "Otonom BAB/BAK: " + values.neurology.autonomic,
-    "Tes Provokasi Saraf: " + values.neurology.provocation,
+    ...templateObjective,
     "Hasil Penunjang: " + values.objective.supportingExamText,
   ]
     .filter((item) => !item.endsWith(": "))
@@ -299,8 +316,11 @@ export default function FollowUpFormPage({
 
   const sectionStats = useMemo(() => {
     const subjectiveFilled = countFilled(values.subjective);
-    const objectiveFilled =
-      countFilled(values.objective) + countFilled(values.neurology);
+    const templateFilled =
+      templateType === "Ilmu Penyakit Dalam"
+        ? countFilled(values.internalMedicine)
+        : countFilled(values.neurology);
+    const objectiveFilled = countFilled(values.objective) + templateFilled;
     const assessmentFilled = values.assessments.filter((item) =>
       item.trim(),
     ).length;
@@ -318,7 +338,9 @@ export default function FollowUpFormPage({
         filled: objectiveFilled,
         total:
           Object.keys(values.objective).length +
-          Object.keys(values.neurology).length,
+          (templateType === "Ilmu Penyakit Dalam"
+            ? Object.keys(values.internalMedicine).length
+            : Object.keys(values.neurology).length),
       },
       supportingExams: { filled: supportingFilled, total: 1 },
       assessment: {
@@ -343,7 +365,7 @@ export default function FollowUpFormPage({
       total,
       percent: total ? Math.round((filled / total) * 100) : 0,
     };
-  }, [values]);
+  }, [templateType, values]);
 
   const sectionNav: Array<{
     key: SectionKey;
@@ -456,6 +478,12 @@ export default function FollowUpFormPage({
       Math.max(0, ...previousFollowUps.map((entry) => entry.number)) + 1;
     const entry = buildFollowUpEntry(values, nextNumber, templateType);
 
+    updatePatient(patient.id, {
+      lastFollowUp: entry.date + " · " + entry.time,
+      followUpNumber: entry.number,
+      lastFollowUpAt:
+        entry.isoDate + "T" + entry.time.replace(".", ":") + ":00",
+    });
     appendSavedFollowUp(patient.id, entry);
     clearFollowUpDraft(patient.id);
     setDirty(false);
