@@ -11,6 +11,7 @@ import { loadSavedFollowUps } from "../../data/localFollowUps";
 import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
 import type { PatientListItem } from "../../types/patient";
 import type { FollowUpEntry } from "../../types/followUp";
+import { toLocalIsoDate } from "../../utils/date";
 
 function getFollowUps(patientId: string): FollowUpEntry[] {
   const local = loadSavedFollowUps()[patientId] ?? [];
@@ -78,7 +79,7 @@ export default function DashboardPage({
   );
 
   const followUpsToday = useMemo(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toLocalIsoDate();
 
     return activePatients.reduce(
       (total, patient) =>
