@@ -1,16 +1,22 @@
+import type { Rotation } from "../../types/rotation";
 import Icon from "../ui/Icon";
 
 type PatientListHeaderProps = {
+  rotation: Rotation;
   onAddPatient: () => void;
 };
 
 export default function PatientListHeader({
+  rotation,
   onAddPatient,
 }: PatientListHeaderProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <h1 className="text-[24px] font-bold leading-tight tracking-tight text-slate-900 lg:text-[30px]">
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
+          Stase Aktif · {rotation.name}
+        </p>
+        <h1 className="mt-1 text-[24px] font-bold leading-tight tracking-tight text-slate-900 lg:text-[30px]">
           Daftar Pasien
         </h1>
         <p className="mt-1 text-sm leading-6 text-slate-500">
