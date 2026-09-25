@@ -1,5 +1,5 @@
 import { mockPatients } from "./mockPatients";
-import type { PatientListItem } from "../types/patient";
+import type { PatientListItem, PatientStatus } from "../types/patient";
 
 const PATIENTS_KEY = "rekammedisku:patients";
 
@@ -12,11 +12,20 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
-export function loadPatients(): PatientListItem[] {
-  return readJson<PatientListItem[]>(PATIENTS_KEY, mockPatients).map((patient) => ({
+function normalizePatient(patient: PatientListItem): PatientListItem {
+  return {
     ...patient,
     rotationId: patient.rotationId ?? "rotation-neurologi",
-  }));
+    lastFollowUpAt: patient.lastFollowUpAt ?? undefined,
+    createdAt: patient.createdAt ?? undefined,
+    admissionDate: patient.admissionDate ?? undefined,
+  };
+}
+
+export function loadPatients(): PatientListItem[] {
+  return readJson<PatientListItem[]>(PATIENTS_KEY, mockPatients).map(
+    normalizePatient,
+  );
 }
 
 export function savePatients(patients: PatientListItem[]) {
@@ -24,5 +33,38 @@ export function savePatients(patients: PatientListItem[]) {
 }
 
 export function replacePatients(patients: PatientListItem[]) {
-  window.localStorage.setItem(PATIENTS_KEY, JSON.stringify(patients));
+  savePatients(patients);
+}
+
+export function updatePatient(
+  patientId: string,
+  updates: Partial<PatientListItem>,
+): PatientListItem | null {
+  const patients = loadPatients();
+  const index = patients.findIndex((patient) => patient.id === patientId);
+
+  if (index === -1) return null;
+
+  const updatedPatient = {
+    ...patients[index],
+    ...updates,
+  };
+
+  patients[index] = updatedPatient;
+  savePatients(patients);
+  return updatedPatient;
+}
+
+export function setPatientStatus(
+  patientId: string,
+  status: PatientStatus,
+): PatientListItem | null {
+  return updatePatient(patientId, { status });
+}
+
+export function createPatientId(rotationId: string, rm: string): string {
+  const normalizedRotation = rotationId.trim().replace(/[^a-zA-Z0-9_-]/g, "-");
+  const normalizedRm = rm.trim().replace(/[^a-zA-Z0-9_-]/g, "-");
+
+  return "p-" + normalizedRotation + "-" + normalizedRm + "-" + crypto.randomUUID();
 }
