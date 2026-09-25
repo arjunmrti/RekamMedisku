@@ -43,10 +43,17 @@ export default function PatientProfilePage({
 
   const latestFollowUp = followUps[0] ?? null;
 
-  const allSupportingExams = useMemo(
-    () => followUps.flatMap((entry) => entry.supportingExams ?? []),
-    [followUps],
-  );
+  const allSupportingExams = useMemo(() => {
+    const seen = new Set<string>();
+
+    return followUps
+      .flatMap((entry) => entry.supportingExams ?? [])
+      .filter((exam) => {
+        if (seen.has(exam.id)) return false;
+        seen.add(exam.id);
+        return true;
+      });
+  }, [followUps]);
 
   const latestSupportingExams = useMemo(
     () =>
