@@ -7,6 +7,9 @@ export type SupportingExam = {
   date: string;
   result?: string;
   attachmentName?: string;
+  attachmentDataUrl?: string;
+  attachmentType?: string;
+  attachmentSize?: number;
   attachmentCount?: number;
   icon: "lab" | "scan" | "image" | "eeg";
 };
