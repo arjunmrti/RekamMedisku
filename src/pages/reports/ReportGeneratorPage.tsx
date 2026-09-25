@@ -1,0 +1,296 @@
+import { useEffect, useMemo, useState } from "react";
+import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
+import ReportPatientContext from "../../components/report/ReportPatientContext";
+import ReportPreview from "../../components/report/ReportPreview";
+import ReportStepTracker from "../../components/report/ReportStepTracker";
+import ReportSummaryCard from "../../components/report/ReportSummaryCard";
+import ReportTemplateSelector from "../../components/report/ReportTemplateSelector";
+import { loadSavedFollowUps } from "../../data/localFollowUps";
+import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
+import { buildWhatsAppReport } from "../../utils/reportGenerator";
+import type { FollowUpEntry } from "../../types/followUp";
+import type { PatientListItem } from "../../types/patient";
+import type { ReportStep, ReportTemplateType } from "../../types/report";
+import Icon from "../../components/ui/Icon";
+
+type ReportGeneratorPageProps = NavigationProps & {
+  patient: PatientListItem;
+};
+
+function getFollowUps(patientId: string) {
+  const local = loadSavedFollowUps()[patientId] ?? [];
+  const mock = mockFollowUpsByPatient[patientId] ?? [];
+  const seen = new Set<string>();
+
+  return [...local, ...mock]
+    .filter((entry) => {
+      if (seen.has(entry.id)) return false;
+      seen.add(entry.id);
+      return true;
+    })
+    .filter((entry) => entry.status === "Tersimpan")
+    .sort((a, b) => (b.isoDate + b.time).localeCompare(a.isoDate + a.time));
+}
+
+export default function ReportGeneratorPage({
+  activeItem,
+  onNavigate,
+  patient,
+}: ReportGeneratorPageProps) {
+  const followUps = useMemo(() => getFollowUps(patient.id), [patient.id]);
+  const [selectedFollowUpId, setSelectedFollowUpId] = useState("");
+  const [templateType, setTemplateType] =
+    useState<ReportTemplateType>("Neurologi");
+  const [editing, setEditing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [reportText, setReportText] = useState("");
+  const [generatedKey, setGeneratedKey] = useState("");
+
+  const selectedFollowUp =
+    followUps.find((entry) => entry.id === selectedFollowUpId) ??
+    followUps[0] ??
+    null;
+
+  const sourceTemplate: ReportTemplateType =
+    selectedFollowUp?.templateType ?? "Neurologi";
+
+  useEffect(() => {
+    if (!followUps.length) {
+      setSelectedFollowUpId("");
+      setReportText("");
+      return;
+    }
+
+    const next = followUps.find((entry) => entry.id === selectedFollowUpId) ??
+      followUps[0];
+    const nextTemplate = next.templateType ?? "Neurologi";
+
+    setSelectedFollowUpId(next.id);
+    setTemplateType(nextTemplate);
+    setReportText(buildWhatsAppReport(patient, next, nextTemplate));
+    setGeneratedKey(next.id + ":" + nextTemplate);
+    setEditing(false);
+    setCopied(false);
+  }, [patient, followUps]);
+
+  const activeStep: ReportStep = copied ? 6 : editing ? 5 : 4;
+
+  const generateReport = (nextTemplate: ReportTemplateType = templateType) => {
+    if (!selectedFollowUp) return;
+    setReportText(
+      buildWhatsAppReport(patient, selectedFollowUp, nextTemplate),
+    );
+    setTemplateType(nextTemplate);
+    setGeneratedKey(
+      selectedFollowUp.id + ":" + nextTemplate + ":" + Date.now(),
+    );
+    setEditing(false);
+    setCopied(false);
+  };
+
+  const handleFollowUpChange = (id: string) => {
+    const next = followUps.find((entry) => entry.id === id);
+    if (!next) return;
+
+    const nextTemplate = next.templateType ?? "Neurologi";
+    setSelectedFollowUpId(id);
+    setTemplateType(nextTemplate);
+    setReportText(buildWhatsAppReport(patient, next, nextTemplate));
+    setGeneratedKey(id + ":" + nextTemplate);
+    setEditing(false);
+    setCopied(false);
+  };
+
+  const handleCopy = async () => {
+    if (!reportText) return;
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(reportText);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = reportText;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+
+      setCopied(true);
+      setEditing(false);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  if (!selectedFollowUp) {
+    return (
+      <AppShell
+        activeItem={activeItem}
+        onNavigate={onNavigate}
+        searchValue=""
+        onSearchChange={() => undefined}
+      >
+        <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-7">
+          <div className="mx-auto flex min-h-[70vh] w-full max-w-[900px] items-center justify-center">
+            <section className="w-full rounded-3xl border border-slate-200/90 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)] sm:p-12">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
+                <Icon name="document" className="h-6 w-6" />
+              </div>
+              <p className="mt-5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#1677FF]">
+                Report Generator
+              </p>
+              <h1 className="mt-2 text-xl font-bold tracking-tight text-slate-900">
+                Belum ada follow-up tersimpan
+              </h1>
+              <p className="mx-auto mt-2 max-w-xl text-xs leading-relaxed text-slate-500">
+                Report Generator menggunakan data yang sudah disimpan pada
+                timeline pasien. Buat follow-up terlebih dahulu agar laporan
+                dapat dibuat tanpa input ulang.
+              </p>
+              <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => onNavigate("Profil Pasien")}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+                >
+                  Kembali ke Profil
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onNavigate("Follow-Up Baru")}
+                  className="rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
+                >
+                  + Buat Follow-Up
+                </button>
+              </div>
+            </section>
+          </div>
+        </main>
+      </AppShell>
+    );
+  }
+
+  return (
+    <AppShell
+      activeItem={activeItem}
+      onNavigate={onNavigate}
+      searchValue=""
+      onSearchChange={() => undefined}
+    >
+      <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-7">
+        <div className="mx-auto w-full max-w-[1400px] space-y-6">
+          <header className="space-y-2">
+            <button
+              type="button"
+              onClick={() => onNavigate("Profil Pasien")}
+              className="inline-flex items-center gap-2 text-xs font-semibold text-[#1677FF] transition hover:text-blue-700"
+            >
+              <Icon name="arrow" className="h-3.5 w-3.5 rotate-180" />
+              Kembali ke Profil Pasien
+            </button>
+
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#1677FF]">
+                  P4 · WhatsApp Report Generator
+                </p>
+                <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                  Buat Laporan
+                </h1>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
+                  Ubah follow-up tersimpan menjadi draft laporan yang siap
+                  ditinjau, diedit, dan disalin ke WhatsApp.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-2 text-[10px] font-medium text-slate-500">
+                <span className="font-bold text-[#1677FF]">Sumber:</span>{" "}
+                Follow-Up tersimpan
+              </div>
+            </div>
+          </header>
+
+          <ReportPatientContext
+            patient={patient}
+            followUps={followUps}
+            selectedFollowUp={selectedFollowUp}
+            onFollowUpChange={handleFollowUpChange}
+          />
+
+          <ReportStepTracker activeStep={activeStep} />
+
+          <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="min-w-0 space-y-6">
+              <ReportTemplateSelector
+                selected={templateType}
+                sourceTemplate={sourceTemplate}
+                onChange={setTemplateType}
+              />
+
+              <section className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/70 via-white to-white p-4 shadow-[0_8px_30px_-22px_rgba(22,119,255,0.4)] sm:p-5">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-[#1677FF]">
+                      <Icon name="bolt" className="h-4 w-4" />
+                    </span>
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">
+                        Draft laporan siap dibuat
+                      </p>
+                      <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                        Sistem memformat data follow-up #{selectedFollowUp.number}
+                        {" "}tanpa meminta input klinis ulang.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => generateReport()}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
+                  >
+                    <Icon name="bolt" className="h-3.5 w-3.5" />
+                    Generate Laporan
+                  </button>
+                </div>
+              </section>
+
+              <ReportPreview
+                key={generatedKey}
+                text={reportText}
+                editing={editing}
+                onToggleEdit={() => {
+                  setEditing((current) => !current);
+                  setCopied(false);
+                }}
+                onTextChange={(value) => {
+                  setReportText(value);
+                  setCopied(false);
+                }}
+                onFinishEdit={() => setEditing(false)}
+              />
+            </div>
+
+            <ReportSummaryCard
+              patient={patient}
+              followUp={selectedFollowUp}
+              templateType={templateType}
+              copied={copied}
+              onCopy={handleCopy}
+              onRegenerate={() => generateReport()}
+            />
+          </div>
+
+          <section className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
+            RekamMedisku hanya mengubah data follow-up tersimpan menjadi draft
+            laporan. Tidak ada direct WhatsApp API atau automatic sending;
+            pengguna tetap meninjau, menyalin, lalu mengirim secara manual.
+          </section>
+        </div>
+      </main>
+    </AppShell>
+  );
+}
