@@ -65,6 +65,11 @@ export default function PatientProfileHeader({
                   <Icon name="user" className="h-3.5 w-3.5 text-slate-400" />
                   DPJP: {patient.doctor}
                 </span>
+                <span className="hidden text-slate-300 sm:inline">•</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon name="brain" className="h-3.5 w-3.5 text-slate-400" />
+                  Stase aktif: Neurologi
+                </span>
               </div>
             </div>
           </div>
