@@ -272,6 +272,29 @@ function validateFollowUpMap(
   return true;
 }
 
+function isSupportingExamForm(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+
+  return (
+    typeof value.id === "string" &&
+    typeof value.examType === "string" &&
+    typeof value.date === "string" &&
+    typeof value.result === "string" &&
+    typeof value.attachmentName === "string" &&
+    (value.attachmentType === undefined ||
+      typeof value.attachmentType === "string") &&
+    (value.attachmentSize === undefined ||
+      (typeof value.attachmentSize === "number" &&
+        Number.isFinite(value.attachmentSize) &&
+        value.attachmentSize >= 0)) &&
+    (value.attachmentDataUrl === undefined ||
+      (typeof value.attachmentDataUrl === "string" &&
+        (value.attachmentDataUrl === "" ||
+          value.attachmentDataUrl.startsWith("data:image/") ||
+          value.attachmentDataUrl.startsWith("data:application/pdf"))))
+  );
+}
+
 function validateDraftMap(
   value: unknown,
   patientIds: Set<string>,
@@ -303,16 +326,7 @@ function validateDraftMap(
       return false;
     }
 
-    if (
-      !draft.supportingExams.every(
-        (exam) => isRecord(exam) && isSupportingExam({
-          ...exam,
-          name: typeof exam.examType === "string" ? exam.examType : "",
-          date: typeof exam.date === "string" ? exam.date : "",
-          icon: "lab",
-        }),
-      )
-    ) {
+    if (!draft.supportingExams.every(isSupportingExamForm)) {
       return false;
     }
 
