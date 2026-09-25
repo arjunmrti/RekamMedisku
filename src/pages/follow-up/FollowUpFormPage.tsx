@@ -640,32 +640,23 @@ export default function FollowUpFormPage({
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                    Follow-Up Baru
-                  </h1>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                      Follow-Up Baru
+                    </h1>
+                    <span className="rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-[#1677FF]">
+                      {activeRotation.name}
+                    </span>
+                  </div>
+                  <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
                     Catat perkembangan pasien berdasarkan temuan follow-up pada
-                    tanggal ini.
+                    tanggal dan waktu yang dipilih.
                   </p>
                 </div>
 
-                <div className="grid w-full grid-cols-2 gap-2 sm:w-auto">
-                  <button
-                    type="button"
-                    onClick={handleSaveDraft}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-[11px] font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 sm:px-4 sm:text-xs"
-                  >
-                    Simpan Draf
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveFollowUp}
-                    className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#1677FF] px-3 py-2.5 text-[11px] font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700 sm:px-4 sm:text-xs"
-                  >
-                    <span className="text-sm">✓</span>
-                    Simpan Follow-Up
-                  </button>
-                </div>
+                <div className="inline-flex items-center gap-2 self-start rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-500 shadow-sm">
+                  <Icon name="clock" className="h-3.5 w-3.5 text-[#1677FF]" />
+                  Draf tersimpan otomatis
               </div>
             </div>
 
@@ -689,7 +680,7 @@ export default function FollowUpFormPage({
                   <div className="min-w-0 lg:w-[320px]">
                     <div className="flex items-center justify-between gap-3 text-[10px]">
                       <span className="font-semibold text-slate-500">
-                        Progress pengisian
+                        Kelengkapan catatan
                       </span>
                       <span className="font-bold text-[#1677FF]">
                         {sectionStats.percent}%
@@ -750,6 +741,7 @@ export default function FollowUpFormPage({
 
             <PatientContextCard
               patient={patient}
+              rotation={activeRotation}
               date={values.followUpDate}
               time={values.followUpTime}
               onDateChange={(followUpDate) =>
