@@ -13,7 +13,10 @@ function readJson<T>(key: string, fallback: T): T {
 }
 
 export function loadPatients(): PatientListItem[] {
-  return readJson<PatientListItem[]>(PATIENTS_KEY, mockPatients);
+  return readJson<PatientListItem[]>(PATIENTS_KEY, mockPatients).map((patient) => ({
+    ...patient,
+    rotationId: patient.rotationId ?? "rotation-neurologi",
+  }));
 }
 
 export function savePatients(patients: PatientListItem[]) {
