@@ -142,6 +142,12 @@ export default function PatientsPage({
     status,
   ]);
 
+  const visibleSelectedPatient =
+    selectedPatient &&
+    filteredPatients.some((patient) => patient.id === selectedPatient.id)
+      ? selectedPatient
+      : filteredPatients[0] ?? null;
+
   const resetFilters = () => {
     setGlobalSearch("");
     setFilterSearch("");
@@ -275,7 +281,7 @@ export default function PatientsPage({
                   onNavigate={onNavigate}
                 />
                 <PatientSummaryPanel
-                  patient={selectedPatient}
+                  patient={visibleSelectedPatient}
                   rotation={activeRotation}
                   onOpenProfile={onOpenPatientProfile}
                   onEditPatient={openEditPatient}
