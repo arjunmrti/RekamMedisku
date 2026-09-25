@@ -1,6 +1,7 @@
 import type { FollowUpEntry } from "./followUp";
 import type { FollowUpFormValues } from "./followUpForm";
 import type { PatientListItem } from "./patient";
+import type { Rotation } from "./rotation";
 
 export type BackupOperationType = "Export" | "Restore";
 export type BackupOperationStatus = "Berhasil" | "Gagal";
@@ -22,4 +23,6 @@ export type BackupPayload = {
   patients: PatientListItem[];
   followUpsByPatient: Record<string, FollowUpEntry[]>;
   followUpDrafts: Record<string, FollowUpFormValues>;
+  rotations?: Rotation[];
+  activeRotationId?: string;
 };
