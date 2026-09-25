@@ -52,10 +52,6 @@ export default function SupportingExamSection({
     onChange(exams.filter((exam) => exam.id !== id));
   };
 
-  const updateExam = (id: string, patch: Partial<SupportingExamForm>) => {
-    onChange(exams.map((exam) => (exam.id === id ? { ...exam, ...patch } : exam)));
-  };
-
   return (
     <FormSection
       number="03"
