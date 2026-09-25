@@ -61,8 +61,25 @@ function App() {
       label === "Stase Saya"
     ) {
       if (label === "Semua Laporan") {
-        refreshSelectedPatient();
+        const activeRotation = loadActiveRotation();
+        const nextPatient =
+          loadPatients().find(
+            (patient) =>
+              patient.rotationId === activeRotation.id &&
+              patient.status === "Aktif",
+          ) ?? null;
+
+        if (!nextPatient) {
+          setSelectedPatient(null);
+          setActiveItem("Daftar Pasien");
+          return;
+        }
+
+        setSelectedPatient(nextPatient);
+        setActiveItem("Semua Laporan");
+        return;
       }
+
       setActiveItem(label);
       return;
     }

@@ -7,7 +7,10 @@ import ReportSummaryCard from "../../components/report/ReportSummaryCard";
 import ReportTemplateSelector from "../../components/report/ReportTemplateSelector";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
 import { loadActiveRotation, loadRotations } from "../../data/localRotations";
-import { buildWhatsAppReport } from "../../utils/reportGenerator";
+import {
+  buildWhatsAppReport,
+  getReportTemplateForSpecialty,
+} from "../../utils/reportGenerator";
 import type { PatientListItem } from "../../types/patient";
 import type { ReportStep, ReportTemplateType } from "../../types/report";
 import Icon from "../../components/ui/Icon";
@@ -44,10 +47,10 @@ export default function ReportGeneratorPage({
     (rotation) => rotation.id === patient.rotationId,
   );
   const patientMatchesRotation = patient.rotationId === activeRotation.id;
-  const fallbackTemplate: ReportTemplateType =
-    patientRotation?.specialty === "Ilmu Penyakit Dalam"
-      ? "Ilmu Penyakit Dalam"
-      : "Neurologi";
+  const reportTemplate = getReportTemplateForSpecialty(
+    patientRotation?.specialty,
+  );
+  const fallbackTemplate: ReportTemplateType = reportTemplate ?? "Neurologi";
 
   const followUps = useMemo(
     () => getFollowUps(patient.id, fallbackTemplate),
@@ -86,7 +89,9 @@ export default function ReportGeneratorPage({
   const generateReport = (nextTemplate: ReportTemplateType = templateType) => {
     if (!selectedFollowUp) return;
     setReportText(
-      buildWhatsAppReport(patient, selectedFollowUp, nextTemplate),
+      buildWhatsAppReport(patient, selectedFollowUp, nextTemplate, {
+        rotationName: patientRotation?.name,
+      }),
     );
     setTemplateType(nextTemplate);
     setGeneratedKey(
@@ -124,8 +129,12 @@ export default function ReportGeneratorPage({
         textarea.style.opacity = "0";
         document.body.appendChild(textarea);
         textarea.select();
-        document.execCommand("copy");
+        const copied = document.execCommand("copy");
         document.body.removeChild(textarea);
+
+        if (!copied) {
+          throw new Error("Clipboard command was rejected.");
+        }
       }
 
       setCopied(true);
@@ -169,6 +178,49 @@ export default function ReportGeneratorPage({
               className="mt-6 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700"
             >
               Kembali ke Daftar Pasien
+            </button>
+          </section>
+        </main>
+      </AppShell>
+    );
+  }
+
+  if (!patientRotation || !reportTemplate) {
+    const title = patientRotation
+      ? "Report Generator untuk stase ini belum tersedia"
+      : "Stase pasien tidak ditemukan";
+    const description = patientRotation
+      ? `MVP RekamMedisku saat ini menyediakan template laporan untuk Neurologi dan Ilmu Penyakit Dalam. Stase ${patientRotation.name} tetap dapat digunakan sebagai rotasi tanpa menghapus data pasien atau riwayat.`
+      : "Data rotasi pasien tidak ditemukan. Periksa kembali data stase sebelum membuat laporan.";
+
+    return (
+      <AppShell
+        activeItem={activeItem}
+        onNavigate={onNavigate}
+        searchValue=""
+        onSearchChange={() => undefined}
+        searchEnabled={false}
+      >
+        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-24">
+          <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
+              <Icon name="document" className="h-5 w-5" />
+            </div>
+            <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
+              Report Generator
+            </p>
+            <h1 className="mt-2 text-xl font-bold text-slate-900">
+              {title}
+            </h1>
+            <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-500">
+              {description}
+            </p>
+            <button
+              type="button"
+              onClick={() => onNavigate("Stase Saya")}
+              className="mt-6 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
+            >
+              Kembali ke Stase
             </button>
           </section>
         </main>

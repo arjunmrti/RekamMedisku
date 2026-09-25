@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "ignoreDeprecations": "6.0",
+    "types": ["node"],
+    "rootDir": ".",
+    "outDir": ".test-dist",
+    "noEmitOnError": true
+  },
+  "include": [
+    "tests/**/*.ts",
+    "src/utils/reportGenerator.ts",
+    "src/types/followUp.ts",
+    "src/types/patient.ts",
+    "src/types/report.ts",
+    "src/types/rotation.ts"
+  ]
+}

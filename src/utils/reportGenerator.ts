@@ -1,6 +1,7 @@
 import type { FollowUpEntry } from "../types/followUp";
 import type { PatientListItem } from "../types/patient";
 import type { ReportTemplateType } from "../types/report";
+import type { RotationSpecialty } from "../types/rotation";
 
 function cleanBlock(value: string) {
   const text = value.trim();
@@ -9,6 +10,23 @@ function cleanBlock(value: string) {
 
 export function formatReportDate(date: string) {
   return date || "Tanggal belum tersedia";
+}
+
+export function getReportGreeting(date = new Date()) {
+  const hour = date.getHours();
+
+  if (hour < 11) return "Selamat pagi Dok";
+  if (hour < 15) return "Selamat siang Dok";
+  if (hour < 18) return "Selamat sore Dok";
+  return "Selamat malam Dok";
+}
+
+export function getReportTemplateForSpecialty(
+  specialty: RotationSpecialty | undefined,
+): ReportTemplateType | null {
+  if (specialty === "Neurologi") return "Neurologi";
+  if (specialty === "Ilmu Penyakit Dalam") return "Ilmu Penyakit Dalam";
+  return null;
 }
 
 function getTemplateObjective(
@@ -21,6 +39,7 @@ function getTemplateObjective(
     .filter(Boolean);
 
   const neurologyPrefixes = [
+    "Kesadaran:",
     "GCS E/M/V:",
     "FKL:",
     "N. Cranialis:",
@@ -40,6 +59,7 @@ function getTemplateObjective(
   ];
 
   const internalMedicinePrefixes = [
+    "Keadaan Umum:",
     "Kesadaran:",
     "Kepala & Leher:",
     "Thoraks:",
@@ -53,7 +73,9 @@ function getTemplateObjective(
       ? neurologyPrefixes
       : internalMedicinePrefixes;
 
-  return lines.filter((line) => prefixes.some((prefix) => line.startsWith(prefix)));
+  return [
+    ...new Set(lines.filter((line) => prefixes.some((prefix) => line.startsWith(prefix)))),
+  ];
 }
 
 function getObjectiveWithoutTemplateSection(
@@ -72,12 +94,20 @@ function getObjectiveWithoutTemplateSection(
     .join("\n");
 }
 
+type BuildWhatsAppReportOptions = {
+  rotationName?: string;
+  generatedAt?: Date;
+};
+
 export function buildWhatsAppReport(
   patient: PatientListItem,
   followUp: FollowUpEntry,
   templateType: ReportTemplateType,
+  options: BuildWhatsAppReportOptions = {},
 ) {
   const exams = followUp.supportingExams ?? [];
+  const rotationName = options.rotationName?.trim() || templateType;
+  const greeting = getReportGreeting(options.generatedAt);
   const planning =
     followUp.planning?.trim() ||
     followUp.plan?.trim() ||
@@ -131,7 +161,7 @@ export function buildWhatsAppReport(
       : templateHeading + "\nBelum ada catatan.";
 
   return [
-    "Selamat pagi Dok, izin melaporkan follow-up pasien:",
+    greeting + ", izin melaporkan follow-up pasien:",
     "",
     "Nama: " + patient.name,
     "Umur: " + patient.age + " tahun",
@@ -139,7 +169,7 @@ export function buildWhatsAppReport(
     "Ruangan: " + patient.room,
     "Bed: " + patient.bed,
     "DPJP: " + patient.doctor,
-    "Stase: " + templateType,
+    "Stase: " + rotationName,
     "Follow-Up #" +
       followUp.number +
       " · " +
