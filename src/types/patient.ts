@@ -12,5 +12,8 @@ export type PatientListItem = {
   doctor: string;
   lastFollowUp: string;
   followUpNumber: number;
+  lastFollowUpAt?: string;
+  createdAt?: string;
+  admissionDate?: string;
   status: PatientStatus;
 };
