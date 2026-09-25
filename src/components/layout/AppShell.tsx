@@ -3,7 +3,7 @@ import { useState } from "react";
 import MobileBottomNav from "./MobileBottomNav";
 import Sidebar from "./Sidebar";
 import TopHeader from "./TopHeader";
-import Icon from "../ui/Icon";
+import Icon, { type IconName } from "../ui/Icon";
 
 type AppShellProps = {
   searchValue: string;
