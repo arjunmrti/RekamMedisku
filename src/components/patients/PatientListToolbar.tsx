@@ -3,11 +3,12 @@ import Icon from "../ui/Icon";
 type PatientListToolbarProps = {
   searchValue: string;
   status: "Semua" | "Aktif" | "Diarsipkan";
-  room: "Semua" | "3A" | "3B" | "4A";
+  room: string;
+  rooms: string[];
   sort: "newest" | "oldest" | "name" | "bed";
   onSearchChange: (value: string) => void;
   onStatusChange: (value: "Semua" | "Aktif" | "Diarsipkan") => void;
-  onRoomChange: (value: "Semua" | "3A" | "3B" | "4A") => void;
+  onRoomChange: (value: string) => void;
   onSortChange: (value: "newest" | "oldest" | "name" | "bed") => void;
   onReset: () => void;
 };
@@ -16,6 +17,7 @@ export default function PatientListToolbar({
   searchValue,
   status,
   room,
+  rooms,
   sort,
   onSearchChange,
   onStatusChange,
@@ -60,16 +62,16 @@ export default function PatientListToolbar({
 
           <select
             value={room}
-            onChange={(event) =>
-              onRoomChange(event.target.value as "Semua" | "3A" | "3B" | "4A")
-            }
+            onChange={(event) => onRoomChange(event.target.value)}
             className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 focus:border-[#1677FF] focus:outline-none focus:ring-1 focus:ring-blue-500"
             aria-label="Filter ruangan"
           >
             <option value="Semua">Semua Ruangan</option>
-            <option value="3A">Ruang 3A</option>
-            <option value="3B">Ruang 3B</option>
-            <option value="4A">Ruang 4A</option>
+            {rooms.map((item) => (
+              <option key={item} value={item}>
+                Ruang {item}
+              </option>
+            ))}
           </select>
 
           <select
