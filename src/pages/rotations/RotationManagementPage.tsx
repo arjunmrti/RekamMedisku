@@ -302,7 +302,9 @@ export default function RotationManagementPage({
             <section className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
               RekamMedisku menggunakan konteks stase untuk menjaga data pasien
               tetap terpisah. Berpindah stase tidak menghapus riwayat stase
-              sebelumnya.
+              sebelumnya. Template klinis MVP saat ini tersedia untuk Neurologi
+              dan Ilmu Penyakit Dalam; stase lain dapat disimpan sebagai rotasi
+              tetapi template khususnya belum termasuk scope MVP.
             </section>
           </div>
         </main>
@@ -315,6 +317,10 @@ export default function RotationManagementPage({
       />
 
       <RotationFormModal
+        key={
+          (formOpen ? "open:" : "closed:") +
+          (editingRotation?.id ?? "new")
+        }
         open={formOpen}
         rotation={editingRotation}
         onClose={() => setFormOpen(false)}
