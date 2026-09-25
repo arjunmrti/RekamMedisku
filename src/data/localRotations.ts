@@ -143,14 +143,19 @@ export function upsertRotation(input: {
   const now = new Date().toISOString();
   const id = input.id ?? "rotation-" + Date.now();
 
+  const existing = rotations.find((rotation) => rotation.id === id);
+  const activeId = loadActiveRotationId();
   const next: Rotation = {
     id,
     name: input.name.trim(),
     specialty: input.specialty,
     startDate: input.startDate,
     endDate: input.endDate,
-    status: input.status,
-    createdAt: rotations.find((rotation) => rotation.id === id)?.createdAt ?? now,
+    status:
+      id === activeId && input.status !== "Aktif"
+        ? "Aktif"
+        : input.status,
+    createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
 
