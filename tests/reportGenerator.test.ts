@@ -129,6 +129,7 @@ test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", ()
   assert.match(report, /^Selamat malam Dok, izin melaporkan follow-up pasien:/);
   assert.match(report, /Stase: Rotasi Neurologi September/);
   assert.match(report, /Pemeriksaan neurologis:/);
+  assert.match(report, /- Kesadaran: Compos mentis/);
   assert.match(report, /- GCS E\/M\/V: 456/);
   assert.match(report, /- N\. Cranialis: Dalam batas normal/);
   assert.match(report, /- Rontgen · 26 September 2026/);
