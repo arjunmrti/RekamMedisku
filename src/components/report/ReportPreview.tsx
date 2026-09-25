@@ -66,10 +66,25 @@ export default function ReportPreview({
               </button>
             </div>
           </div>
-        ) : (
+        ) : text ? (
           <div className="max-h-[680px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-inner sm:p-6">
             <div className="whitespace-pre-wrap font-mono text-[11px] leading-6 text-slate-700">
               {text}
+            </div>
+          </div>
+        ) : (
+          <div className="flex min-h-[280px] items-center justify-center rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center">
+            <div className="max-w-sm">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
+                <Icon name="document" className="h-6 w-6" />
+              </div>
+              <p className="mt-4 text-sm font-bold text-slate-700">
+                Preview belum dibuat
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                Pilih follow-up, pastikan template sesuai, lalu klik Generate
+                Laporan untuk membuat draft.
+              </p>
             </div>
           </div>
         )}
