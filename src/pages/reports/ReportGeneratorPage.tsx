@@ -48,14 +48,8 @@ export default function ReportGeneratorPage({
     useState<ReportTemplateType>(initialTemplate);
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [reportText, setReportText] = useState(
-    initialFollowUp
-      ? buildWhatsAppReport(patient, initialFollowUp, initialTemplate)
-      : "",
-  );
-  const [generatedKey, setGeneratedKey] = useState(
-    initialFollowUp ? initialFollowUp.id + ":" + initialTemplate : "",
-  );
+  const [reportText, setReportText] = useState("");
+  const [generatedKey, setGeneratedKey] = useState("");
 
   const selectedFollowUp =
     followUps.find((entry) => entry.id === selectedFollowUpId) ??
@@ -64,7 +58,13 @@ export default function ReportGeneratorPage({
   const sourceTemplate: ReportTemplateType =
     selectedFollowUp?.templateType ?? "Neurologi";
 
-  const activeStep: ReportStep = copied ? 6 : editing ? 5 : 4;
+  const activeStep: ReportStep = copied
+    ? 6
+    : editing
+      ? 5
+      : reportText
+        ? 4
+        : 2;
 
   const generateReport = (nextTemplate: ReportTemplateType = templateType) => {
     if (!selectedFollowUp) return;
@@ -86,8 +86,8 @@ export default function ReportGeneratorPage({
     const nextTemplate = next.templateType ?? "Neurologi";
     setSelectedFollowUpId(id);
     setTemplateType(nextTemplate);
-    setReportText(buildWhatsAppReport(patient, next, nextTemplate));
-    setGeneratedKey(id + ":" + nextTemplate);
+    setReportText("");
+    setGeneratedKey("");
     setEditing(false);
     setCopied(false);
   };
@@ -123,6 +123,7 @@ export default function ReportGeneratorPage({
         onNavigate={onNavigate}
         searchValue=""
         onSearchChange={() => undefined}
+        searchEnabled={false}
       >
         <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-7">
           <div className="mx-auto flex min-h-[70vh] w-full max-w-[900px] items-center justify-center">
@@ -271,6 +272,7 @@ export default function ReportGeneratorPage({
               followUp={selectedFollowUp}
               templateType={templateType}
               copied={copied}
+              hasReport={Boolean(reportText)}
               onCopy={handleCopy}
               onRegenerate={() => generateReport()}
             />
