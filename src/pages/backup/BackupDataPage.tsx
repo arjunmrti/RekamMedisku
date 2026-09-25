@@ -20,6 +20,7 @@ import {
   triggerJsonDownload,
 } from "../../utils/backup";
 import type { PatientListItem } from "../../types/patient";
+import { toLocalIsoDate } from "../../utils/date";
 import Icon from "../../components/ui/Icon";
 
 type BackupDataPageProps = NavigationProps;
@@ -158,9 +159,7 @@ export default function BackupDataPage({
       const payload = buildBackupPayload(currentPatients);
       const content = serializeBackup(payload);
       const fileName =
-        "rekammedisku-backup-" +
-        new Date(payload.exportedAt).toISOString().slice(0, 10) +
-        ".json";
+        "rekammedisku-backup-" + toLocalIsoDate() + ".json";
       const size = triggerJsonDownload(content, fileName);
 
       saveBackupSnapshot(payload.exportedAt);
