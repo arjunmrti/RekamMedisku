@@ -2,6 +2,7 @@ export type PatientStatus = "Aktif" | "Diarsipkan";
 
 export type PatientListItem = {
   id: string;
+  rotationId: string;
   name: string;
   age: number;
   gender: "Laki-laki" | "Perempuan";
