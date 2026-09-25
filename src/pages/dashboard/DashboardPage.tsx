@@ -12,7 +12,7 @@ import EncouragementBanner from "../../components/dashboard/EncouragementBanner"
 import type { Patient } from "../../types/dashboard";
 
 const patients: Patient[] = [
-  { name: "Andi Pratama", rm: "24012601", room: "3A", bed: "12", doctor: "dr. Budi Santoso, Sp.N", lastFollowUp: "26 Sep 2026 · 09:30", status: "Aktif" },
+  { name: "Muhammad Fadel", rm: "24012601", room: "3A", bed: "12", doctor: "dr. Budi Santoso, Sp.N", lastFollowUp: "26 Sep 2026 · 09:30", status: "Aktif" },
   { name: "Budi Santoso", rm: "24012602", room: "3A", bed: "14", doctor: "dr. Budi Santoso, Sp.N", lastFollowUp: "25 Sep 2026 · 14:20", status: "Aktif" },
   { name: "Citra Lestari", rm: "24012603", room: "3B", bed: "07", doctor: "dr. Sari Dewi, Sp.N", lastFollowUp: "25 Sep 2026 · 10:15", status: "Aktif" },
   { name: "Dewi Anggraini", rm: "24012604", room: "3B", bed: "08", doctor: "dr. Sari Dewi, Sp.N", lastFollowUp: "24 Sep 2026 · 16:45", status: "Aktif" },
