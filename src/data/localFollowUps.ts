@@ -46,3 +46,14 @@ export function appendSavedFollowUp(
     JSON.stringify({ ...current, [patientId]: next }),
   );
 }
+export function replaceSavedFollowUps(
+  followUpsByPatient: Record<string, FollowUpEntry[]>,
+) {
+  window.localStorage.setItem(SAVED_KEY, JSON.stringify(followUpsByPatient));
+}
+
+export function clearAllFollowUpDrafts() {
+  Object.keys(window.localStorage)
+    .filter((key) => key.startsWith(DRAFT_PREFIX))
+    .forEach((key) => window.localStorage.removeItem(key));
+}
