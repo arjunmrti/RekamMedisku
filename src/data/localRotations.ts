@@ -78,13 +78,16 @@ export function loadActiveRotationId(): string {
   const storedId = window.localStorage.getItem(ACTIVE_ROTATION_KEY);
   const rotations = loadRotations();
 
-  if (storedId && rotations.some((rotation) => rotation.id === storedId)) {
-    return storedId;
+  const storedRotation = rotations.find((rotation) => rotation.id === storedId);
+  if (storedRotation?.status === "Aktif") {
+    return storedRotation.id;
   }
 
-  return rotations.find((rotation) => rotation.status === "Aktif")?.id ??
+  return (
+    rotations.find((rotation) => rotation.status === "Aktif")?.id ??
     rotations[0]?.id ??
-    DEFAULT_ROTATIONS[0].id;
+    DEFAULT_ROTATIONS[0].id
+  );
 }
 
 export function loadActiveRotation(): Rotation {
@@ -105,6 +108,9 @@ export function setActiveRotationId(rotationId: string) {
 export function activateRotation(rotationId: string): Rotation[] {
   const rotations = loadRotations();
   const now = new Date().toISOString();
+
+  const target = rotations.find((rotation) => rotation.id === rotationId);
+  if (!target) return rotations;
 
   const updated = rotations.map((rotation) => {
     if (rotation.id === rotationId) {
@@ -145,6 +151,10 @@ export function upsertRotation(input: {
 
   const existing = rotations.find((rotation) => rotation.id === id);
   const activeId = loadActiveRotationId();
+  if (!input.name.trim() || !input.startDate || !input.endDate) {
+    return rotations;
+  }
+
   const next: Rotation = {
     id,
     name: input.name.trim(),
