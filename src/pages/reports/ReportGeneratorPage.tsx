@@ -8,7 +8,6 @@ import ReportTemplateSelector from "../../components/report/ReportTemplateSelect
 import { loadSavedFollowUps } from "../../data/localFollowUps";
 import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
 import { buildWhatsAppReport } from "../../utils/reportGenerator";
-import type { FollowUpEntry } from "../../types/followUp";
 import type { PatientListItem } from "../../types/patient";
 import type { ReportStep, ReportTemplateType } from "../../types/report";
 import Icon from "../../components/ui/Icon";
