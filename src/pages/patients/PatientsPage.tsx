@@ -7,7 +7,7 @@ import PatientQuickActions from "../../components/patients/PatientQuickActions";
 import PatientSummaryPanel from "../../components/patients/PatientSummaryPanel";
 import PatientTips from "../../components/patients/PatientTips";
 import AddPatientModal from "../../components/patients/AddPatientModal";
-import { mockPatients } from "../../data/mockPatients";
+import { loadPatients, savePatients } from "../../data/localPatients";
 import type { PatientListItem } from "../../types/patient";
 
 type PatientsPageProps = NavigationProps & {
@@ -28,9 +28,9 @@ export default function PatientsPage({
   const [sort, setSort] = useState<
     "newest" | "oldest" | "name" | "bed"
   >("newest");
-  const [patients, setPatients] = useState(mockPatients);
+  const [patients, setPatients] = useState(() => loadPatients());
   const [selectedPatient, setSelectedPatient] =
-    useState<PatientListItem | null>(mockPatients[0]);
+    useState<PatientListItem | null>(() => loadPatients()[0] ?? null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const filteredPatients = useMemo(() => {
@@ -82,7 +82,11 @@ export default function PatientsPage({
   };
 
   const handleAddPatient = (patient: PatientListItem) => {
-    setPatients((current) => [patient, ...current]);
+    setPatients((current) => {
+      const next = [patient, ...current];
+      savePatients(next);
+      return next;
+    });
     setSelectedPatient(patient);
   };
 
