@@ -8,21 +8,16 @@ import QuickActions from "../../components/dashboard/QuickActions";
 import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients } from "../../data/localPatients";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
-import { mockFollowUpsByPatient } from "../../data/mockFollowUps";
 import type { PatientListItem } from "../../types/patient";
 import type { FollowUpEntry } from "../../types/followUp";
 import { toLocalIsoDate } from "../../utils/date";
 
 function getFollowUps(patientId: string): FollowUpEntry[] {
   const local = loadSavedFollowUps()[patientId] ?? [];
-  const mock = mockFollowUpsByPatient[patientId] ?? [];
-  const seen = new Set<string>();
 
-  return [...local, ...mock]
-    .filter((entry) => {
-      if (seen.has(entry.id)) return false;
-      seen.add(entry.id);
-      return true;
+  return [...local]
+    .filter((entry, index, entries) => {
+      return entries.findIndex((candidate) => candidate.id === entry.id) === index;
     })
     .sort((a, b) => (b.isoDate + b.time).localeCompare(a.isoDate + a.time));
 }
