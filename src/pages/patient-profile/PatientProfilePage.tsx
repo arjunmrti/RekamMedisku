@@ -145,7 +145,7 @@ export default function PatientProfilePage({
 
               <div ref={examsRef}>
                 <SupportingExams
-                  exams={supportingExams}
+                  exams={latestSupportingExams}
                   onSelect={handleExamSelect}
                 />
               </div>
