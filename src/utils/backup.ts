@@ -5,7 +5,6 @@ import {
   saveFollowUpDraft,
   replaceSavedFollowUps,
 } from "../data/localFollowUps";
-import { mockFollowUpsByPatient } from "../data/mockFollowUps";
 import { loadPatients, replacePatients } from "../data/localPatients";
 import {
   loadActiveRotationId,
@@ -23,10 +22,7 @@ function mergeFollowUps(
   patientId: string,
   saved: Record<string, FollowUpEntry[]>,
 ): FollowUpEntry[] {
-  const merged = [
-    ...(saved[patientId] ?? []),
-    ...(mockFollowUpsByPatient[patientId] ?? []),
-  ];
+  const merged = [...(saved[patientId] ?? [])];
   const seen = new Set<string>();
 
   return merged.filter((entry) => {
