@@ -7,13 +7,26 @@ export type SupportingExamForm = {
 };
 
 export type NeurologyFormValues = {
-  gcs: string;
-  pupil: string;
-  motoric: string;
-  sensory: string;
-  reflex: string;
+  generalCondition: string;
+  consciousness: string;
+  gcsEye: string;
+  gcsMotor: string;
+  gcsVerbal: string;
+  fkl: string;
   cranialNerve: string;
-  neurologicalStatus: string;
+  pupil: string;
+  neckStiffness: string;
+  brudzinski: string;
+  kernig: string;
+  movement: string;
+  tone: string;
+  sensory: string;
+  upperStrength: string;
+  lowerStrength: string;
+  physiologicReflex: string;
+  pathologicReflex: string;
+  autonomic: string;
+  provocation: string;
 };
 
 export type InternalMedicineFormValues = {
@@ -30,25 +43,31 @@ export type FollowUpFormValues = {
   followUpDate: string;
   followUpTime: string;
   subjective: {
-    chiefComplaint: string;
-    currentComplaints: string;
-    presentIllness: string;
+    keluhan: string;
+    riwayatKeluhanSerupa: string;
     pastHistory: string;
     medicationHistory: string;
     allergies: string;
-    other: string;
+    otherHistory: string;
   };
   objective: {
-    bloodPressure: string;
+    generalCondition: string;
+    systolic: string;
+    diastolic: string;
     pulse: string;
     respiratoryRate: string;
     temperature: string;
     spo2: string;
-    physicalExam: string;
+    oxygenVia: string;
+    painNrs: string;
+    physicalFindings: string;
+    supportingExamText: string;
   };
   neurology: NeurologyFormValues;
   internalMedicine: InternalMedicineFormValues;
   supportingExams: SupportingExamForm[];
   assessments: string[];
-  plan: string;
+  assessmentCodes: string[];
+  planning: string;
+  instruction: string;
 };
