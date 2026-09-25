@@ -1,6 +1,6 @@
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
-import Icon from "../ui/Icon";
+import Icon, { type IconName } from "../ui/Icon";
 import StatusBadge from "../ui/StatusBadge";
 
 type PatientSummaryPanelProps = {
@@ -86,7 +86,11 @@ export default function PatientSummaryPanel({
               label="Follow-Up"
               value={String(patient.followUpNumber)}
             />
-            <Metric label="Stase" value={rotation.name} icon="brain" />
+            <Metric
+              label="Stase"
+              value={rotation.name}
+              icon={rotation.specialty === "Neurologi" ? "brain" : "stethoscope"}
+            />
             <Metric
               label="Terakhir"
               value={
@@ -142,7 +146,7 @@ function Metric({
 }: {
   label: string;
   value: string;
-  icon?: "brain";
+  icon?: IconName;
 }) {
   return (
     <div className="rounded-lg bg-slate-50 p-2.5">
