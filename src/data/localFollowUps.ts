@@ -44,7 +44,15 @@ export function loadSavedFollowUps(): Record<string, FollowUpEntry[]> {
     return seeded;
   }
 
-  return readJson<Record<string, FollowUpEntry[]>>(SAVED_KEY, {});
+  const parsed = readJson<unknown>(SAVED_KEY, null);
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(parsed).filter(([, entries]) => Array.isArray(entries)),
+  ) as Record<string, FollowUpEntry[]>;
 }
 
 export function appendSavedFollowUp(
