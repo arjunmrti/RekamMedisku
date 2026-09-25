@@ -181,13 +181,25 @@ export default function ObjectiveSection({
           </div>
 
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            {[
-              ["generalCondition", "Status Kesadaran", "Contoh: compos mentis / somnolen / stupor / koma"],
-              ["gcsEye", "GCS Ringkas", "GCS dapat dilengkapi dengan E/M/V di atas."],
-            ].map(([key, label, placeholder]) => {
-              if (key !== "generalCondition") return null;
-              return null;
-            })}
+            <label className="space-y-1.5">
+              <span className="block text-[11px] font-semibold text-slate-600">Status Kesadaran</span>
+              <input
+                value={neurology.consciousness}
+                onChange={(event) =>
+                  onNeurologyChange({ ...neurology, consciousness: event.target.value })
+                }
+                placeholder="Contoh: compos mentis / somnolen / stupor"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700 outline-none focus:border-[#1677FF]"
+              />
+            </label>
+            <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+              <span className="block text-[11px] font-semibold text-slate-600">GCS</span>
+              <span className="mt-1 block text-xs font-bold text-[#1677FF]">
+                {neurology.gcsEye && neurology.gcsMotor && neurology.gcsVerbal
+                  ? neurology.gcsEye + neurology.gcsMotor + neurology.gcsVerbal
+                  : "E / M / V belum lengkap"}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
