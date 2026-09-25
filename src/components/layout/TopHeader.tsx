@@ -69,19 +69,14 @@ export default function TopHeader({
           <span>{today}</span>
         </div>
 
-        <button
-          type="button"
-          aria-label="Notifikasi"
-          className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
+        <span
+          aria-hidden="true"
+          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-300"
         >
           <Icon name="bell" className="h-5 w-5" />
-        </button>
+        </span>
 
-        <button
-          type="button"
-          aria-label="Buka menu profil"
-          className="flex items-center gap-2 border-l border-slate-200 pl-3 text-left sm:gap-3"
-        >
+        <div className="flex items-center gap-2 border-l border-slate-200 pl-3 sm:gap-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#60708A] text-xs font-semibold text-white sm:h-10 sm:w-10">
             MF
           </div>
@@ -93,11 +88,7 @@ export default function TopHeader({
               Mahasiswa Kedokteran
             </span>
           </div>
-          <Icon
-            name="chevron"
-            className="hidden h-4 w-4 text-slate-400 sm:block"
-          />
-        </button>
+        </div>
       </div>
     </header>
   );
