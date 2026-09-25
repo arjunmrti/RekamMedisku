@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { PatientListItem } from "../../types/patient";
 import Icon from "../ui/Icon";
 import StatusBadge from "../ui/StatusBadge";
@@ -53,8 +52,6 @@ export default function PatientListTable({
   onEditPatient,
   onToggleArchive,
 }: PatientListTableProps) {
-  const [actionOpenId, setActionOpenId] = useState<string | null>(null);
-
   if (patients.length === 0) {
     return (
       <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
@@ -142,56 +139,34 @@ export default function PatientListTable({
                 <td className="px-3 py-3.5">
                   <StatusBadge status={patient.status} />
                 </td>
-                <td className="relative px-3 py-3.5 text-center">
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setActionOpenId((current) =>
-                        current === patient.id ? null : patient.id,
-                      );
-                    }}
-                    aria-label={"Opsi pasien " + patient.name}
-                    aria-expanded={actionOpenId === patient.id}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-base tracking-[0.2em] text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-                  >
-                    <span aria-hidden="true">•••</span>
-                  </button>
-
-                  {actionOpenId === patient.id ? (
-                    <div
-                      className="absolute right-3 top-12 z-20 w-44 rounded-xl border border-slate-200 bg-white p-1.5 text-left shadow-xl"
-                      onClick={(event) => event.stopPropagation()}
+                <td className="px-3 py-3.5">
+                  <div className="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onEditPatient(patient);
+                      }}
+                      className="rounded-lg border border-slate-200 px-2.5 py-2 text-[10px] font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActionOpenId(null);
-                          onEditPatient(patient);
-                        }}
-                        className="w-full rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-                      >
-                        Edit Data Pasien
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActionOpenId(null);
-                          onToggleArchive(patient);
-                        }}
-                        className={
-                          "w-full rounded-lg px-3 py-2 text-left text-xs font-semibold hover:bg-slate-50 " +
-                          (patient.status === "Aktif"
-                            ? "text-rose-600"
-                            : "text-emerald-600")
-                        }
-                      >
-                        {patient.status === "Aktif"
-                          ? "Arsipkan Pasien"
-                          : "Pulihkan Pasien"}
-                      </button>
-                    </div>
-                  ) : null}
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onToggleArchive(patient);
+                      }}
+                      className={
+                        "rounded-lg border px-2.5 py-2 text-[10px] font-semibold transition hover:bg-slate-50 " +
+                        (patient.status === "Aktif"
+                          ? "border-rose-100 text-rose-600"
+                          : "border-emerald-100 text-emerald-600")
+                      }
+                    >
+                      {patient.status === "Aktif" ? "Arsip" : "Pulihkan"}
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
