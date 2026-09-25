@@ -41,10 +41,12 @@ export default function ReportSummaryCard({
               "rounded-full border px-2 py-0.5 text-[10px] font-semibold " +
               (copied
                 ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-blue-100 bg-blue-50 text-[#1677FF]")
+                : hasReport
+                  ? "border-blue-100 bg-blue-50 text-[#1677FF]"
+                  : "border-slate-200 bg-slate-50 text-slate-400")
             }
           >
-            {copied ? "Tersalin" : "Draft siap"}
+            {copied ? "Tersalin" : hasReport ? "Draft siap" : "Belum dibuat"}
           </span>
         </div>
 
@@ -126,7 +128,7 @@ export default function ReportSummaryCard({
             ["Review", true, "Follow-up dipilih untuk dilaporkan."],
             ["Generate", hasReport, hasReport ? "Draft dibuat dari data tersimpan." : "Belum dibuat; klik Generate Laporan."],
             ["Preview", hasReport, hasReport ? "Hasil dapat ditinjau sebelum disalin." : "Preview tersedia setelah laporan dibuat."],
-            ["Edit", false, "Opsional dan hanya mengubah draft laporan."],
+            ["Edit", hasReport, hasReport ? "Opsional dan hanya mengubah draft laporan." : "Tersedia setelah laporan dibuat."],
             ["Salin", copied, "Copy ke clipboard untuk paste manual."],
           ].map(([title, done, description]) => (
             <div key={title as string} className="flex items-start gap-3">
