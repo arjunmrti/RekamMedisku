@@ -25,16 +25,26 @@ export default function SupportingExamSection({
   onChange,
 }: SupportingExamSectionProps) {
   const [adding, setAdding] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<SupportingExamForm>(emptyExam());
 
   const resetDraft = () => {
     setDraft(emptyExam());
+    setEditingId(null);
     setAdding(false);
   };
 
   const addExam = () => {
     if (!draft.examType.trim() || !draft.date) return;
-    onChange([...exams, draft]);
+    if (editingId) {
+      onChange(
+        exams.map((exam) =>
+          exam.id === editingId ? { ...draft, id: editingId } : exam,
+        ),
+      );
+    } else {
+      onChange([...exams, draft]);
+    }
     resetDraft();
   };
 
@@ -183,7 +193,11 @@ export default function SupportingExamSection({
                   <div className="flex shrink-0 items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setDraft(exam)}
+                      onClick={() => {
+                        setDraft(exam);
+                        setEditingId(exam.id);
+                        setAdding(true);
+                      }}
                       className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#1677FF] hover:bg-blue-50"
                     >
                       Edit
