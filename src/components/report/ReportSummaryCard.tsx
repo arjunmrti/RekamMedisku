@@ -101,7 +101,7 @@ export default function ReportSummaryCard({
           className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#1677FF]"
         >
           <Icon name="bolt" className="h-3.5 w-3.5" />
-          Generate Ulang
+          {hasReport ? "Generate Ulang" : "Generate Laporan"}
         </button>
 
         {copied ? (
@@ -130,7 +130,7 @@ export default function ReportSummaryCard({
             ["Review", true, "Follow-up dipilih untuk dilaporkan."],
             ["Generate", hasReport, hasReport ? "Draft dibuat dari data tersimpan." : "Belum dibuat; klik Generate Laporan."],
             ["Preview", hasReport, hasReport ? "Hasil dapat ditinjau sebelum disalin." : "Preview tersedia setelah laporan dibuat."],
-            ["Edit", hasReport, hasReport ? "Opsional dan hanya mengubah draft laporan." : "Tersedia setelah laporan dibuat."],
+            ["Edit", false, hasReport ? "Opsional dan hanya mengubah draft laporan." : "Tersedia setelah laporan dibuat."],
             ["Salin", copied, "Copy ke clipboard untuk paste manual."],
           ].map(([title, done, description]) => (
             <div key={title as string} className="flex items-start gap-3">
