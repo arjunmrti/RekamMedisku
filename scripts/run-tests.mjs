@@ -8,10 +8,11 @@ const outputDir = path.join(rootDir, ".test-dist");
 const tscPath = path.join(rootDir, "node_modules", "typescript", "bin", "tsc");
 const testFile = path.join(outputDir, "tests", "reportGenerator.test.js");
 
-function run(command, args) {
+function run(command, args, env = {}) {
   execFileSync(command, args, {
     cwd: rootDir,
     stdio: "inherit",
+    env: { ...process.env, ...env },
   });
 }
 
@@ -30,7 +31,9 @@ try {
     "utf8",
   );
 
-  run(process.execPath, ["--test", testFile]);
+  run(process.execPath, ["--test", testFile], {
+    TZ: "Asia/Makassar",
+  });
 } catch (error) {
   process.exitCode = error?.status ?? 1;
 } finally {
