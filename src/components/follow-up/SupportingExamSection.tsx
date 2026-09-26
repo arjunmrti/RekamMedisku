@@ -142,8 +142,7 @@ export default function SupportingExamSection({
       ? exams.map((exam) => (exam.id === editingId ? nextExam : exam))
       : [...exams, nextExam];
 
-    if (editingId) {
-      onChange(nextExams);
+    onChange(nextExams);
 
     if (
       previousExam?.attachmentId &&
