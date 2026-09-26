@@ -10,18 +10,7 @@ const LEGACY_DEMO_ROTATION_IDS = new Set([
   "rotation-obgyn",
 ]);
 
-export const DEFAULT_ROTATIONS: Rotation[] = [
-  {
-    id: "rotation-neurologi",
-    name: "Neurologi",
-    specialty: "Neurologi",
-    startDate: "2026-09-01",
-    endDate: "2026-09-30",
-    status: "Aktif",
-    createdAt: "2026-09-01T00:00:00.000Z",
-    updatedAt: "2026-09-26T09:30:00.000Z",
-  },
-];
+export const DEFAULT_ROTATIONS: Rotation[] = [];
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -36,8 +25,7 @@ export function loadRotations(): Rotation[] {
   const raw = window.localStorage.getItem(ROTATIONS_KEY);
 
   if (!raw) {
-    saveRotations(DEFAULT_ROTATIONS);
-    return DEFAULT_ROTATIONS;
+    return [];
   }
 
   const stored = readJson<unknown>(ROTATIONS_KEY, null);
@@ -53,16 +41,14 @@ export function loadRotations(): Rotation[] {
     ) as Rotation[];
 
     if (migrationsApplied.length !== stored.length) {
-      const nextRotations =
-        migrationsApplied.length > 0 ? migrationsApplied : DEFAULT_ROTATIONS;
-      saveRotations(nextRotations);
-      return nextRotations;
+      saveRotations(migrationsApplied);
+      return migrationsApplied;
     }
 
     return migrationsApplied;
   }
 
-  return DEFAULT_ROTATIONS;
+  return [];
 }
 
 export function saveRotations(rotations: Rotation[]) {
@@ -81,7 +67,7 @@ export function loadActiveRotationId(): string {
   return (
     rotations.find((rotation) => rotation.status === "Aktif")?.id ??
     rotations[0]?.id ??
-    DEFAULT_ROTATIONS[0].id
+    ""
   );
 }
 
@@ -92,7 +78,16 @@ export function loadActiveRotation(): Rotation {
   return (
     rotations.find((rotation) => rotation.id === activeId) ??
     rotations[0] ??
-    DEFAULT_ROTATIONS[0]
+    {
+      id: "",
+      name: "Belum ada stase",
+      specialty: "Lainnya",
+      startDate: "",
+      endDate: "",
+      status: "Mendatang",
+      createdAt: "",
+      updatedAt: "",
+    }
   );
 }
 
