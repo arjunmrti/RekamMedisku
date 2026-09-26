@@ -2,6 +2,16 @@ import type { PatientListItem, PatientStatus } from "../types/patient";
 
 const PATIENTS_KEY = "rekammedisku:patients";
 
+const LEGACY_DEMO_PATIENT_IDS = new Set([
+  "p-rotation-interna-24012607-demo",
+  "p-24012601",
+  "p-24012602",
+  "p-24012603",
+  "p-24012604",
+  "p-24012605",
+  "p-24012606",
+]);
+
 function readJson<T>(key: string, fallback: T): T {
   try {
     const raw = window.localStorage.getItem(key);
@@ -21,6 +31,10 @@ function normalizePatient(patient: PatientListItem): PatientListItem {
   };
 }
 
+function removeLegacyDemoPatients(patients: PatientListItem[]) {
+  return patients.filter((patient) => !LEGACY_DEMO_PATIENT_IDS.has(patient.id));
+}
+
 export function loadPatients(): PatientListItem[] {
   const stored = window.localStorage.getItem(PATIENTS_KEY);
 
@@ -34,12 +48,20 @@ export function loadPatients(): PatientListItem[] {
     return [];
   }
 
-  return parsed
+  const patients = parsed
     .filter(
       (patient): patient is PatientListItem =>
         typeof patient === "object" && patient !== null,
     )
     .map(normalizePatient);
+
+  const cleanedPatients = removeLegacyDemoPatients(patients);
+
+  if (cleanedPatients.length !== patients.length) {
+    savePatients(cleanedPatients);
+  }
+
+  return cleanedPatients;
 }
 
 export function savePatients(patients: PatientListItem[]) {
