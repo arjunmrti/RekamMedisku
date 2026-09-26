@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Icon from "../ui/Icon";
 import {
   createSlaberanTemplate,
@@ -138,16 +138,28 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
   const [errorMessage, setErrorMessage] = useState("");
   const [variable, setVariable] = useState(SLABERAN_VARIABLES[0]?.key ?? "");
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setErrorMessage("");
     try {
       const next = await syncSlaberanTemplatesWithSupabase();
       setTemplates(next);
-      setSelectedId((current) => current || next.find((item) => item.isDefault)?.id || next[0]?.id || "");
+      setSelectedId(
+        (current) =>
+          current ||
+          next.find((item) => item.isDefault)?.id ||
+          next[0]?.id ||
+          "",
+      );
     } catch (error) {
       const fallback = loadSlaberanTemplates();
       setTemplates(fallback);
-      setSelectedId((current) => current || fallback.find((item) => item.isDefault)?.id || fallback[0]?.id || "");
+      setSelectedId(
+        (current) =>
+          current ||
+          fallback.find((item) => item.isDefault)?.id ||
+          fallback[0]?.id ||
+          "",
+      );
       if (!fallback.length) {
         setErrorMessage(
           error instanceof Error
@@ -158,11 +170,11 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     if (!selectedId) {
@@ -467,10 +479,10 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
     if (block.type === "ward-summary") {
       return (
         <div className="flex flex-wrap gap-2">
-          {[
+          {([
             ["showEmptyRooms", "Tampilkan bangsal kosong"],
             ["highlightOccupied", "Tebalkan bangsal berisi pasien"],
-          ].map(([key, label]) => (
+          ] as Array<[keyof SlaberanTemplateBlockConfig, string]>).map(([key, label]) => (
             <label
               key={key}
               className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-600"
@@ -522,10 +534,10 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
 
           {block.type === "special-unit-list" ? (
             <div className="flex flex-wrap gap-2">
-              {[
+              {([
                 ["showEmptyRooms", "Tampilkan unit kosong"],
                 ["highlightOccupied", "Tebalkan unit berisi pasien"],
-              ].map(([key, label]) => (
+              ] as Array<[keyof SlaberanTemplateBlockConfig, string]>).map(([key, label]) => (
                 <label
                   key={key}
                   className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-600"
@@ -554,10 +566,10 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
     if (block.type === "summary") {
       return (
         <div className="flex flex-wrap gap-2">
-          {[
+          {([
             ["showDoctorCount", "Jumlah pasien dokter"],
             ["showTotalPatients", "Total pasien"],
-          ].map(([key, label]) => (
+          ] as Array<[keyof SlaberanTemplateBlockConfig, string]>).map(([key, label]) => (
             <label
               key={key}
               className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-600"
