@@ -427,6 +427,10 @@ async function persistFollowUpWithSupabaseInternal(
       }
     }
 
+    if (!remoteRow) {
+      throw new Error("Follow-up tidak berhasil ditemukan atau disimpan.");
+    }
+
     if (insertedFollowUpId) {
       for (const exam of entry.supportingExams ?? []) {
         const { data, error } = await supabase
@@ -443,10 +447,6 @@ async function persistFollowUpWithSupabaseInternal(
         examMap[exam.id] = data.id;
         insertedExamIds.push(data.id);
       }
-    }
-
-    if (!remoteRow) {
-      throw new Error("Follow-up tidak berhasil ditemukan atau disimpan.");
     }
 
     if (!insertedFollowUpId) {
