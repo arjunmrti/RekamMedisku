@@ -13,6 +13,7 @@ import {
   upsertRotationWithSupabase,
 } from "../../data/supabaseRotations";
 import { loadPatients } from "../../data/localPatients";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
 import Icon from "../../components/ui/Icon";
@@ -60,6 +61,7 @@ export default function RotationManagementPage({
   onNavigate,
   onRotationChange,
 }: RotationManagementPageProps) {
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const [rotations, setRotations] = useState<Rotation[]>(() => loadRotations());
   const [activeRotation, setActiveRotation] = useState<Rotation>(() =>
     loadActiveRotation(),
@@ -106,6 +108,13 @@ export default function RotationManagementPage({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (workspaceSyncVersion === 0) return;
+
+    setRotations(loadRotations());
+    setActiveRotation(loadActiveRotation());
+  }, [workspaceSyncVersion]);
 
   const patientCounts = useMemo(() => {
     return rotations.reduce<Record<string, number>>((acc, rotation) => {
