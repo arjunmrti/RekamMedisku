@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import ReportPreview from "../../components/report/ReportPreview";
 import { getDefaultSlaberanTemplate } from "../../data/slaberanTemplates";
@@ -12,6 +12,7 @@ import {
   getSlaberanDoctorOptions,
 } from "../../utils/slaberanGenerator";
 import Icon from "../../components/ui/Icon";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
 type SlaberanPageProps = NavigationProps;
 
@@ -55,6 +56,7 @@ export default function SlaberanPage({
   activeItem,
   onNavigate,
 }: SlaberanPageProps) {
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const activeRotation = loadActiveRotation();
   const template = getDefaultSlaberanTemplate();
   const allPatients = useMemo(
@@ -64,11 +66,11 @@ export default function SlaberanPage({
           patient.rotationId === activeRotation.id &&
           patient.status === "Aktif",
       ),
-    [activeRotation.id],
+    [activeRotation.id, workspaceSyncVersion],
   );
   const followUpsByPatient = useMemo(
     () => loadSavedFollowUps(),
-    [],
+    [workspaceSyncVersion],
   );
 
   const doctors = useMemo(
@@ -91,6 +93,19 @@ export default function SlaberanPage({
       ),
     [allPatients, doctor],
   );
+
+  useEffect(() => {
+    if (!doctors.length) {
+      setDoctor("");
+      return;
+    }
+
+    if (!doctors.includes(doctor)) {
+      setDoctor(doctors[0]);
+      setReportText("");
+      setCopied(false);
+    }
+  }, [doctor, doctors]);
 
   const diagnosisCount = useMemo(
     () =>
