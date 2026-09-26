@@ -55,7 +55,7 @@ export default function TopHeader({
           </label>
         ) : (
           <div className="min-w-0 flex-1 xl:hidden">
-            <p className="truncate text-sm font-bold text-slate-800 sm:text-left">
+            <p className="truncate text-center text-sm font-bold text-slate-800 sm:text-left">
               {activeItem}
             </p>
             <p className="hidden truncate text-[11px] text-slate-400 sm:block">
