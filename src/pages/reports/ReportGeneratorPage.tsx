@@ -181,7 +181,7 @@ export default function ReportGeneratorPage({
         onSearchChange={() => undefined}
         searchEnabled={false}
       >
-        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-24">
+        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
               <Icon name="alert" className="h-5 w-5" />
@@ -225,7 +225,7 @@ export default function ReportGeneratorPage({
         onSearchChange={() => undefined}
         searchEnabled={false}
       >
-        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-24">
+        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
               <Icon name="document" className="h-5 w-5" />
