@@ -97,7 +97,7 @@ export default function PatientSummaryPanel({
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
                 Perawatan
               </p>
-              <Icon name="hospital" className="h-4 w-4 text-slate-300" />
+              <Icon name="stethoscope" className="h-4 w-4 text-slate-300" />
             </div>
 
             <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-4">
