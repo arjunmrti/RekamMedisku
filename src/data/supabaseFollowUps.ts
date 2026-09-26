@@ -570,9 +570,10 @@ export async function syncFollowUpsWithSupabase(): Promise<
     const remotePatientId = patientMap[patientId];
 
     if (!remotePatientId) {
-      throw new Error(
-        "Ada follow-up lokal dengan pasien yang belum tersinkron ke Supabase.",
-      );
+      // Keep orphaned local follow-ups untouched. They can belong to legacy
+      // patients that were removed locally; they must not block sync for
+      // patients that are already mapped to Supabase.
+      continue;
     }
 
     for (const entry of entries) {
