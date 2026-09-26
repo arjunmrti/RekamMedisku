@@ -1,20 +1,11 @@
 import type { BackupAttachment } from "../types/backup";
 import { supabase } from "../utils/supabase";
+import { getAuthenticatedUserId } from "../utils/authenticatedUser";
 
 export const ATTACHMENT_BUCKET = "rekammedisku-attachments";
 
 async function getCurrentUserId() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) throw error;
-  if (!user) {
-    throw new Error("Sesi RekamMedisku tidak ditemukan.");
-  }
-
-  return user.id;
+  return getAuthenticatedUserId();
 }
 
 function objectPath(userId: string, attachmentId: string) {
