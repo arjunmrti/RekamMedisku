@@ -850,7 +850,7 @@ export default function FollowUpFormPage({
               resmi rumah sakit.
             </section>
 
-            <div className="sticky bottom-[68px] z-20 -mx-4 border-t border-slate-200/80 bg-[#F7F9FC]/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:bottom-0 lg:-mx-8 lg:px-8">
+            <div className="sticky bottom-[68px] z-20 -mx-4 border-t border-slate-200/80 bg-[#F7F9FC]/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 md:bottom-0 lg:-mx-8 lg:px-8">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-2 text-[11px] text-slate-400">
                   <Icon
