@@ -11,6 +11,7 @@ import { loadPatients } from "./data/localPatients";
 import type { Rotation } from "./types/rotation";
 import type { PatientListItem } from "./types/patient";
 import { useWorkspaceSyncVersion } from "./hooks/useWorkspaceSync";
+import { isActivePatientInRotation } from "./utils/patientContext";
 
 type View =
   | "Beranda"
@@ -57,7 +58,12 @@ function App() {
         );
       }
 
-      const refreshed = patients.find((patient) => patient.id === current.id);
+      const refreshed =
+        patients.find(
+          (patient) =>
+            patient.id === current.id &&
+            isActivePatientInRotation(patient, activeRotation.id),
+        ) ?? null;
 
       if (!refreshed) {
         setActiveItem((currentItem) =>
