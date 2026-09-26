@@ -209,6 +209,35 @@ function appendSpecialUnits(
     .filter((location) => location.type === "special" && location.isActive)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
 
+  const legacyRooms = Array.isArray(config.legacyRooms)
+    ? config.legacyRooms
+    : [];
+
+  if (specials.length === 0 && legacyRooms.length > 0) {
+    for (const room of legacyRooms) {
+      const unitPatients = patientContexts.filter(
+        (context) =>
+          normalize(context.patient.currentLocation?.name ?? context.patient.room) ===
+          normalize(room),
+      );
+
+      if (!showEmptyRooms && unitPatients.length === 0) continue;
+
+      if (lines.length > 0) lines.push("");
+      lines.push(
+        highlightOccupied && unitPatients.length > 0
+          ? "*" + room + " (" + unitPatients.length + ")*"
+          : room + " (" + unitPatients.length + ")",
+      );
+
+      unitPatients.forEach((context, index) => {
+        lines.push(patientLine(context, index + 1, fields));
+      });
+    }
+
+    return;
+  }
+
   for (const unit of specials) {
     const unitPatients = findPatientsForLocation(patientContexts, unit);
 
