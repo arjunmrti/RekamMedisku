@@ -248,7 +248,7 @@ function App() {
       <ReportGeneratorPage
         key={`${selectedPatient?.id ?? "none"}:${reportMode}`}
         {...navigationProps}
-        patient={selectedPatient}
+        patient={selectedPatient ?? undefined}
         mode={reportMode}
         onModeChange={setReportMode}
       />
