@@ -34,7 +34,9 @@ function getInitialPatient() {
 
 function App() {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
-  const [activeItem, setActiveItem] = useState<View>("Beranda");
+  const [activeItem, setActiveItem] = useState<View>(() =>
+    loadActiveRotation().id ? "Beranda" : "Stase Saya",
+  );
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(() => getInitialPatient());
 
@@ -115,6 +117,11 @@ function App() {
 
         setSelectedPatient(nextPatient);
         setActiveItem("Semua Laporan");
+        return;
+      }
+
+      if (label === "Beranda" && !loadActiveRotation().id) {
+        setActiveItem("Stase Saya");
         return;
       }
 
