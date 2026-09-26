@@ -106,6 +106,10 @@ export default function PatientTable({
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
               <div>
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">No. RM</p>
+                <p className="font-semibold text-slate-700">{patient.rm}</p>
+              </div>
+              <div>
                 <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Ruangan / Bed</p>
                 <p className="font-semibold text-slate-700">{patient.room} / {patient.bed}</p>
               </div>
