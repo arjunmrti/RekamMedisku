@@ -3,6 +3,13 @@ import type { Rotation, RotationStatus, RotationSpecialty } from "../types/rotat
 const ROTATIONS_KEY = "rekammedisku:rotations";
 const ACTIVE_ROTATION_KEY = "rekammedisku:active-rotation";
 
+const LEGACY_DEMO_ROTATION_IDS = new Set([
+  "rotation-interna",
+  "rotation-bedah",
+  "rotation-pediatri",
+  "rotation-obgyn",
+]);
+
 export const DEFAULT_ROTATIONS: Rotation[] = [
   {
     id: "rotation-neurologi",
@@ -36,7 +43,23 @@ export function loadRotations(): Rotation[] {
   const stored = readJson<unknown>(ROTATIONS_KEY, null);
 
   if (Array.isArray(stored) && stored.length > 0) {
-    return stored as Rotation[];
+    const migrationsApplied = stored.filter(
+      (rotation): rotation is Rotation =>
+        typeof rotation === "object" &&
+        rotation !== null &&
+        !LEGACY_DEMO_ROTATION_IDS.has(
+          (rotation as { id?: unknown }).id as string,
+        ),
+    ) as Rotation[];
+
+    if (migrationsApplied.length !== stored.length) {
+      const nextRotations =
+        migrationsApplied.length > 0 ? migrationsApplied : DEFAULT_ROTATIONS;
+      saveRotations(nextRotations);
+      return nextRotations;
+    }
+
+    return migrationsApplied;
   }
 
   return DEFAULT_ROTATIONS;

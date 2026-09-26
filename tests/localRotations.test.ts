@@ -1,0 +1,107 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { DEFAULT_ROTATIONS, loadRotations } from "../src/data/localRotations";
+
+class MemoryStorage {
+  private values = new Map<string, string>();
+
+  getItem(key: string) {
+    return this.values.get(key) ?? null;
+  }
+
+  setItem(key: string, value: string) {
+    this.values.set(key, String(value));
+  }
+
+  removeItem(key: string) {
+    this.values.delete(key);
+  }
+
+  clear() {
+    this.values.clear();
+  }
+}
+
+const storage = new MemoryStorage();
+
+Object.defineProperty(globalThis, "window", {
+  configurable: true,
+  value: {
+    localStorage: storage,
+  },
+});
+
+function rotation(
+  id: string,
+  name: string,
+  status: "Aktif" | "Selesai" | "Mendatang" = "Aktif",
+) {
+  return {
+    id,
+    name,
+    specialty: "Neurologi" as const,
+    startDate: "2026-09-01",
+    endDate: "2026-09-30",
+    status,
+    createdAt: "2026-09-01T00:00:00.000Z",
+    updatedAt: "2026-09-26T00:00:00.000Z",
+  };
+}
+
+test("memigrasikan rotation demo lama dari localStorage", () => {
+  storage.clear();
+  storage.setItem(
+    "rekammedisku:rotations",
+    JSON.stringify([
+      rotation("rotation-neurologi", "Neurologi"),
+      rotation("rotation-interna", "Ilmu Penyakit Dalam"),
+      rotation("rotation-bedah", "Bedah"),
+      rotation("rotation-pediatri", "Pediatri"),
+      rotation("rotation-obgyn", "Obgyn"),
+      rotation("rotation-custom", "Stase Buatan User"),
+    ]),
+  );
+
+  const rotations = loadRotations();
+
+  assert.deepEqual(
+    rotations.map((item) => item.id),
+    ["rotation-neurologi", "rotation-custom"],
+  );
+  assert.equal(
+    JSON.parse(storage.getItem("rekammedisku:rotations") ?? "[]").length,
+    2,
+  );
+});
+
+test("mengembalikan satu-satunya default Neurologi jika storage hanya berisi demo lama", () => {
+  storage.clear();
+  storage.setItem(
+    "rekammedisku:rotations",
+    JSON.stringify([
+      rotation("rotation-interna", "Ilmu Penyakit Dalam"),
+      rotation("rotation-bedah", "Bedah"),
+      rotation("rotation-pediatri", "Pediatri"),
+      rotation("rotation-obgyn", "Obgyn"),
+    ]),
+  );
+
+  const rotations = loadRotations();
+
+  assert.deepEqual(rotations, DEFAULT_ROTATIONS);
+  assert.deepEqual(
+    JSON.parse(storage.getItem("rekammedisku:rotations") ?? "null"),
+    DEFAULT_ROTATIONS,
+  );
+});
+
+test("mempertahankan rotation yang bukan data demo", () => {
+  storage.clear();
+  const customRotation = rotation("rotation-custom", "Stase Buatan User");
+  storage.setItem(
+    "rekammedisku:rotations",
+    JSON.stringify([customRotation]),
+  );
+
+  assert.deepEqual(loadRotations(), [customRotation]);
+});
