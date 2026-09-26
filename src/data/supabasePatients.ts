@@ -16,6 +16,7 @@ type PatientRow = {
   bed: string;
   doctor: string;
   created_at: string;
+  updated_at: string;
   admission_date: string | null;
   status: string;
   follow_ups?: Array<{
