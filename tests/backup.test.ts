@@ -91,6 +91,8 @@ function createRestoreLocalState(
   )?.id ?? "";
   let drafts: Record<string, FollowUpFormValues> = {};
   let attachments: StoredAttachment[] = [];
+  let slaberanLocations: never[] = [];
+  let slaberanTemplates: never[] = [];
 
   const state: RestoreBackupLocalState = {
     loadPatients: () => patients,
@@ -119,6 +121,14 @@ function createRestoreLocalState(
     loadAllAttachments: async () => attachments,
     replaceAllAttachments: async (value) => {
       attachments = value;
+    },
+    loadSlaberanLocations: () => slaberanLocations,
+    saveSlaberanLocations: (value) => {
+      slaberanLocations = value;
+    },
+    loadSlaberanTemplates: () => slaberanTemplates,
+    saveSlaberanTemplates: (value) => {
+      slaberanTemplates = value;
     },
   };
 
@@ -568,4 +578,59 @@ test("restore sukses melaporkan status synced setelah persist dan sync berhasil"
   assert.equal(result.syncStatus, "synced");
   assert.equal(snapshot.patients[0]?.name, "Pasien Baru");
   assert.equal(snapshot.rotations[0]?.id, validRotation.id);
+});
+
+
+test("backup lama tanpa konfigurasi Slaberan tetap dapat diparse", () => {
+  const result = parseBackupText(
+    JSON.stringify(withRotations(basePayload)),
+  );
+
+  assert.equal(result.ok, true);
+  if (result.ok) {
+    assert.equal(result.data.slaberanLocations, undefined);
+    assert.equal(result.data.slaberanTemplates, undefined);
+  }
+});
+
+test("restore mempertahankan konfigurasi Slaberan lama ketika backup legacy tidak membawanya", async () => {
+  const helper = createRestoreLocalState();
+  helper.state.saveSlaberanLocations([
+    {
+      id: "floor-existing",
+      type: "floor",
+      name: "Lantai 1",
+      sortOrder: 0,
+      isActive: true,
+      createdAt: "2026-09-01T00:00:00.000Z",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+    },
+  ]);
+  helper.state.saveSlaberanTemplates([
+    {
+      id: "template-existing",
+      name: "Template Lama",
+      doctor: "dr. Uji",
+      specialty: "Neurologi",
+      hospital: "RS Uji",
+      opening: "Pembuka",
+      showEmptyRooms: true,
+      blocks: [],
+      settings: {},
+      schemaVersion: 1,
+      isDefault: true,
+      createdAt: "2026-09-01T00:00:00.000Z",
+      updatedAt: "2026-09-01T00:00:00.000Z",
+    },
+  ]);
+
+  const payload = withRotations(basePayload);
+  await restoreBackupPayload(payload, {
+    localState: helper.state,
+    persistRemote: async () => undefined,
+    syncRemote: async () => undefined,
+  });
+
+  const snapshot = helper.getSnapshot();
+  assert.equal(snapshot.patients[0]?.name, "Pasien Uji");
 });
