@@ -170,7 +170,7 @@ export function buildSlaberanReport(
 
   lines.push("");
 
-  template.specialRooms.forEach((room, index) => {
+  template.specialRooms.forEach((room) => {
     appendRoom(
       lines,
       room,
@@ -178,8 +178,6 @@ export function buildSlaberanReport(
       template.showEmptyRooms,
       options.followUpsByPatient,
     );
-
-    if (index < template.specialRooms.length - 1) lines.push("");
   });
 
   lines.push("");
