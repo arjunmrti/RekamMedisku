@@ -43,6 +43,7 @@ function patientLine(
   context: PatientContext,
   index: number,
   fields: SlaberanPatientField[],
+  config: SlaberanTemplateBlockConfig,
 ) {
   const { patient, diagnosis } = context;
 
@@ -55,11 +56,20 @@ function patientLine(
     diagnosis,
   };
 
-  const selected = fields.length ? fields : ["name", "age", "rm"];
+  const selected: SlaberanPatientField[] =
+    fields.length ? fields : ["name", "age", "rm"];
+  const separator = config.patientSeparator ?? "/";
+  const prefix = config.patientPrefix ?? "";
+  const showPatientIndex = config.showPatientIndex ?? true;
+  const body = selected
+    .map((field) => values[field])
+    .filter(Boolean)
+    .join(separator);
+
   return (
-    String(index) +
-    ". " +
-    selected.map((field) => values[field]).filter(Boolean).join("/")
+    (showPatientIndex ? String(index) + ". " : "") +
+    prefix +
+    body
   );
 }
 
@@ -183,12 +193,12 @@ function appendPatientList(
     config.fields ?? ["name", "age", "rm", "doctor", "bed", "diagnosis"];
 
   if (patientContexts.length === 0) {
-    lines.push("Belum ada pasien.");
+    lines.push(config.emptyText ?? "Belum ada pasien.");
     return;
   }
 
   patientContexts.forEach((context, index) => {
-    lines.push(patientLine(context, index + 1, fields));
+    lines.push(patientLine(context, index + 1, fields, config));
   });
 }
 
@@ -231,7 +241,7 @@ function appendSpecialUnits(
       );
 
       unitPatients.forEach((context, index) => {
-        lines.push(patientLine(context, index + 1, fields));
+        lines.push(patientLine(context, index + 1, fields, config));
       });
     }
 
@@ -251,7 +261,7 @@ function appendSpecialUnits(
     );
 
     unitPatients.forEach((context, index) => {
-      lines.push(patientLine(context, index + 1, fields));
+      lines.push(patientLine(context, index + 1, fields, config));
     });
   }
 }
