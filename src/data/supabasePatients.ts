@@ -345,6 +345,7 @@ export async function deletePatientWithSupabase(
 ): Promise<boolean> {
   const previousPatients = loadPatients();
   const patientMap = readMap(PATIENT_ID_MAP_KEY);
+  let remotePatientDeleted = false;
 
   try {
     const userId = await getCurrentUserId();
@@ -359,18 +360,54 @@ export async function deletePatientWithSupabase(
       throw new Error("Pasien belum tersinkron ke Supabase.");
     }
 
-    const { count, error: followUpCheckError } = await supabase
+    const { data: remoteFollowUps, error: followUpReadError } = await supabase
       .from("follow_ups")
-      .select("id", { count: "exact", head: true })
+      .select("*")
       .eq("patient_id", remotePatientId)
       .eq("user_id", userId);
 
-    if (followUpCheckError) throw followUpCheckError;
+    if (followUpReadError) throw followUpReadError;
 
-    if ((count ?? 0) > 0) {
-      throw new Error(
-        "Pasien memiliki riwayat follow-up di Supabase. Penghapusan akan tersedia setelah data follow-up tersinkron.",
-      );
+    const followUpRows = (remoteFollowUps ?? []) as Array<FollowUpRow>;
+    const followUpIds = followUpRows.map((row) => row.id);
+
+    let supportingExamRows: SupportingExamRow[] = [];
+
+    if (followUpIds.length) {
+      const { data, error } = await supabase
+        .from("supporting_exams")
+        .select("*")
+        .in("follow_up_id", followUpIds)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+      supportingExamRows = (data ?? []) as SupportingExamRow[];
+    }
+
+    if (supportingExamRows.length) {
+      const { error } = await supabase
+        .from("supporting_exams")
+        .delete()
+        .in(
+          "id",
+          supportingExamRows.map((exam) => exam.id),
+        )
+        .eq("user_id", userId);
+
+      if (error) throw error;
+    }
+
+    if (followUpRows.length) {
+      const { error } = await supabase
+        .from("follow_ups")
+        .delete()
+        .in(
+          "id",
+          followUpRows.map((followUp) => followUp.id),
+        )
+        .eq("user_id", userId);
+
+      if (error) throw error;
     }
 
     const { data: deletedRows, error: deleteError } = await supabase
@@ -387,6 +424,8 @@ export async function deletePatientWithSupabase(
       throw new Error("Pasien tidak ditemukan di Supabase.");
     }
 
+    remotePatientDeleted = true;
+
     try {
       const localDeleted = await deletePatient(patient.id);
 
@@ -394,24 +433,52 @@ export async function deletePatientWithSupabase(
         throw new Error("Pasien tidak ditemukan pada penyimpanan lokal.");
       }
     } catch (localError) {
-      const { data: restored, error: restoreError } = await supabase
-        .from("patients")
-        .insert({
-          id: remotePatientId,
-          user_id: userId,
-          ...patientPayload(
-            patient,
-            readMap(ROTATION_ID_MAP_KEY)[patient.rotationId] ?? patient.rotationId,
-          ),
-        })
-        .select()
-        .single<PatientRow>();
+      const rotationMap = readMap(ROTATION_ID_MAP_KEY);
+      const remoteRotationId =
+        rotationMap[patient.rotationId] ?? patient.rotationId;
 
-      if (restoreError || !restored) {
+      const { error: restorePatientError } = await supabase
+        .from("patients")
+        .upsert(
+          {
+            id: remotePatientId,
+            user_id: userId,
+            ...patientPayload(patient, remoteRotationId),
+          },
+          { onConflict: "id" },
+        );
+
+      if (restorePatientError) {
         savePatients(previousPatients);
         throw new Error(
           "Penghapusan gagal dan pemulihan pasien di Supabase juga gagal.",
         );
+      }
+
+      if (followUpRows.length) {
+        const { error: restoreFollowUpsError } = await supabase
+          .from("follow_ups")
+          .upsert(followUpRows, { onConflict: "id" });
+
+        if (restoreFollowUpsError) {
+          savePatients(previousPatients);
+          throw new Error(
+            "Penghapusan gagal dan pemulihan riwayat follow-up di Supabase juga gagal.",
+          );
+        }
+      }
+
+      if (supportingExamRows.length) {
+        const { error: restoreExamsError } = await supabase
+          .from("supporting_exams")
+          .upsert(supportingExamRows, { onConflict: "id" });
+
+        if (restoreExamsError) {
+          savePatients(previousPatients);
+          throw new Error(
+            "Penghapusan gagal dan pemulihan lampiran pemeriksaan di Supabase juga gagal.",
+          );
+        }
       }
 
       throw localError;
@@ -421,7 +488,14 @@ export async function deletePatientWithSupabase(
     saveMap(PATIENT_ID_MAP_KEY, patientMap);
     return true;
   } catch (error) {
-    savePatients(previousPatients);
+    if (remotePatientDeleted) {
+      // The local rollback above already attempts to restore remote data.
+      // Keep this catch focused on restoring the local patient snapshot.
+      savePatients(previousPatients);
+    } else {
+      savePatients(previousPatients);
+    }
+
     throw new Error(getErrorMessage(error));
   }
 }
