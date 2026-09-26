@@ -53,10 +53,13 @@ export function loadRotations(): Rotation[] {
     ) as Rotation[];
 
     if (migrationsApplied.length !== stored.length) {
-      saveRotations(migrationsApplied);
+      const nextRotations =
+        migrationsApplied.length > 0 ? migrationsApplied : DEFAULT_ROTATIONS;
+      saveRotations(nextRotations);
+      return nextRotations;
     }
 
-    return migrationsApplied.length > 0 ? migrationsApplied : DEFAULT_ROTATIONS;
+    return migrationsApplied;
   }
 
   return DEFAULT_ROTATIONS;
