@@ -48,7 +48,7 @@ function rotation(
   };
 }
 
-test("memigrasikan rotation demo lama dari localStorage", () => {
+test("menghapus rotation demo lama dari localStorage", () => {
   storage.clear();
   storage.setItem(
     "rekammedisku:rotations",
@@ -66,7 +66,7 @@ test("memigrasikan rotation demo lama dari localStorage", () => {
 
   assert.deepEqual(
     rotations.map((item) => item.id),
-    ["rotation-neurologi", "rotation-custom"],
+    ["rotation-custom"],
   );
   assert.equal(
     JSON.parse(storage.getItem("rekammedisku:rotations") ?? "[]").length,
