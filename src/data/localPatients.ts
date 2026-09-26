@@ -5,6 +5,10 @@ import {
   getPatientFollowUpAttachmentIds,
 } from "./localFollowUps";
 import type { PatientListItem, PatientStatus } from "../types/patient";
+import {
+  normalizePatientAdmissionLocation,
+  normalizePatientLocation,
+} from "../utils/patientLocation";
 
 const PATIENTS_KEY = "rekammedisku:patients";
 
@@ -33,10 +37,25 @@ function normalizePatient(patient: PatientListItem): PatientListItem {
   // supplies its real rotation context.
   const rotationId =
     typeof patient.rotationId === "string" ? patient.rotationId.trim() : "";
+  const currentLocation = normalizePatientLocation(
+    patient.currentLocation,
+    patient.room,
+    patient.bed,
+  );
+  const room = currentLocation.name || patient.room.trim();
 
   return {
     ...patient,
     rotationId,
+    room,
+    bed: currentLocation.bed,
+    currentLocation: {
+      ...currentLocation,
+      name: room,
+    },
+    admissionLocation: normalizePatientAdmissionLocation(
+      patient.admissionLocation,
+    ),
     lastFollowUpAt: patient.lastFollowUpAt ?? undefined,
     createdAt: patient.createdAt ?? undefined,
     admissionDate: patient.admissionDate ?? undefined,
