@@ -1,4 +1,10 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import type {
   PatientListItem,
   PatientLocationType,
@@ -9,6 +15,11 @@ import {
 } from "../../utils/patientLocation";
 import type { Rotation } from "../../types/rotation";
 import { createPatientId } from "../../data/localPatients";
+import {
+  loadSlaberanLocations,
+  saveSlaberanLocations,
+} from "../../data/localSlaberanLocations";
+import { syncSlaberanLocationsWithSupabase } from "../../data/supabaseSlaberanLocations";
 import { toLocalIsoDate } from "../../utils/date";
 import Icon from "../ui/Icon";
 
@@ -42,9 +53,13 @@ export default function AddPatientModal({
   );
   const [currentLocationType, setCurrentLocationType] =
     useState<PatientLocationType>(() => initialCurrentLocation.type);
+  const [currentLocationId, setCurrentLocationId] = useState(
+    () => initialCurrentLocation.locationId ?? "",
+  );
   const [currentLocationName, setCurrentLocationName] =
     useState(() => initialCurrentLocation.name);
   const [bed, setBed] = useState(() => initialCurrentLocation.bed);
+  const [locations, setLocations] = useState(() => loadSlaberanLocations());
   const initialAdmissionLocation = normalizePatientAdmissionLocation(
     patient?.admissionLocation,
   );
@@ -52,6 +67,9 @@ export default function AddPatientModal({
     useState<PatientLocationType | "">(
       () => initialAdmissionLocation?.type ?? "",
     );
+  const [admissionLocationId, setAdmissionLocationId] = useState(
+    () => initialAdmissionLocation?.locationId ?? "",
+  );
   const [admissionLocationName, setAdmissionLocationName] = useState(
     () => initialAdmissionLocation?.name ?? "",
   );
@@ -78,6 +96,19 @@ export default function AddPatientModal({
   useEffect(() => {
     if (!open) return;
 
+    let cancelled = false;
+
+    void syncSlaberanLocationsWithSupabase()
+      .then((nextLocations) => {
+        if (cancelled) return;
+        setLocations(nextLocations);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLocations(loadSlaberanLocations());
+        }
+      });
+
     setAdmissionDate(patient?.admissionDate ?? toLocalIsoDate());
     const currentLocation = normalizePatientLocation(
       patient?.currentLocation,
@@ -85,12 +116,14 @@ export default function AddPatientModal({
       patient?.bed,
     );
     setCurrentLocationType(currentLocation.type);
+    setCurrentLocationId(currentLocation.locationId ?? "");
     setCurrentLocationName(currentLocation.name);
     setBed(currentLocation.bed);
     const admissionLocation = normalizePatientAdmissionLocation(
       patient?.admissionLocation,
     );
     setAdmissionLocationType(admissionLocation?.type ?? "");
+    setAdmissionLocationId(admissionLocation?.locationId ?? "");
     setAdmissionLocationName(admissionLocation?.name ?? "");
   }, [open, patient?.id]);
 
@@ -115,6 +148,13 @@ export default function AddPatientModal({
       return;
     }
 
+    const selectedCurrentLocation = locations.find(
+      (location) => location.id === currentLocationId,
+    );
+    const selectedAdmissionLocation = locations.find(
+      (location) => location.id === admissionLocationId,
+    );
+
     setErrorMessage("");
     setSubmitting(true);
 
@@ -135,8 +175,9 @@ export default function AddPatientModal({
       admissionDate,
       admissionComplaint: admissionComplaint.trim() || undefined,
       currentLocation: {
-        type: currentLocationType,
-        name: currentLocationName.trim(),
+        ...(currentLocationId ? { locationId: currentLocationId } : {}),
+        type: selectedCurrentLocation?.type ?? currentLocationType,
+        name: selectedCurrentLocation?.name ?? currentLocationName.trim(),
         bed: bed.trim(),
       },
       room: currentLocationName.trim(),
@@ -144,8 +185,11 @@ export default function AddPatientModal({
       admissionLocation:
         admissionLocationType && admissionLocationName.trim()
           ? {
-              type: admissionLocationType,
-              name: admissionLocationName.trim(),
+              ...(admissionLocationId ? { locationId: admissionLocationId } : {}),
+              type: selectedAdmissionLocation?.type ?? admissionLocationType,
+              name:
+                selectedAdmissionLocation?.name ??
+                admissionLocationName.trim(),
             }
           : undefined,
       status: patient?.status ?? "Aktif",
@@ -166,6 +210,25 @@ export default function AddPatientModal({
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const currentLocationOptions = useMemo(
+    () => locations.filter((location) => location.type === currentLocationType && location.type !== "floor"),
+    [currentLocationType, locations],
+  );
+
+  const specialLocationOptions = useMemo(
+    () => locations.filter((location) => location.type === "special"),
+    [locations],
+  );
+
+  const formatLocationOption = (locationId: string) => {
+    const location = locations.find((item) => item.id === locationId);
+    if (!location) return "";
+    if (!location.parentId) return location.name;
+
+    const parent = locations.find((item) => item.id === location.parentId);
+    return parent ? parent.name + " · " + location.name : location.name;
   };
 
   if (!open) return null;
@@ -325,17 +388,45 @@ export default function AddPatientModal({
                     : "Nama Bangsal / Ruangan"
                 }
               >
-                <input
-                  required
-                  value={currentLocationName}
-                  onChange={(event) => setCurrentLocationName(event.target.value)}
-                  placeholder={
-                    currentLocationType === "special"
-                      ? "Contoh: ICU / IGD / CVCU/ICCU"
-                      : "Contoh: Anggrek"
-                  }
-                  className="field-control"
-                />
+                {currentLocationOptions.length > 0 ? (
+                  <select
+                    required
+                    value={currentLocationId}
+                    onChange={(event) => {
+                      const location = locations.find(
+                        (item) => item.id === event.target.value,
+                      );
+                      setCurrentLocationId(event.target.value);
+                      setCurrentLocationType(
+                        location?.type === "special" ? "special" : "ward",
+                      );
+                      setCurrentLocationName(location?.name ?? "");
+                    }}
+                    className="field-control"
+                  >
+                    <option value="">Pilih lokasi</option>
+                    {currentLocationOptions.map((location) => (
+                      <option key={location.id} value={location.id}>
+                        {formatLocationOption(location.id)}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    required
+                    value={currentLocationName}
+                    onChange={(event) => {
+                      setCurrentLocationId("");
+                      setCurrentLocationName(event.target.value);
+                    }}
+                    placeholder={
+                      currentLocationType === "special"
+                        ? "Contoh: ICU / IGD / CVCU/ICCU"
+                        : "Contoh: Anggrek"
+                    }
+                    className="field-control"
+                  />
+                )}
               </Field>
             </div>
 
@@ -381,13 +472,44 @@ export default function AddPatientModal({
               </Field>
 
               <Field label="Nama Lokasi Masuk">
-                <input
-                  value={admissionLocationName}
-                  onChange={(event) => setAdmissionLocationName(event.target.value)}
-                  placeholder="Contoh: IGD"
-                  disabled={!admissionLocationType}
-                  className="field-control disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
-                />
+                {admissionLocationType &&
+                (admissionLocationType === "special"
+                  ? specialLocationOptions
+                  : locations.filter((location) => location.type === "ward")).length > 0 ? (
+                  <select
+                    value={admissionLocationId}
+                    onChange={(event) => {
+                      const location = locations.find(
+                        (item) => item.id === event.target.value,
+                      );
+                      setAdmissionLocationId(event.target.value);
+                      setAdmissionLocationType(location?.type ?? "ward");
+                      setAdmissionLocationName(location?.name ?? "");
+                    }}
+                    disabled={!admissionLocationType}
+                    className="field-control disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                  >
+                    <option value="">Pilih lokasi</option>
+                    {locations
+                      .filter((location) => location.type === admissionLocationType)
+                      .map((location) => (
+                        <option key={location.id} value={location.id}>
+                          {formatLocationOption(location.id)}
+                        </option>
+                      ))}
+                  </select>
+                ) : (
+                  <input
+                    value={admissionLocationName}
+                    onChange={(event) => {
+                      setAdmissionLocationId("");
+                      setAdmissionLocationName(event.target.value);
+                    }}
+                    placeholder="Contoh: IGD"
+                    disabled={!admissionLocationType}
+                    className="field-control disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                  />
+                )}
               </Field>
             </div>
           </section>
