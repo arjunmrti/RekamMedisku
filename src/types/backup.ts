@@ -4,7 +4,7 @@ import type { PatientListItem } from "./patient";
 import type { Rotation } from "./rotation";
 
 export type BackupOperationType = "Export" | "Restore";
-export type BackupOperationStatus = "Berhasil" | "Gagal";
+export type BackupOperationStatus = "Berhasil" | "Sebagian" | "Gagal";
 
 export type BackupHistoryEntry = {
   id: string;
