@@ -16,7 +16,6 @@ import Icon from "../../components/ui/Icon";
 import type { SupportingExam } from "../../types/followUp";
 import { getAttachment } from "../../data/localAttachments";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
-import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 
 type PatientProfilePageProps = NavigationProps & {
   patient: PatientListItem;
@@ -144,32 +143,6 @@ export default function PatientProfilePage({
     loadSavedFollowUps()[patient.id] ?? [],
   );
   const [followUpError, setFollowUpError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void syncWorkspaceWithSupabase()
-      .then(() => {
-        if (!cancelled) {
-          setFollowUps(loadSavedFollowUps()[patient.id] ?? []);
-          setFollowUpError("");
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setFollowUpError(
-            getSupabaseFollowUpErrorMessage(
-              error,
-              "Data follow-up online gagal dimuat. Data lokal tetap digunakan.",
-            ),
-          );
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [patient.id]);
 
   useEffect(() => {
     if (workspaceSyncVersion === 0) return;
