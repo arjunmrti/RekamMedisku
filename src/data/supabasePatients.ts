@@ -2,6 +2,7 @@ import type { PatientListItem, PatientStatus } from "../types/patient";
 import { deletePatient, loadPatients, savePatients } from "./localPatients";
 import { syncRotationsWithSupabase } from "./supabaseRotations";
 import { supabase } from "../utils/supabase";
+import { derivePatientFollowUpSummaryFromRemote } from "./patientFollowUpSummary";
 
 type PatientRow = {
   id: string;
@@ -17,6 +18,12 @@ type PatientRow = {
   created_at: string;
   admission_date: string | null;
   status: string;
+  follow_ups?: Array<{
+    number: number;
+    iso_date: string;
+    time: string;
+    status: string | null;
+  }>;
 };
 
 type PatientIdMap = Record<string, string>;
@@ -61,8 +68,11 @@ function normalizeGender(value: string): PatientListItem["gender"] {
 function toPatient(
   row: PatientRow,
   localId: string,
-  existingPatient?: PatientListItem,
 ): PatientListItem {
+  const followUpSummary = derivePatientFollowUpSummaryFromRemote(
+    row.follow_ups ?? [],
+  );
+
   return {
     id: localId,
     rotationId: row.rotation_id,
@@ -73,10 +83,7 @@ function toPatient(
     room: row.room,
     bed: row.bed,
     doctor: row.doctor,
-    lastFollowUp:
-      existingPatient?.lastFollowUp ?? "Belum ada follow-up",
-    followUpNumber: existingPatient?.followUpNumber ?? 0,
-    lastFollowUpAt: existingPatient?.lastFollowUpAt,
+    ...followUpSummary,
     createdAt: row.created_at,
     admissionDate: row.admission_date ?? undefined,
     status: normalizeStatus(row.status),
@@ -188,7 +195,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
   const { data: remoteRows, error } = await supabase
     .from("patients")
     .select(
-      "id,user_id,rotation_id,name,age,gender,rm,room,bed,doctor,created_at,admission_date,status",
+      "id,user_id,rotation_id,name,age,gender,rm,room,bed,doctor,created_at,admission_date,status,follow_ups(number,iso_date,time,status)",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -229,12 +236,8 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
         ([, remoteId]) => remoteId === row.rotation_id,
       )?.[0] ?? row.rotation_id;
 
-    const existingPatient = localPatients.find(
-      (patient) => patient.id === localId,
-    );
-
     nextLocal = mergePatientIntoLocal(nextLocal, {
-      ...toPatient(row, localId, existingPatient),
+      ...toPatient(row, localId),
       rotationId: localRotationId,
     });
   }
@@ -346,21 +349,18 @@ export async function deletePatientWithSupabase(
     }
 
     /*
-     * Package 2 membuat relasi follow-up dan supporting exam memakai
-     * ON DELETE CASCADE. Satu DELETE pada parent patient menjadi operasi
-     * sumber kebenaran untuk seluruh riwayat pasien di cloud.
+     * Package 3 memusatkan penghapusan cloud di satu RPC. Fungsi database
+     * menjalankan DELETE parent patient dalam satu transaksi PostgreSQL;
+     * follow-up dan supporting exam ikut terhapus lewat ON DELETE CASCADE.
      */
-    const { data: deletedRows, error: deleteError } = await supabase
-      .from("patients")
-      .delete()
-      .eq("id", remotePatientId)
-      .eq("user_id", userId)
-      .select()
-      .returns<PatientRow[]>();
+    const { data: deleted, error: deleteError } = await supabase.rpc(
+      "delete_patient_with_history",
+      { target_patient_id: remotePatientId },
+    );
 
     if (deleteError) throw deleteError;
 
-    if (deletedRows.length !== 1) {
+    if (deleted !== true) {
       throw new Error("Pasien tidak ditemukan di Supabase.");
     }
 
