@@ -16,6 +16,7 @@ import {
 import type { PatientListItem } from "../../types/patient";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
+import { isSamePatientIdentity } from "../../data/patientIdentity";
 
 type PatientsPageProps = NavigationProps & {
   onOpenPatientProfile: (patient: PatientListItem) => void;
@@ -247,8 +248,12 @@ export default function PatientsPage({
     const duplicate = patients.some(
       (item) =>
         item.id !== patient.id &&
-        item.rotationId === patient.rotationId &&
-        item.rm.trim().toLowerCase() === patient.rm.trim().toLowerCase(),
+        isSamePatientIdentity(
+          item.rotationId,
+          item.rm,
+          patient.rotationId,
+          patient.rm,
+        ),
     );
 
     if (duplicate) {
