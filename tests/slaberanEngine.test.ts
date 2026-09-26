@@ -237,3 +237,47 @@ test("blok nonaktif benar-benar tidak menghasilkan output", () => {
   assert.equal(report.includes("Anggrek (1)"), false);
   assert.match(report, /Bima/);
 });
+
+
+test("pasien Unit Khusus tidak duplikat di Patient List secara default", () => {
+  const report = renderSlaberanTemplate({
+    template,
+    doctor: "dr. Supardi",
+    date: "2026-09-27",
+    patients: [
+      patient("p-1", "Bima", "ward-1-anggrek", "Anggrek"),
+      {
+        ...patient("p-icu", "Citra", "special-icu", "ICU"),
+        currentLocation: {
+          locationId: "special-icu",
+          type: "special",
+          name: "ICU",
+          bed: "04",
+        },
+        room: "ICU",
+      },
+    ],
+    followUpsByPatient: followUps,
+    locations,
+  });
+
+  assert.equal((report.match(/Citra/g) ?? []).length, 1);
+  assert.match(report, /\*ICU \(1\)\*[\s\S]*Citra/);
+  assert.match(report, /Bima/);
+});
+
+test("starter template tetap dapat menghasilkan bangsal legacy tanpa registry lokasi", async () => {
+  const { createStarterSlaberanTemplate } = await import("../src/utils/slaberanTemplate");
+  const { buildSlaberanReport } = await import("../src/utils/slaberanGenerator");
+
+  const report = buildSlaberanReport(createStarterSlaberanTemplate(), {
+    doctor: "dr. Supardi",
+    date: "2026-09-27",
+    patients: [patient("p-1", "Bima", "ward-1-anggrek", "Anggrek")],
+    followUpsByPatient: followUps,
+  });
+
+  assert.match(report, /\*Lantai 1\*/);
+  assert.match(report, /Anggrek \(1\)/);
+  assert.match(report, /\*Lantai 2\*/);
+});
