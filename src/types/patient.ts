@@ -14,6 +14,8 @@ export type PatientListItem = {
   followUpNumber: number;
   lastFollowUpAt?: string;
   createdAt?: string;
+  /** Remote updated_at used for optimistic concurrency control. */
+  updatedAt?: string;
   admissionDate?: string;
   status: PatientStatus;
 };
