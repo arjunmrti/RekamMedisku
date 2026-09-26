@@ -3,9 +3,7 @@ import AppShell, { type NavigationProps } from "../../components/layout/AppShell
 import PatientListHeader from "../../components/patients/PatientListHeader";
 import PatientListToolbar from "../../components/patients/PatientListToolbar";
 import PatientListTable from "../../components/patients/PatientListTable";
-import PatientQuickActions from "../../components/patients/PatientQuickActions";
 import PatientSummaryPanel from "../../components/patients/PatientSummaryPanel";
-import PatientTips from "../../components/patients/PatientTips";
 import AddPatientModal from "../../components/patients/AddPatientModal";
 import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients, savePatients } from "../../data/localPatients";
@@ -69,7 +67,6 @@ export default function PatientsPage({
   onNavigate,
   onOpenPatientProfile,
 }: PatientsPageProps) {
-  const [globalSearch, setGlobalSearch] = useState("");
   const [filterSearch, setFilterSearch] = useState("");
   const [status, setStatus] = useState<
     "Semua" | "Aktif" | "Diarsipkan"
@@ -100,7 +97,7 @@ export default function PatientsPage({
   );
 
   const filteredPatients = useMemo(() => {
-    const query = (globalSearch + " " + filterSearch).trim().toLowerCase();
+    const query = filterSearch.trim().toLowerCase();
 
     const result = activeRotationPatients.filter((patient) => {
       const searchable = [
@@ -136,7 +133,6 @@ export default function PatientsPage({
   }, [
     activeRotationPatients,
     filterSearch,
-    globalSearch,
     room,
     sort,
     status,
@@ -149,7 +145,6 @@ export default function PatientsPage({
       : filteredPatients[0] ?? null;
 
   const resetFilters = () => {
-    setGlobalSearch("");
     setFilterSearch("");
     setStatus("Semua");
     setRoom("Semua");
@@ -221,8 +216,9 @@ export default function PatientsPage({
       <AppShell
         activeItem={activeItem}
         onNavigate={onNavigate}
-        searchValue={globalSearch}
-        onSearchChange={setGlobalSearch}
+        searchValue=""
+        onSearchChange={() => undefined}
+        searchEnabled={false}
       >
         <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-7 lg:pb-8">
           <div className="mx-auto w-full max-w-[1400px]">
@@ -257,7 +253,7 @@ export default function PatientsPage({
                   onReset={resetFilters}
                 />
 
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3 px-1">
                   <p className="text-xs text-slate-500">
                     Menampilkan{" "}
                     <span className="font-semibold text-slate-700">
@@ -267,13 +263,13 @@ export default function PatientsPage({
                     <span className="font-semibold text-slate-700">
                       {activeRotationPatients.length}
                     </span>{" "}
-                    pasien pada stase {activeRotation.name}.
+                    pasien
                   </p>
 
                   <button
                     type="button"
                     onClick={resetFilters}
-                    className="hidden min-h-10 px-2 text-xs font-medium text-[#1677FF] hover:underline lg:block"
+                    className="hidden min-h-10 px-1 text-xs font-semibold text-[#1677FF] hover:underline lg:block"
                   >
                     Reset Filter
                   </button>
@@ -281,17 +277,14 @@ export default function PatientsPage({
 
                 <PatientListTable
                   patients={filteredPatients}
+                  selectedPatientId={visibleSelectedPatient?.id ?? null}
                   onSelectPatient={setSelectedPatient}
                   onEditPatient={openEditPatient}
                   onToggleArchive={handleToggleArchive}
                 />
               </section>
 
-              <aside className="space-y-5 xl:col-span-3">
-                <PatientQuickActions
-                  onAddPatient={openAddPatient}
-                  onNavigate={onNavigate}
-                />
+              <aside className="xl:sticky xl:top-5 xl:col-span-3 xl:self-start">
                 <PatientSummaryPanel
                   patient={visibleSelectedPatient}
                   rotation={activeRotation}
@@ -299,7 +292,6 @@ export default function PatientsPage({
                   onEditPatient={openEditPatient}
                   onToggleArchive={handleToggleArchive}
                 />
-                <PatientTips />
               </aside>
             </div>
           </div>
