@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Icon from "../ui/Icon";
 import {
   createSlaberanTemplate,
@@ -137,6 +137,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [variable, setVariable] = useState(SLABERAN_VARIABLES[0]?.key ?? "");
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const refresh = useCallback(async () => {
     setErrorMessage("");
@@ -382,6 +383,135 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleExport = () => {
+    if (!draft) return;
+
+    const payload = {
+      product: "RekamMedisku",
+      type: "slaberan-template",
+      schemaVersion: draft.schemaVersion,
+      exportedAt: new Date().toISOString(),
+      template: {
+        ...draft,
+        isDefault: false,
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json;charset=utf-8",
+    });
+    const href = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = href;
+    link.download =
+      draft.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") ||
+      "slaberan-template";
+    link.download += ".json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(href);
+  };
+
+  const handleImport = async (file: File) => {
+    setSaving(true);
+    setErrorMessage("");
+
+    try {
+      const parsed = JSON.parse(await file.text()) as unknown;
+
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        (parsed as { product?: unknown }).product !== "RekamMedisku" ||
+        (parsed as { type?: unknown }).type !== "slaberan-template"
+      ) {
+        throw new Error("File bukan template Slaberan RekamMedisku yang valid.");
+      }
+
+      const candidate = (parsed as { template?: unknown }).template;
+
+      if (
+        typeof candidate !== "object" ||
+        candidate === null ||
+        typeof (candidate as { name?: unknown }).name !== "string" ||
+        typeof (candidate as { specialty?: unknown }).specialty !== "string" ||
+        typeof (candidate as { hospital?: unknown }).hospital !== "string" ||
+        typeof (candidate as { opening?: unknown }).opening !== "string" ||
+        typeof (candidate as { showEmptyRooms?: unknown }).showEmptyRooms !==
+          "boolean" ||
+        !Array.isArray((candidate as { blocks?: unknown }).blocks)
+      ) {
+        throw new Error("Struktur template JSON tidak lengkap.");
+      }
+
+      const blocks = (candidate as { blocks: unknown[] }).blocks.filter(
+        (block): block is SlaberanTemplateBlock =>
+          typeof block === "object" &&
+          block !== null &&
+          typeof (block as { id?: unknown }).id === "string" &&
+          typeof (block as { type?: unknown }).type === "string" &&
+          block.type in BLOCK_META &&
+          typeof (block as { label?: unknown }).label === "string" &&
+          typeof (block as { enabled?: unknown }).enabled === "boolean" &&
+          typeof (block as { config?: unknown }).config === "object" &&
+          (block as { config?: unknown }).config !== null,
+      );
+
+      if (!blocks.length) {
+        throw new Error("Template harus memiliki minimal satu blok.");
+      }
+
+      const source = candidate as SlaberanTemplateRecord;
+      const baseName = source.name.trim() || "Template Slaberan Import";
+      const existingNames = new Set(
+        templates.map((template) => template.name.trim().toLowerCase()),
+      );
+      let importedName = baseName;
+      let suffix = 2;
+
+      while (existingNames.has(importedName.toLowerCase())) {
+        importedName = baseName + " (" + suffix + ")";
+        suffix += 1;
+      }
+
+      const created = await createSlaberanTemplate({
+        name: importedName,
+        doctor: typeof source.doctor === "string" ? source.doctor : "",
+        specialty: source.specialty.trim(),
+        hospital: source.hospital.trim(),
+        opening: source.opening,
+        showEmptyRooms: source.showEmptyRooms,
+        blocks: blocks.map((block, index) => ({
+          ...block,
+          id: block.id + "-import-" + Date.now() + "-" + index,
+          config: { ...block.config },
+        })),
+        settings:
+          typeof source.settings === "object" &&
+          source.settings !== null &&
+          !Array.isArray(source.settings)
+            ? { ...source.settings }
+            : {},
+        schemaVersion:
+          typeof source.schemaVersion === "number" ? source.schemaVersion : 1,
+        isDefault: false,
+      });
+
+      await refresh();
+      setSelectedId(created.id);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Template JSON gagal diimpor.",
+      );
+    } finally {
+      setSaving(false);
+      if (importInputRef.current) importInputRef.current.value = "";
     }
   };
 
@@ -791,7 +921,25 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    ref={importInputRef}
+                    type="file"
+                    accept="application/json,.json"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) void handleImport(file);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => importInputRef.current?.click()}
+                    disabled={saving}
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-semibold text-slate-600 disabled:opacity-40"
+                  >
+                    Import JSON
+                  </button>
                   {!isUnsaved ? (
                     <>
                       <button
@@ -822,6 +970,15 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
                       </button>
                     </>
                   ) : null}
+
+                  <button
+                    type="button"
+                    onClick={handleExport}
+                    disabled={!draft || saving}
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-[10px] font-semibold text-slate-600 disabled:opacity-40"
+                  >
+                    Export JSON
+                  </button>
 
                   <button
                     type="button"
