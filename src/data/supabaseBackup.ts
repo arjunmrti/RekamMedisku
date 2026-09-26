@@ -30,6 +30,8 @@ type RestoreWorkspaceResult = {
   patientCount: number;
   followUpCount: number;
   supportingExamCount: number;
+  slaberanLocationCount: number;
+  slaberanTemplateCount: number;
 };
 
 function isStringMap(value: unknown): value is Record<string, string> {
@@ -103,6 +105,14 @@ function validateRestoreResult(data: unknown): RestoreWorkspaceResult {
       typeof result.supportingExamCount === "number"
         ? result.supportingExamCount
         : 0,
+    slaberanLocationCount:
+      typeof result.slaberanLocationCount === "number"
+        ? result.slaberanLocationCount
+        : 0,
+    slaberanTemplateCount:
+      typeof result.slaberanTemplateCount === "number"
+        ? result.slaberanTemplateCount
+        : 0,
   };
 }
 
@@ -123,6 +133,8 @@ export async function restoreWorkspaceBackupWithSupabase(
     followUpsByPatient: payload.followUpsByPatient,
     rotations: payload.rotations,
     activeRotationId: payload.activeRotationId ?? "",
+    slaberanLocations: payload.slaberanLocations,
+    slaberanTemplates: payload.slaberanTemplates,
   };
 
   // Upload binary attachments before replacing the cloud database snapshot.
