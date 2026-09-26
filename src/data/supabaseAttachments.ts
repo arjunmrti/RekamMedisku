@@ -96,12 +96,49 @@ export async function deleteAttachmentWithSupabase(
 }
 
 
+export type BackupAttachmentUploadState = {
+  newlyUploadedIds: string[];
+  replacedAttachments: Array<{
+    id: string;
+    blob: Blob;
+    contentType: string;
+  }>;
+};
+
+async function blobsHaveSameBytes(first: Blob, second: Blob): Promise<boolean> {
+  if (first.size !== second.size) return false;
+
+  const [firstBuffer, secondBuffer] = await Promise.all([
+    first.arrayBuffer(),
+    second.arrayBuffer(),
+  ]);
+
+  const firstBytes = new Uint8Array(firstBuffer);
+  const secondBytes = new Uint8Array(secondBuffer);
+
+  for (let index = 0; index < firstBytes.length; index += 1) {
+    if (firstBytes[index] !== secondBytes[index]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export async function uploadBackupAttachmentsWithSupabase(
   attachments: BackupAttachment[] | undefined,
-): Promise<string[]> {
-  if (!attachments?.length) return [];
+): Promise<BackupAttachmentUploadState> {
+  if (!attachments?.length) {
+    return {
+      newlyUploadedIds: [],
+      replacedAttachments: [],
+    };
+  }
 
-  const newlyUploadedIds: string[] = [];
+  const state: BackupAttachmentUploadState = {
+    newlyUploadedIds: [],
+    replacedAttachments: [],
+  };
 
   try {
     for (const attachment of attachments) {
@@ -124,17 +161,25 @@ export async function uploadBackupAttachmentsWithSupabase(
 
       const existing = await downloadAttachmentWithSupabase(attachment.id);
 
-      // Attachment IDs are stable logical IDs. Reuse an existing cloud object
-      // with the same size instead of overwriting it during a restore; this also
-      // lets us safely remove only objects created by this restore attempt.
       if (existing) {
-        if (existing.size !== attachment.size) {
-          throw new Error(
-            "Lampiran " +
-              attachment.name +
-              " sudah ada di cloud dengan ukuran berbeda.",
-          );
+        const sameContent = await blobsHaveSameBytes(existing, blob);
+
+        if (sameContent) {
+          continue;
         }
+
+        // Same logical ID but different binary: preserve the current cloud
+        // object so a failed DB restore can restore it exactly.
+        await uploadAttachmentWithSupabase(
+          attachment.id,
+          blob,
+          attachment.type,
+        );
+        state.replacedAttachments.push({
+          id: attachment.id,
+          blob: existing,
+          contentType: existing.type || "application/octet-stream",
+        });
         continue;
       }
 
@@ -143,25 +188,47 @@ export async function uploadBackupAttachmentsWithSupabase(
         blob,
         attachment.type,
       );
-      newlyUploadedIds.push(attachment.id);
+      state.newlyUploadedIds.push(attachment.id);
     }
 
-    return newlyUploadedIds;
+    return state;
   } catch (error) {
-    await rollbackBackupAttachmentUploadsWithSupabase(newlyUploadedIds);
+    await rollbackBackupAttachmentUploadsWithSupabase(state);
     throw error;
   }
 }
 
 export async function rollbackBackupAttachmentUploadsWithSupabase(
-  attachmentIds: string[],
+  state: BackupAttachmentUploadState | string[],
 ): Promise<void> {
-  for (const attachmentId of attachmentIds) {
+  const normalizedState: BackupAttachmentUploadState = Array.isArray(state)
+    ? {
+        newlyUploadedIds: state,
+        replacedAttachments: [],
+      }
+    : state;
+
+  for (const attachmentId of normalizedState.newlyUploadedIds) {
     try {
       await deleteAttachmentWithSupabase(attachmentId);
     } catch (rollbackError) {
       console.warn(
         "Gagal membersihkan lampiran backup yang ter-upload setelah restore gagal.",
+        rollbackError,
+      );
+    }
+  }
+
+  for (const attachment of normalizedState.replacedAttachments) {
+    try {
+      await uploadAttachmentWithSupabase(
+        attachment.id,
+        attachment.blob,
+        attachment.contentType,
+      );
+    } catch (rollbackError) {
+      console.warn(
+        "Gagal memulihkan lampiran cloud yang tertimpa saat restore gagal.",
         rollbackError,
       );
     }
