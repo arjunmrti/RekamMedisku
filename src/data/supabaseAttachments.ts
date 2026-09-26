@@ -63,20 +63,38 @@ export async function downloadAttachmentWithSupabase(
   return data;
 }
 
+export async function deleteAttachmentsWithSupabase(
+  attachmentIds: string[],
+): Promise<void> {
+  const uniqueIds = [...new Set(attachmentIds.filter(Boolean))];
+
+  if (uniqueIds.length === 0) return;
+
+  const userId = await getCurrentUserId();
+
+  // Supabase Storage accepts multiple paths per remove call. Keep batches
+  // bounded so a large patient history does not produce an oversized request.
+  for (let index = 0; index < uniqueIds.length; index += 100) {
+    const paths = uniqueIds
+      .slice(index, index + 100)
+      .map((attachmentId) => objectPath(userId, attachmentId));
+
+    const { error } = await supabase.storage
+      .from(ATTACHMENT_BUCKET)
+      .remove(paths);
+
+    if (error) {
+      throw new Error("Lampiran cloud gagal dihapus: " + error.message);
+    }
+  }
+}
+
 export async function deleteAttachmentWithSupabase(
   attachmentId: string,
 ): Promise<void> {
-  const userId = await getCurrentUserId();
-  const path = objectPath(userId, attachmentId);
-
-  const { error } = await supabase.storage
-    .from(ATTACHMENT_BUCKET)
-    .remove([path]);
-
-  if (error) {
-    throw new Error("Lampiran cloud gagal dihapus: " + error.message);
-  }
+  await deleteAttachmentsWithSupabase([attachmentId]);
 }
+
 
 export async function uploadBackupAttachmentsWithSupabase(
   attachments: BackupAttachment[] | undefined,
