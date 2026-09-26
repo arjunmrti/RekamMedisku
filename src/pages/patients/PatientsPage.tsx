@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import PatientListHeader from "../../components/patients/PatientListHeader";
 import PatientListToolbar from "../../components/patients/PatientListToolbar";
@@ -6,11 +6,14 @@ import PatientListTable from "../../components/patients/PatientListTable";
 import PatientSummaryPanel from "../../components/patients/PatientSummaryPanel";
 import AddPatientModal from "../../components/patients/AddPatientModal";
 import { loadActiveRotation } from "../../data/localRotations";
+import { loadPatients } from "../../data/localPatients";
 import {
-  deletePatient,
-  loadPatients,
-  savePatients,
-} from "../../data/localPatients";
+  deletePatientWithSupabase,
+  getSupabasePatientErrorMessage,
+  syncPatientsWithSupabase,
+  setPatientStatusWithSupabase,
+  upsertPatientWithSupabase,
+} from "../../data/supabasePatients";
 import type { PatientListItem } from "../../types/patient";
 
 type PatientsPageProps = NavigationProps & {
@@ -86,7 +89,54 @@ export default function PatientsPage({
     );
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientListItem | null>(null);
+  const [syncing, setSyncing] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
   const deletingPatientRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncWorkspace() {
+      setSyncing(true);
+      setErrorMessage("");
+
+      try {
+        const nextPatients = await syncPatientsWithSupabase();
+
+        if (cancelled) return;
+
+        setPatients(nextPatients);
+        setSelectedPatient(
+          (current) =>
+            nextPatients.find(
+              (patient) =>
+                patient.id === current?.id &&
+                patient.rotationId === activeRotation.id,
+            ) ??
+            nextPatients.find(
+              (patient) => patient.rotationId === activeRotation.id,
+            ) ??
+            null,
+        );
+      } catch (error) {
+        console.error("Supabase patient sync failed:", error);
+
+        if (!cancelled) {
+          setErrorMessage(getSupabasePatientErrorMessage(error));
+        }
+      } finally {
+        if (!cancelled) {
+          setSyncing(false);
+        }
+      }
+    }
+
+    void syncWorkspace();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeRotation.id]);
 
   const activeRotationPatients = useMemo(
     () => patients.filter((patient) => patient.rotationId === activeRotation.id),
@@ -166,7 +216,9 @@ export default function PatientsPage({
     setModalOpen(true);
   };
 
-  const handlePatientSubmit = (patient: PatientListItem) => {
+  const handlePatientSubmit = async (
+    patient: PatientListItem,
+  ): Promise<string | null> => {
     const duplicate = patients.some(
       (item) =>
         item.id !== patient.id &&
@@ -178,19 +230,24 @@ export default function PatientsPage({
       return "Nomor RM tersebut sudah digunakan pada stase ini.";
     }
 
-    const exists = patients.some((item) => item.id === patient.id);
-    const next = exists
-      ? patients.map((item) => (item.id === patient.id ? patient : item))
-      : [patient, ...patients];
-
-    savePatients(next);
-    setPatients(next);
-    setSelectedPatient(patient);
-    setEditingPatient(null);
-    return null;
+    try {
+      const next = await upsertPatientWithSupabase(patient);
+      setPatients(next);
+      setSelectedPatient(patient);
+      setEditingPatient(null);
+      setErrorMessage("");
+      return null;
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Gagal menyimpan data pasien.",
+      );
+      return "Pasien belum tersimpan. Periksa koneksi lalu coba lagi.";
+    }
   };
 
-  const handleToggleArchive = (patient: PatientListItem) => {
+  const handleToggleArchive = async (patient: PatientListItem) => {
     const nextStatus: PatientListItem["status"] =
       patient.status === "Aktif" ? "Diarsipkan" : "Aktif";
     const action = nextStatus === "Diarsipkan" ? "Arsipkan" : "Pulihkan";
@@ -204,16 +261,25 @@ export default function PatientsPage({
 
     if (!confirmed) return;
 
-    const next = patients.map((item) =>
-      item.id === patient.id ? { ...item, status: nextStatus } : item,
-    );
+    setErrorMessage("");
 
-    savePatients(next);
-    setPatients(next);
-
-    setSelectedPatient((current) =>
-      current?.id === patient.id ? { ...current, status: nextStatus } : current,
-    );
+    try {
+      const next = await setPatientStatusWithSupabase(patient, nextStatus);
+      setPatients(next);
+      setSelectedPatient(
+        (current) =>
+          current?.id === patient.id
+            ? next.find((item) => item.id === patient.id) ?? current
+            : current,
+      );
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengubah status pasien.",
+      );
+      window.alert("Status pasien belum berubah. Silakan coba lagi.");
+    }
   };
 
   const handleDeletePatient = async (patient: PatientListItem) => {
@@ -230,11 +296,11 @@ export default function PatientsPage({
     deletingPatientRef.current = true;
 
     try {
-      const deleted = await deletePatient(patient.id);
+      const deleted = await deletePatientWithSupabase(patient);
 
       if (!deleted) return;
 
-      const nextPatients = patients.filter((item) => item.id !== patient.id);
+      const nextPatients = loadPatients();
       setPatients(nextPatients);
       setSelectedPatient(
         (current) =>
@@ -280,6 +346,21 @@ export default function PatientsPage({
                   }
                   onAddPatient={openAddPatient}
                 />
+
+                {syncing ? (
+                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-2.5 text-[11px] font-medium text-slate-500">
+                    Menyinkronkan data pasien...
+                  </div>
+                ) : null}
+
+                {errorMessage ? (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-[11px] leading-relaxed text-rose-700"
+                  >
+                    {errorMessage}
+                  </div>
+                ) : null}
 
                 <PatientListToolbar
                   searchValue={filterSearch}
