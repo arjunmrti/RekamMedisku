@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { DEFAULT_ROTATIONS, loadRotations } from "../src/data/localRotations";
+import { loadRotations } from "../src/data/localRotations";
 
 class MemoryStorage {
   private values = new Map<string, string>();
@@ -74,7 +74,7 @@ test("memigrasikan rotation demo lama dari localStorage", () => {
   );
 });
 
-test("mengembalikan satu-satunya default Neurologi jika storage hanya berisi demo lama", () => {
+test("menghapus seluruh data demo lama tanpa membuat default baru", () => {
   storage.clear();
   storage.setItem(
     "rekammedisku:rotations",
@@ -88,10 +88,10 @@ test("mengembalikan satu-satunya default Neurologi jika storage hanya berisi dem
 
   const rotations = loadRotations();
 
-  assert.deepEqual(rotations, DEFAULT_ROTATIONS);
+  assert.deepEqual(rotations, []);
   assert.deepEqual(
     JSON.parse(storage.getItem("rekammedisku:rotations") ?? "null"),
-    DEFAULT_ROTATIONS,
+    [],
   );
 });
 
@@ -104,4 +104,11 @@ test("mempertahankan rotation yang bukan data demo", () => {
   );
 
   assert.deepEqual(loadRotations(), [customRotation]);
+});
+
+test("workspace baru tidak membuat stase otomatis", () => {
+  storage.clear();
+
+  assert.deepEqual(loadRotations(), []);
+  assert.equal(storage.getItem("rekammedisku:rotations"), null);
 });
