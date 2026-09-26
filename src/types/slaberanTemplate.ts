@@ -77,4 +77,6 @@ export type SlaberanTemplateBlockConfig = {
   showSpecialty?: boolean;
   showDoctor?: boolean;
   showDate?: boolean;
+  legacyGroups?: Array<{ label: string; rooms: string[] }>;
+  legacyRooms?: string[];
 };
