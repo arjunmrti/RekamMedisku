@@ -42,6 +42,7 @@ export function createStarterSlaberanTemplate(): SlaberanTemplateRecord {
       }),
       block("patients", "patient-list", "Daftar Pasien", {
         fields: ["name", "age", "rm", "doctor", "bed", "diagnosis"],
+        legacyRooms: ["CVCU/ICCU", "ICU", "IGD"],
       }),
       block("special", "special-unit-list", "Unit Khusus", {
         showEmptyRooms: true,
