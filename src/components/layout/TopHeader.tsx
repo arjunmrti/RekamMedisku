@@ -120,7 +120,6 @@ export default function TopHeader({
           />
         </label>
       ) : null}
-      </div>
 
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-3 lg:gap-4 xl:gap-6">
         <div className="hidden items-center gap-2 text-xs font-medium text-slate-600 xl:flex">
