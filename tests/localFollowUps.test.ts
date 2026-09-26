@@ -155,7 +155,7 @@ test("attachment pasien menggabungkan follow-up dan draft tanpa duplikat", () =>
   storage.setItem(
     "rekammedisku:follow-ups",
     JSON.stringify({
-      patient-a: [followUpWithAttachment("fu-a", "att-1")],
+      "patient-a": [followUpWithAttachment("fu-a", "att-1")],
     }),
   );
   storage.setItem(
@@ -171,8 +171,8 @@ test("attachment yang masih direferensikan pasien lain tidak dianggap aman dihap
   storage.setItem(
     "rekammedisku:follow-ups",
     JSON.stringify({
-      patient-a: [followUpWithAttachment("fu-a", "att-shared")],
-      patient-b: [followUpWithAttachment("fu-b", "att-shared")],
+      "patient-a": [followUpWithAttachment("fu-a", "att-shared")],
+      "patient-b": [followUpWithAttachment("fu-b", "att-shared")],
     }),
   );
   storage.setItem(
