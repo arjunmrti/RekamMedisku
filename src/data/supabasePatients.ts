@@ -20,6 +20,7 @@ type PatientRow = {
   created_at: string;
   updated_at: string;
   admission_date: string | null;
+  admission_complaint: string | null;
   status: string;
   follow_ups?: Array<{
     number: number;
@@ -94,6 +95,7 @@ function toPatient(
     ...followUpSummary,
     createdAt: row.created_at,
     admissionDate: row.admission_date ?? undefined,
+    admissionComplaint: row.admission_complaint ?? undefined,
     updatedAt: row.updated_at,
     status: normalizeStatus(row.status),
   };
@@ -140,6 +142,7 @@ function patientPayload(patient: PatientListItem, remoteRotationId: string) {
     doctor: patient.doctor,
     created_at: patient.createdAt ?? new Date().toISOString(),
     admission_date: patient.admissionDate ?? null,
+    admission_complaint: patient.admissionComplaint?.trim() || null,
     status: patient.status,
   };
 }
@@ -208,7 +211,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
   const { data: remoteRows, error } = await supabase
     .from("patients")
     .select(
-      "id,user_id,rotation_id,name,age,gender,rm,room,bed,doctor,created_at,admission_date,status,follow_ups(number,iso_date,time,status)",
+      "id,user_id,rotation_id,name,age,gender,rm,room,bed,doctor,created_at,admission_date,admission_complaint,status,follow_ups(number,iso_date,time,status)",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -358,6 +361,7 @@ export async function upsertPatientWithSupabase(
       rotationId: patient.rotationId,
       createdAt: remoteRow.created_at,
       admissionDate: remoteRow.admission_date ?? undefined,
+      admissionComplaint: remoteRow.admission_complaint ?? undefined,
       updatedAt: remoteRow.updated_at,
       status: normalizeStatus(remoteRow.status),
     };

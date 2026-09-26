@@ -152,6 +152,15 @@ export function buildWhatsAppReport(
     .filter(Boolean)
     .join("\n");
 
+  const subjectiveBlock = [
+    patient.admissionComplaint?.trim()
+      ? "Keluhan Masuk: " + patient.admissionComplaint.trim()
+      : "",
+    followUp.subjective.trim(),
+  ]
+    .filter(Boolean)
+    .join("\n");
+
   const supportingBlock =
     exams.length > 0
       ? exams
@@ -208,7 +217,7 @@ export function buildWhatsAppReport(
     "Tanggal Follow-Up: " + formatReportDate(followUp.date),
     "",
     "S:",
-    cleanBlock(followUp.subjective),
+    cleanBlock(subjectiveBlock),
     "",
     "O:",
     cleanBlock(generalObjective),

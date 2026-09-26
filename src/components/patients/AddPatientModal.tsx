@@ -33,6 +33,9 @@ export default function AddPatientModal({
   const [admissionDate, setAdmissionDate] = useState(
     () => patient?.admissionDate ?? toLocalIsoDate(),
   );
+  const [admissionComplaint, setAdmissionComplaint] = useState(
+    () => patient?.admissionComplaint ?? "",
+  );
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -94,7 +97,8 @@ export default function AddPatientModal({
       createdAt: patient?.createdAt ?? new Date().toISOString(),
       updatedAt: patient?.updatedAt,
       admissionDate,
-        status: patient?.status ?? "Aktif",
+      admissionComplaint: admissionComplaint.trim() || undefined,
+      status: patient?.status ?? "Aktif",
       });
 
       if (result) {
@@ -221,6 +225,20 @@ export default function AddPatientModal({
               onChange={(event) => setAdmissionDate(event.target.value)}
               className="field-control"
             />
+          </Field>
+
+          <Field label="Keluhan Saat Masuk">
+            <textarea
+              maxLength={1000}
+              rows={3}
+              value={admissionComplaint}
+              onChange={(event) => setAdmissionComplaint(event.target.value)}
+              placeholder="Keluhan utama saat pertama masuk rumah sakit..."
+              className="field-control min-h-24 resize-none leading-relaxed"
+            />
+            <span className="mt-1 block text-[10px] leading-relaxed text-slate-400">
+              Disimpan sebagai konteks awal pasien dan akan tampil otomatis pada setiap Follow-Up.
+            </span>
           </Field>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

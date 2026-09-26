@@ -17,5 +17,7 @@ export type PatientListItem = {
   /** Remote updated_at used for optimistic concurrency control. */
   updatedAt?: string;
   admissionDate?: string;
+  /** Initial presenting complaint recorded as persistent patient context. */
+  admissionComplaint?: string;
   status: PatientStatus;
 };
