@@ -1,11 +1,30 @@
 import type { FollowUpEntry } from "../types/followUp";
 import type { PatientListItem } from "../types/patient";
-import type { ReportTemplateType } from "../types/report";
+import type {
+  ReportReporterProfile,
+  ReportTemplateType,
+} from "../types/report";
 import type { RotationSpecialty } from "../types/rotation";
 
 function cleanBlock(value: string) {
   const text = value.trim();
   return text || "Belum ada catatan.";
+}
+
+function cleanOptional(value: string | undefined) {
+  return value?.trim() ?? "";
+}
+
+function formatIsoDateForReport(date: string | undefined) {
+  if (!date) return "";
+  const parsed = new Date(date + "T00:00:00");
+  if (Number.isNaN(parsed.getTime())) return date;
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(parsed);
 }
 
 export function formatReportDate(date: string) {
@@ -74,7 +93,11 @@ function getTemplateObjective(
       : internalMedicinePrefixes;
 
   return [
-    ...new Set(lines.filter((line) => prefixes.some((prefix) => line.startsWith(prefix)))),
+    ...new Set(
+      lines.filter((line) =>
+        prefixes.some((prefix) => line.startsWith(prefix)),
+      ),
+    ),
   ];
 }
 
@@ -82,9 +105,7 @@ function getObjectiveWithoutTemplateSection(
   objective: string,
   templateType: ReportTemplateType,
 ) {
-  const templateLines = new Set(
-    getTemplateObjective(objective, templateType),
-  );
+  const templateLines = new Set(getTemplateObjective(objective, templateType));
 
   return objective
     .split("\n")
@@ -96,8 +117,39 @@ function getObjectiveWithoutTemplateSection(
 
 type BuildWhatsAppReportOptions = {
   rotationName?: string;
-  generatedAt?: Date;
+  reporter?: ReportReporterProfile;
 };
+
+function buildOpening(
+  rotationName: string,
+  reporter?: ReportReporterProfile,
+) {
+  if (
+    reporter &&
+    cleanOptional(reporter.name) &&
+    cleanOptional(reporter.stambuk) &&
+    cleanOptional(reporter.program)
+  ) {
+    return [
+      "Assalamualaikum warahmatullahi wabarakatuh dok. Tabe dok, mohon izin dok.",
+      "Perkenalkan saya " +
+        reporter.name.trim() +
+        " dengan Stambuk " +
+        reporter.stambuk.trim() +
+        " " +
+        reporter.program.trim() +
+        " Stase " +
+        rotationName +
+        ".",
+      "Mohon izin melaporkan follow-up pasien:",
+    ].join(" ");
+  }
+
+  return [
+    "Assalamualaikum warahmatullahi wabarakatuh dok. Tabe dok, mohon izin dok.",
+    "Mohon izin melaporkan follow-up pasien:",
+  ].join(" ");
+}
 
 export function buildWhatsAppReport(
   patient: PatientListItem,
@@ -107,39 +159,11 @@ export function buildWhatsAppReport(
 ) {
   const exams = followUp.supportingExams ?? [];
   const rotationName = options.rotationName?.trim() || templateType;
-  const greeting = getReportGreeting(options.generatedAt);
   const planning =
     followUp.planning?.trim() ||
     followUp.plan?.trim() ||
     "Belum ada planning.";
   const instruction = followUp.instruction?.trim();
-
-  const planBlock = [
-    "P: " + planning,
-    instruction ? "I: " + instruction : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  const supportingBlock =
-    exams.length > 0
-      ? exams
-          .map((exam) => {
-            const result = exam.result?.trim();
-            const attachment = exam.attachmentName?.trim();
-
-            return [
-              "- " + exam.name + " · " + exam.date,
-              result ? "  " + result : "",
-              attachment ? "  Lampiran: " + attachment : "",
-            ]
-              .filter(Boolean)
-              .join("\n");
-          })
-          .join("\n")
-      : followUp.objective.includes("Hasil Penunjang:")
-        ? "Data pemeriksaan penunjang mengikuti catatan pada follow-up."
-        : "Belum ada pemeriksaan penunjang.";
 
   const templateObjective = getTemplateObjective(
     followUp.objective,
@@ -149,10 +173,12 @@ export function buildWhatsAppReport(
     followUp.objective,
     templateType,
   );
+
   const templateHeading =
     templateType === "Neurologi"
       ? "Pemeriksaan neurologis:"
       : "Pemeriksaan sistemik Ilmu Penyakit Dalam:";
+
   const templateBlock =
     templateObjective.length > 0
       ? templateHeading +
@@ -160,8 +186,15 @@ export function buildWhatsAppReport(
         templateObjective.map((line) => "- " + line).join("\n")
       : templateHeading + "\nBelum ada catatan.";
 
+  const supportingBlock =
+    exams.length > 0
+      ? exams
+          .map((exam) => "- " + exam.name + " · " + exam.date)
+          .join("\n")
+      : "Belum ada pemeriksaan penunjang.";
+
   return [
-    greeting + ", izin melaporkan follow-up pasien:",
+    buildOpening(rotationName, options.reporter),
     "",
     "Nama: " + patient.name,
     "Umur: " + patient.age + " tahun",
@@ -170,12 +203,8 @@ export function buildWhatsAppReport(
     "Bed: " + patient.bed,
     "DPJP: " + patient.doctor,
     "Stase: " + rotationName,
-    "Follow-Up #" +
-      followUp.number +
-      " · " +
-      formatReportDate(followUp.date) +
-      " · " +
-      followUp.time,
+    "Tanggal Masuk: " + formatIsoDateForReport(patient.admissionDate),
+    "Tanggal Follow-Up: " + formatReportDate(followUp.date),
     "",
     "S:",
     cleanBlock(followUp.subjective),
@@ -191,9 +220,14 @@ export function buildWhatsAppReport(
     "A:",
     cleanBlock(followUp.assessment),
     "",
-    planBlock,
+    "P: " + planning,
+    instruction ? "I: " + instruction : "",
     "",
-    "Mohon arahan lebih lanjut, Dok.",
-    "Terima kasih.",
-  ].join("\n");
+    "Terimakasih sebelumnya dokter, Mohon arahan dan bimbingannya dok🙏🏻",
+  ]
+    .filter((line, index, lines) => {
+      if (line !== "") return true;
+      return lines[index - 1] !== "";
+    })
+    .join("\n");
 }
