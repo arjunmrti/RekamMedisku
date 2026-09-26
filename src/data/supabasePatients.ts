@@ -5,6 +5,10 @@ import { syncRotationsWithSupabase } from "./supabaseRotations";
 import { supabase } from "../utils/supabase";
 import { derivePatientFollowUpSummaryFromRemote } from "./patientFollowUpSummary";
 import { deleteAttachmentsWithSupabase } from "./supabaseAttachments";
+import {
+  normalizePatientAdmissionLocation,
+  normalizePatientLocation,
+} from "../utils/patientLocation";
 
 type PatientRow = {
   id: string;
@@ -15,8 +19,12 @@ type PatientRow = {
   gender: string;
   rm: string;
   room: string;
+  current_location_type: string | null;
+  current_location_name: string | null;
   bed: string;
   doctor: string;
+  admission_location_type: string | null;
+  admission_location_name: string | null;
   created_at: string;
   updated_at: string;
   admission_date: string | null;
@@ -89,9 +97,26 @@ function toPatient(
     age: row.age,
     gender: normalizeGender(row.gender),
     rm: row.rm,
-    room: row.room,
+    room: row.current_location_name?.trim() || row.room,
+    currentLocation: normalizePatientLocation(
+      {
+        type: row.current_location_type as "ward" | "special" | null,
+        name: row.current_location_name ?? "",
+        bed: row.bed,
+      },
+      row.room,
+      row.bed,
+    ),
     bed: row.bed,
     doctor: row.doctor,
+    admissionLocation: normalizePatientAdmissionLocation(
+      row.admission_location_name
+        ? {
+            type: row.admission_location_type as "ward" | "special" | null,
+            name: row.admission_location_name,
+          }
+        : undefined,
+    ),
     ...followUpSummary,
     createdAt: row.created_at,
     admissionDate: row.admission_date ?? undefined,
@@ -140,9 +165,13 @@ function patientPayload(patient: PatientListItem, remoteRotationId: string) {
     room: patient.room,
     bed: patient.bed,
     doctor: patient.doctor,
+    current_location_type: patient.currentLocation.type,
+    current_location_name: patient.currentLocation.name,
     created_at: patient.createdAt ?? new Date().toISOString(),
     admission_date: patient.admissionDate ?? null,
     admission_complaint: patient.admissionComplaint?.trim() || null,
+    admission_location_type: patient.admissionLocation?.type ?? null,
+    admission_location_name: patient.admissionLocation?.name ?? null,
     status: patient.status,
   };
 }
@@ -211,7 +240,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
   const { data: remoteRows, error } = await supabase
     .from("patients")
     .select(
-      "id,user_id,rotation_id,name,age,gender,rm,room,bed,doctor,created_at,admission_date,admission_complaint,status,follow_ups(number,iso_date,time,status)",
+      "id,user_id,rotation_id,name,age,gender,rm,room,current_location_type,current_location_name,bed,doctor,created_at,admission_date,admission_complaint,admission_location_type,admission_location_name,status,follow_ups(number,iso_date,time,status)",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -355,9 +384,26 @@ export async function upsertPatientWithSupabase(
       age: remoteRow.age,
       gender: normalizeGender(remoteRow.gender),
       rm: remoteRow.rm,
-      room: remoteRow.room,
+      room: remoteRow.current_location_name?.trim() || remoteRow.room,
+      currentLocation: normalizePatientLocation(
+        {
+          type: remoteRow.current_location_type as "ward" | "special" | null,
+          name: remoteRow.current_location_name ?? "",
+          bed: remoteRow.bed,
+        },
+        remoteRow.room,
+        remoteRow.bed,
+      ),
       bed: remoteRow.bed,
       doctor: remoteRow.doctor,
+      admissionLocation: normalizePatientAdmissionLocation(
+        remoteRow.admission_location_name
+          ? {
+              type: remoteRow.admission_location_type as "ward" | "special" | null,
+              name: remoteRow.admission_location_name,
+            }
+          : undefined,
+      ),
       rotationId: patient.rotationId,
       createdAt: remoteRow.created_at,
       admissionDate: remoteRow.admission_date ?? undefined,
