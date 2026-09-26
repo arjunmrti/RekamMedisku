@@ -9,7 +9,6 @@ import SupportingExams from "../../components/patient-profile/SupportingExams";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
 import {
   getSupabaseFollowUpErrorMessage,
-  syncFollowUpsForPatientWithSupabase,
 } from "../../data/supabaseFollowUps";
 import { loadRotations } from "../../data/localRotations";
 import type { PatientListItem } from "../../types/patient";
@@ -17,6 +16,7 @@ import Icon from "../../components/ui/Icon";
 import type { SupportingExam } from "../../types/followUp";
 import { getAttachment } from "../../data/localAttachments";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
+import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 
 type PatientProfilePageProps = NavigationProps & {
   patient: PatientListItem;
@@ -148,10 +148,10 @@ export default function PatientProfilePage({
   useEffect(() => {
     let cancelled = false;
 
-    void syncFollowUpsForPatientWithSupabase(patient.id)
-      .then((entries) => {
+    void syncWorkspaceWithSupabase()
+      .then(() => {
         if (!cancelled) {
-          setFollowUps(entries);
+          setFollowUps(loadSavedFollowUps()[patient.id] ?? []);
           setFollowUpError("");
         }
       })
