@@ -51,11 +51,14 @@ export function derivePatientFollowUpSummary(
     };
   }
 
+  const normalizedTime = latest.time.replace(".", ":").slice(0, 8);
+  const timeWithSeconds =
+    normalizedTime.length === 5 ? normalizedTime + ":00" : normalizedTime;
+
   return {
     lastFollowUp: formatDate(latest.isoDate) + " · " + formatTime(latest.time),
     followUpNumber: latest.number,
-    lastFollowUpAt:
-      latest.isoDate + "T" + latest.time.replace(".", ":").slice(0, 8),
+    lastFollowUpAt: latest.isoDate + "T" + timeWithSeconds,
   };
 }
 
