@@ -25,6 +25,26 @@ test("legacy ward room is normalized as a ward current location", () => {
   });
 });
 
+test("preserves explicit current location ID", () => {
+  const location = normalizePatientLocation(
+    {
+      locationId: "loc-123",
+      type: "ward",
+      name: "Anggrek",
+      bed: "15",
+    },
+    "ICU",
+    "04",
+  );
+
+  assert.deepEqual(location, {
+    locationId: "loc-123",
+    type: "ward",
+    name: "Anggrek",
+    bed: "15",
+  });
+});
+
 test("explicit current location wins over legacy room", () => {
   const location = normalizePatientLocation(
     {
@@ -47,11 +67,13 @@ test("admission location stays separate from current location", () => {
   const location = normalizePatientAdmissionLocation({
     type: "special",
     name: "IGD",
+    locationId: "loc-igd",
   });
 
   assert.deepEqual(location, {
     type: "special",
     name: "IGD",
+    locationId: "loc-igd",
   });
 });
 
