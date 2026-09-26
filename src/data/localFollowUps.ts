@@ -14,6 +14,26 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
+function getStoredFollowUps(): Record<string, FollowUpEntry[]> {
+  const parsed = readJson<unknown>(SAVED_KEY, null);
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(parsed).filter(([, entries]) => Array.isArray(entries)),
+  ) as Record<string, FollowUpEntry[]>;
+}
+
+function getDraftAttachmentIds(patientId: string): string[] {
+  const draft = loadFollowUpDraft(patientId);
+
+  return (draft?.supportingExams ?? [])
+    .map((exam) => exam.attachmentId)
+    .filter((attachmentId): attachmentId is string => Boolean(attachmentId));
+}
+
 export function loadFollowUpDraft(patientId: string): FollowUpFormValues | null {
   return readJson<FollowUpFormValues | null>(DRAFT_PREFIX + patientId, null);
 }
@@ -44,15 +64,25 @@ export function loadSavedFollowUps(): Record<string, FollowUpEntry[]> {
     return seeded;
   }
 
-  const parsed = readJson<unknown>(SAVED_KEY, null);
+  return getStoredFollowUps();
+}
 
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return {};
-  }
+export function getPatientFollowUpAttachmentIds(patientId: string): string[] {
+  const followUps = getStoredFollowUps()[patientId] ?? [];
+  const savedAttachmentIds = followUps
+    .flatMap((entry) => entry.supportingExams ?? [])
+    .map((exam) => exam.attachmentId)
+    .filter((attachmentId): attachmentId is string => Boolean(attachmentId));
 
-  return Object.fromEntries(
-    Object.entries(parsed).filter(([, entries]) => Array.isArray(entries)),
-  ) as Record<string, FollowUpEntry[]>;
+  return [...new Set([...savedAttachmentIds, ...getDraftAttachmentIds(patientId)])];
+}
+
+export function deleteFollowUpsForPatient(patientId: string) {
+  const current = getStoredFollowUps();
+
+  delete current[patientId];
+  window.localStorage.setItem(SAVED_KEY, JSON.stringify(current));
+  clearFollowUpDraft(patientId);
 }
 
 export function appendSavedFollowUp(
