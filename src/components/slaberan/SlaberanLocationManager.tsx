@@ -98,9 +98,25 @@ export default function SlaberanLocationManager({ onBack }: Props) {
   }, [floors, parentId, type]);
 
   const getPatientCount = (location: SlaberanLocation) =>
-    patients.filter(
-      (patient) => patient.currentLocation?.locationId === location.id,
-    ).length;
+    patients.filter((patient) => {
+      const current = patient.currentLocation;
+
+      if (current?.locationId) {
+        return current.locationId === location.id;
+      }
+
+      const normalizedPatientName = (
+        current?.name ??
+        patient.room
+      ).trim().toLowerCase();
+
+      return (
+        normalizedPatientName === location.name.trim().toLowerCase() &&
+        (location.type === "special"
+          ? current?.type === "special"
+          : current?.type !== "special")
+      );
+    }).length;
 
   const siblingLocations = (location: SlaberanLocation) =>
     sortLocations(
