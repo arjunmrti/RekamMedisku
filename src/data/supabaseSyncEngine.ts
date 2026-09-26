@@ -1,5 +1,7 @@
 import { supabase } from "../utils/supabase";
 import { syncFollowUpsWithSupabase } from "./supabaseFollowUps";
+import { syncSlaberanLocationsWithSupabase } from "./supabaseSlaberanLocations";
+import { syncSlaberanTemplatesWithSupabase } from "./supabaseSlaberanTemplates";
 
 const WORKSPACE_SYNC_EVENT = "rekammedisku:workspace-synced";
 const REALTIME_WATCHDOG_INTERVAL_MS = 30_000;
@@ -19,6 +21,8 @@ export async function syncWorkspaceWithSupabase(): Promise<void> {
   if (syncInFlight) return syncInFlight;
 
   syncInFlight = (async () => {
+    await syncSlaberanLocationsWithSupabase();
+    await syncSlaberanTemplatesWithSupabase();
     await syncFollowUpsWithSupabase();
     notifyWorkspaceSynced();
   })().finally(() => {
@@ -64,6 +68,26 @@ export function startWorkspaceSync(userId: string): () => void {
 
   const channel = supabase
     .channel("rekammedisku-workspace-sync-" + userId)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "slaberan_locations",
+        filter: "user_id=eq." + userId,
+      },
+      sync,
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "slaberan_templates",
+        filter: "user_id=eq." + userId,
+      },
+      sync,
+    )
     .on(
       "postgres_changes",
       {
