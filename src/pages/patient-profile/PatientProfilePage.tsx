@@ -16,6 +16,7 @@ import type { PatientListItem } from "../../types/patient";
 import Icon from "../../components/ui/Icon";
 import type { SupportingExam } from "../../types/followUp";
 import { getAttachment } from "../../data/localAttachments";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
 type PatientProfilePageProps = NavigationProps & {
   patient: PatientListItem;
@@ -131,6 +132,7 @@ export default function PatientProfilePage({
   onNavigate,
   patient,
 }: PatientProfilePageProps) {
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const [activeTab, setActiveTab] = useState<ProfileTab>("Ringkasan");
   const [selectedExam, setSelectedExam] = useState<SupportingExam | null>(null);
   const rotation =
@@ -168,6 +170,12 @@ export default function PatientProfilePage({
       cancelled = true;
     };
   }, [patient.id]);
+
+  useEffect(() => {
+    if (workspaceSyncVersion === 0) return;
+
+    setFollowUps(loadSavedFollowUps()[patient.id] ?? []);
+  }, [workspaceSyncVersion, patient.id]);
 
   const latestFollowUp = followUps[0] ?? null;
 
