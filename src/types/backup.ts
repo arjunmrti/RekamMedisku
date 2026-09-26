@@ -2,6 +2,8 @@ import type { FollowUpEntry } from "./followUp";
 import type { FollowUpFormValues } from "./followUpForm";
 import type { PatientListItem } from "./patient";
 import type { Rotation } from "./rotation";
+import type { SlaberanLocation } from "./slaberanLocation";
+import type { SlaberanTemplateRecord } from "./slaberanTemplate";
 
 export type BackupOperationType = "Export" | "Restore";
 export type BackupOperationStatus = "Berhasil" | "Sebagian" | "Gagal";
@@ -38,4 +40,10 @@ export type BackupPayload = {
   attachments?: BackupAttachment[];
   rotations?: Rotation[];
   activeRotationId?: string;
+  /**
+   * Optional so backups created before the Slaberan workspace model remain
+   * restorable without deleting newer Slaberan configuration.
+   */
+  slaberanLocations?: SlaberanLocation[];
+  slaberanTemplates?: SlaberanTemplateRecord[];
 };
