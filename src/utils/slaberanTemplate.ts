@@ -39,15 +39,37 @@ export function createStarterSlaberanTemplate(): SlaberanTemplateRecord {
       block("wards", "ward-summary", "Ringkasan Bangsal", {
         showEmptyRooms: true,
         highlightOccupied: true,
+        legacyGroups: [
+          {
+            label: "Lantai 1",
+            rooms: ["Anggrek", "Bougenville", "Cemara", "Dahlia", "Edelwais"],
+          },
+          {
+            label: "Lantai 2",
+            rooms: [
+              "Anggrek",
+              "Cemara",
+              "Dahlia",
+              "Flamboyan",
+              "Edelwais",
+              "Geranium",
+            ],
+          },
+        ],
       }),
       block("patients", "patient-list", "Daftar Pasien", {
         fields: ["name", "age", "rm", "doctor", "bed", "diagnosis"],
-        legacyRooms: ["CVCU/ICCU", "ICU", "IGD"],
+        patientSeparator: "/",
+        showPatientIndex: true,
+        emptyText: "Belum ada pasien.",
       }),
       block("special", "special-unit-list", "Unit Khusus", {
         showEmptyRooms: true,
         highlightOccupied: true,
         fields: ["name", "age", "rm", "doctor", "bed", "diagnosis"],
+        patientSeparator: "/",
+        showPatientIndex: true,
+        legacyRooms: ["CVCU/ICCU", "ICU", "IGD"],
       }),
       block("summary", "summary", "Keterangan", {
         showDoctorCount: true,
