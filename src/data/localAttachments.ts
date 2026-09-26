@@ -81,6 +81,38 @@ export async function saveAttachment(file: File): Promise<string> {
   });
 }
 
+export async function saveStoredAttachment(
+  attachment: StoredAttachment,
+): Promise<void> {
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(STORE_NAME, "readwrite");
+    transaction.objectStore(STORE_NAME).put(attachment);
+
+    transaction.oncomplete = () => {
+      database.close();
+      resolve();
+    };
+
+    transaction.onerror = () => {
+      database.close();
+      reject(
+        transaction.error ??
+          new Error("Lampiran gagal disimpan ke penyimpanan browser."),
+      );
+    };
+
+    transaction.onabort = () => {
+      database.close();
+      reject(
+        transaction.error ??
+          new Error("Penyimpanan lampiran dibatalkan oleh browser."),
+      );
+    };
+  });
+}
+
 export async function getAttachment(id: string): Promise<Blob | null> {
   const database = await openDatabase();
 
