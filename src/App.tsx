@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import PatientProfilePage from "./pages/patient-profile/PatientProfilePage";
 import FollowUpFormPage from "./pages/follow-up/FollowUpFormPage";
@@ -10,6 +10,7 @@ import { loadActiveRotation } from "./data/localRotations";
 import { loadPatients } from "./data/localPatients";
 import type { Rotation } from "./types/rotation";
 import type { PatientListItem } from "./types/patient";
+import { useWorkspaceSyncVersion } from "./hooks/useWorkspaceSync";
 
 type View =
   | "Beranda"
@@ -32,9 +33,33 @@ function getInitialPatient() {
 }
 
 function App() {
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const [activeItem, setActiveItem] = useState<View>("Beranda");
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(() => getInitialPatient());
+
+  useEffect(() => {
+    if (workspaceSyncVersion === 0) return;
+
+    const activeRotation = loadActiveRotation();
+    const patients = loadPatients();
+
+    setSelectedPatient((current) => {
+      if (!current) {
+        return (
+          patients.find(
+            (patient) =>
+              patient.rotationId === activeRotation.id &&
+              patient.status === "Aktif",
+          ) ?? null
+        );
+      }
+
+      const refreshed = patients.find((patient) => patient.id === current.id);
+
+      return refreshed ?? null;
+    });
+  }, [workspaceSyncVersion]);
   const handleNavigate = (label: string) => {
     if (label === "Pasien") {
       setActiveItem("Daftar Pasien");
