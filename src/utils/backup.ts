@@ -22,8 +22,6 @@ import type {
   BackupAttachment,
   BackupPayload,
 } from "../types/backup";
-import { restoreWorkspaceBackupWithSupabase } from "../data/supabaseBackup";
-import { syncWorkspaceWithSupabase } from "../data/supabaseSyncEngine";
 import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
 import type { PatientListItem } from "../types/patient";
@@ -699,8 +697,14 @@ export function parseBackupText(
   }
 }
 
+export type RestoreBackupOptions = {
+  persistRemote: (payload: BackupPayload) => Promise<unknown>;
+  syncRemote: () => Promise<unknown>;
+};
+
 export async function restoreBackupPayload(
   payload: BackupPayload,
+  options: RestoreBackupOptions,
 ) {
   if (!payload.rotations) {
     throw new Error(
@@ -747,11 +751,12 @@ export async function restoreBackupPayload(
     }
   }
 
-  try {
-    // Persist the synced workspace first. The RPC replaces rotations, patients,
-    // follow-ups, and supporting-exam metadata atomically in Supabase.
-    await restoreWorkspaceBackupWithSupabase(payload);
+  let remoteRestored = false;
 
+  try {
+    // Prepare the browser copy before changing the cloud snapshot. This makes
+    // a browser storage failure recoverable without leaving cloud data pointing
+    // at attachments that were never restored locally.
     if (shouldReplaceAttachments) {
       await replaceAllAttachments(restoredAttachments);
     }
@@ -767,9 +772,13 @@ export async function restoreBackupPayload(
       saveFollowUpDraft(patientId, draft);
     }
 
+    // Now replace the synced cloud snapshot atomically.
+    await options.persistRemote(payload);
+    remoteRestored = true;
+
     // Reconcile local derived fields and notify the rest of the app from the
     // authoritative cloud snapshot before returning success.
-    await syncWorkspaceWithSupabase();
+    await options.syncRemote();
   } catch (error) {
     try {
       if (shouldReplaceAttachments) {
@@ -787,9 +796,9 @@ export async function restoreBackupPayload(
       }
 
       // Supabase remains the source of truth when its atomic restore succeeded.
-      // A sync here repairs local state if a browser-local write failed.
-      if (payload.rotations) {
-        await syncWorkspaceWithSupabase();
+      // A sync here repairs local state if a browser-local write or refresh failed.
+      if (remoteRestored) {
+        await options.syncRemote();
       }
     } catch {
       // Preserve the original restore error when local rollback/reconciliation fails.
