@@ -45,6 +45,8 @@ export type InternalMedicineFormValues = {
 };
 
 export type FollowUpFormValues = {
+  /** Local workspace context for this draft. */
+  rotationId?: string;
   followUpDate: string;
   followUpTime: string;
   subjective: {
