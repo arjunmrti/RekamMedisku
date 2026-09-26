@@ -77,12 +77,72 @@ export function getPatientFollowUpAttachmentIds(patientId: string): string[] {
   return [...new Set([...savedAttachmentIds, ...getDraftAttachmentIds(patientId)])];
 }
 
-export function deleteFollowUpsForPatient(patientId: string) {
+export function getOtherPatientFollowUpAttachmentIds(
+  patientId: string,
+): Set<string> {
+  const attachmentIds = new Set<string>();
+  const followUpsByPatient = getStoredFollowUps();
+
+  for (const [otherPatientId, entries] of Object.entries(followUpsByPatient)) {
+    if (otherPatientId === patientId) continue;
+
+    for (const entry of entries) {
+      for (const exam of entry.supportingExams ?? []) {
+        if (exam.attachmentId) {
+          attachmentIds.add(exam.attachmentId);
+        }
+      }
+    }
+  }
+
+  for (const key of Object.keys(window.localStorage)) {
+    if (!key.startsWith(DRAFT_PREFIX)) continue;
+
+    const draftPatientId = key.slice(DRAFT_PREFIX.length);
+    if (draftPatientId === patientId) continue;
+
+    for (const attachmentId of getDraftAttachmentIds(draftPatientId)) {
+      attachmentIds.add(attachmentId);
+    }
+  }
+
+  return attachmentIds;
+}
+
+function restoreStorageValue(key: string, rawValue: string | null) {
+  if (rawValue === null) {
+    window.localStorage.removeItem(key);
+  } else {
+    window.localStorage.setItem(key, rawValue);
+  }
+}
+
+export function deleteFollowUpsForPatient(patientId: string): () => void {
+  const draftKey = DRAFT_PREFIX + patientId;
+  const previousSavedFollowUps = window.localStorage.getItem(SAVED_KEY);
+  const previousDraft = window.localStorage.getItem(draftKey);
   const current = getStoredFollowUps();
 
   delete current[patientId];
-  window.localStorage.setItem(SAVED_KEY, JSON.stringify(current));
-  clearFollowUpDraft(patientId);
+
+  const rollback = () => {
+    restoreStorageValue(SAVED_KEY, previousSavedFollowUps);
+    restoreStorageValue(draftKey, previousDraft);
+  };
+
+  try {
+    window.localStorage.setItem(SAVED_KEY, JSON.stringify(current));
+    window.localStorage.removeItem(draftKey);
+  } catch (error) {
+    try {
+      rollback();
+    } catch {
+      // Preserve the original localStorage failure.
+    }
+    throw error;
+  }
+
+  return rollback;
 }
 
 export function appendSavedFollowUp(
