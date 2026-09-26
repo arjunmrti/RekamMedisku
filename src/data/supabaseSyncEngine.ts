@@ -2,7 +2,7 @@ import { supabase } from "../utils/supabase";
 import { syncFollowUpsWithSupabase } from "./supabaseFollowUps";
 
 const WORKSPACE_SYNC_EVENT = "rekammedisku:workspace-synced";
-const REALTIME_FALLBACK_INTERVAL_MS = 30_000;
+const REALTIME_WATCHDOG_INTERVAL_MS = 30_000;
 
 let syncInFlight: Promise<void> | null = null;
 let activeCleanup: (() => void) | null = null;
@@ -42,23 +42,26 @@ export function startWorkspaceSync(userId: string): () => void {
     });
   };
 
-  let pollingTimer: number | null = null;
+  let watchdogTimer: number | null = null;
 
-  const stopPolling = () => {
-    if (pollingTimer === null) return;
-    window.clearInterval(pollingTimer);
-    pollingTimer = null;
+  const stopWatchdog = () => {
+    if (watchdogTimer === null) return;
+    window.clearInterval(watchdogTimer);
+    watchdogTimer = null;
   };
 
-  const startPolling = () => {
-    if (disposed || pollingTimer !== null) return;
+  const startWatchdog = () => {
+    if (disposed || watchdogTimer !== null) return;
 
-    sync();
-
-    pollingTimer = window.setInterval(() => {
+    watchdogTimer = window.setInterval(() => {
+      // Keep a low-frequency authoritative refresh even while Realtime says
+      // SUBSCRIBED. This closes the "silent/stuck channel" gap where no status
+      // error is emitted even though events stop arriving.
       sync();
-    }, REALTIME_FALLBACK_INTERVAL_MS);
+    }, REALTIME_WATCHDOG_INTERVAL_MS);
   };
+
+  startWatchdog();
 
   const channel = supabase
     .channel("rekammedisku-workspace-sync-" + userId)
@@ -114,15 +117,15 @@ export function startWorkspaceSync(userId: string): () => void {
         status === "CLOSED"
       ) {
         console.warn(
-          "Supabase Realtime unavailable; falling back to background polling.",
+          "Supabase Realtime unavailable; the sync watchdog will keep refreshing the workspace.",
         );
-        startPolling();
+        sync();
       }
     });
 
   activeCleanup = () => {
     disposed = true;
-    stopPolling();
+    stopWatchdog();
     void supabase.removeChannel(channel);
     activeCleanup = null;
   };

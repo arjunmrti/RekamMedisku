@@ -361,6 +361,7 @@ export async function activateRotationWithSupabase(
 ): Promise<Rotation[]> {
   const previousRotations = loadRotations();
   const previousActiveId = loadActiveRotationId();
+  let remoteCommitted = false;
 
   try {
     const target = previousRotations.find(
@@ -384,18 +385,73 @@ export async function activateRotationWithSupabase(
       throw new Error("Stase belum tersinkron ke Supabase.");
     }
 
-    const { error: activationError } = await supabase.rpc("activate_rotation", {
-      target_rotation_id: remoteId,
-    });
+    const { data: activatedRows, error: activationError } =
+      await supabase.rpc("activate_rotation", {
+        target_rotation_id: remoteId,
+      });
 
     if (activationError) throw activationError;
 
+    remoteCommitted = true;
+
+    const rows = (activatedRows ?? []) as RotationRow[];
+    let nextLocal = previousRotations;
+
+    if (rows.length) {
+      for (const row of rows) {
+        const localId =
+          Object.entries(idMap).find(
+            ([, mappedRemoteId]) => mappedRemoteId === row.id,
+          )?.[0] ?? row.id;
+
+        idMap[localId] = row.id;
+        nextLocal = mergeRotationIntoLocal(
+          nextLocal,
+          toRotation(row, localId),
+        );
+      }
+    } else {
+      nextLocal = mergeRotationIntoLocal(
+        nextLocal,
+        toRotation(
+          {
+            ...target,
+            id: remoteId,
+            user_id: "",
+            created_at: target.createdAt ?? new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            start_date: target.startDate,
+            end_date: target.endDate,
+          },
+          rotationId,
+        ),
+      );
+    }
+
+    saveRotations(nextLocal);
     saveLocalActiveRotation(rotationId);
 
-    return await syncRotationsWithSupabase();
+    try {
+      saveIdMap(idMap);
+    } catch (mapError) {
+      console.warn(
+        "Rotation ID mapping could not be persisted.",
+        mapError,
+      );
+    }
+
+    return nextLocal;
   } catch (error) {
-    saveRotations(previousRotations);
-    setActiveRotationId(previousActiveId);
+    if (!remoteCommitted) {
+      saveRotations(previousRotations);
+      setActiveRotationId(previousActiveId);
+    } else {
+      console.warn(
+        "Cloud rotation activation committed, but a local follow-up step failed. Keeping the local state instead of rolling it back.",
+        error,
+      );
+    }
+
     throw new Error(getErrorMessage(error));
   }
 }

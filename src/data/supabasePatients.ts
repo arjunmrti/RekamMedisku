@@ -1,4 +1,5 @@
 import type { PatientListItem, PatientStatus } from "../types/patient";
+import { deleteFollowUpsForPatient } from "./localFollowUps";
 import { deletePatient, loadPatients, savePatients } from "./localPatients";
 import { syncRotationsWithSupabase } from "./supabaseRotations";
 import { supabase } from "../utils/supabase";
@@ -267,6 +268,7 @@ export async function upsertPatientWithSupabase(
   patient: PatientListItem,
 ): Promise<PatientListItem[]> {
   const previousPatients = loadPatients();
+  let remoteCommitted = false;
 
   try {
     const userId = await getCurrentUserId();
@@ -335,12 +337,54 @@ export async function upsertPatientWithSupabase(
       remoteRow = data;
     }
 
-    patientMap[patient.id] = remoteRow.id;
-    saveMap(PATIENT_ID_MAP_KEY, patientMap);
+    remoteCommitted = true;
 
-    return await syncPatientsWithSupabase();
+    const persistedPatient: PatientListItem = {
+      ...patient,
+      id: patient.id,
+      name: remoteRow.name,
+      age: remoteRow.age,
+      gender: normalizeGender(remoteRow.gender),
+      rm: remoteRow.rm,
+      room: remoteRow.room,
+      bed: remoteRow.bed,
+      doctor: remoteRow.doctor,
+      rotationId: patient.rotationId,
+      createdAt: remoteRow.created_at,
+      admissionDate: remoteRow.admission_date ?? undefined,
+      updatedAt: remoteRow.updated_at,
+      status: normalizeStatus(remoteRow.status),
+    };
+
+    const persistedPatients = localExists
+      ? previousPatients.map((item) =>
+          item.id === patient.id ? persistedPatient : item,
+        )
+      : [persistedPatient, ...previousPatients];
+
+    savePatients(persistedPatients);
+
+    try {
+      patientMap[patient.id] = remoteRow.id;
+      saveMap(PATIENT_ID_MAP_KEY, patientMap);
+    } catch (mapError) {
+      console.warn(
+        "Patient ID mapping could not be persisted; the next workspace sync will recover it.",
+        mapError,
+      );
+    }
+
+    return persistedPatients;
   } catch (error) {
-    savePatients(previousPatients);
+    if (!remoteCommitted) {
+      savePatients(previousPatients);
+    } else {
+      console.warn(
+        "Cloud patient mutation committed, but a follow-up local step failed. Keeping the local state instead of rolling it back.",
+        error,
+      );
+    }
+
     throw new Error(getErrorMessage(error));
   }
 }
@@ -360,6 +404,7 @@ export async function deletePatientWithSupabase(
 ): Promise<boolean> {
   const previousPatients = loadPatients();
   const patientMap = readMap(PATIENT_ID_MAP_KEY);
+  let remoteCommitted = false;
 
   try {
     await getCurrentUserId();
@@ -390,27 +435,51 @@ export async function deletePatientWithSupabase(
       throw new Error("Pasien tidak ditemukan di Supabase.");
     }
 
-    try {
-      const localDeleted = await deletePatient(patient.id);
+    remoteCommitted = true;
 
-      if (!localDeleted) {
-        throw new Error("Pasien tidak ditemukan pada penyimpanan lokal.");
-      }
+    try {
+      await deletePatient(patient.id);
     } catch (localError) {
-      /*
-       * Penghapusan cloud sudah berhasil. Kembalikan cache lokal ke snapshot
-       * sebelumnya agar state UI tidak terlihat setengah terhapus; sync berikutnya
-       * akan menyelaraskannya kembali dengan Supabase.
-       */
-      savePatients(previousPatients);
-      throw localError;
+      // Cloud deletion already committed. Do not restore the patient locally.
+      // Remove the visible patient/follow-up cache as a best-effort reconciliation.
+      console.warn(
+        "Cloud patient deletion committed, but local cleanup failed. Reconciling local cache without rollback.",
+        localError,
+      );
+
+      try {
+        deleteFollowUpsForPatient(patient.id);
+      } catch (followUpError) {
+        console.warn(
+          "Local follow-up cleanup after patient deletion failed.",
+          followUpError,
+        );
+      }
+
+      savePatients(previousPatients.filter((item) => item.id !== patient.id));
     }
 
-    delete patientMap[patient.id];
-    saveMap(PATIENT_ID_MAP_KEY, patientMap);
+    try {
+      delete patientMap[patient.id];
+      saveMap(PATIENT_ID_MAP_KEY, patientMap);
+    } catch (mapError) {
+      console.warn(
+        "Patient ID mapping cleanup could not be persisted.",
+        mapError,
+      );
+    }
+
     return true;
   } catch (error) {
-    savePatients(previousPatients);
+    if (!remoteCommitted) {
+      savePatients(previousPatients);
+    } else {
+      console.warn(
+        "Cloud patient deletion committed, but a local cleanup step failed.",
+        error,
+      );
+    }
+
     throw new Error(getErrorMessage(error));
   }
 }

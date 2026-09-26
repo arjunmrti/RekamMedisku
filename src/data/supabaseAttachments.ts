@@ -80,10 +80,13 @@ export async function deleteAttachmentWithSupabase(
 
 export async function uploadBackupAttachmentsWithSupabase(
   attachments: BackupAttachment[] | undefined,
-): Promise<void> {
-  if (!attachments?.length) return;
+): Promise<string[]> {
+  if (!attachments?.length) return [];
 
-  for (const attachment of attachments) {
+  const newlyUploadedIds: string[] = [];
+
+  try {
+    for (const attachment of attachments) {
     const binary = atob(attachment.dataBase64);
     const bytes = new Uint8Array(binary.length);
 
@@ -101,10 +104,48 @@ export async function uploadBackupAttachmentsWithSupabase(
       );
     }
 
-    await uploadAttachmentWithSupabase(
-      attachment.id,
-      blob,
-      attachment.type,
-    );
+      const existing = await downloadAttachmentWithSupabase(attachment.id);
+
+      // Attachment IDs are stable logical IDs. Reuse an existing cloud object
+      // with the same size instead of overwriting it during a restore; this also
+      // lets us safely remove only objects created by this restore attempt.
+      if (existing) {
+        if (existing.size !== attachment.size) {
+          throw new Error(
+            "Lampiran " +
+              attachment.name +
+              " sudah ada di cloud dengan ukuran berbeda.",
+          );
+        }
+        continue;
+      }
+
+      await uploadAttachmentWithSupabase(
+        attachment.id,
+        blob,
+        attachment.type,
+      );
+      newlyUploadedIds.push(attachment.id);
+    }
+
+    return newlyUploadedIds;
+  } catch (error) {
+    await rollbackBackupAttachmentUploadsWithSupabase(newlyUploadedIds);
+    throw error;
+  }
+}
+
+export async function rollbackBackupAttachmentUploadsWithSupabase(
+  attachmentIds: string[],
+): Promise<void> {
+  for (const attachmentId of attachmentIds) {
+    try {
+      await deleteAttachmentWithSupabase(attachmentId);
+    } catch (rollbackError) {
+      console.warn(
+        "Gagal membersihkan lampiran backup yang ter-upload setelah restore gagal.",
+        rollbackError,
+      );
+    }
   }
 }

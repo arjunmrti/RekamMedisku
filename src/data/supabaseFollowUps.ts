@@ -61,6 +61,11 @@ type SupportingExamRow = {
 
 type IdMap = Record<string, string>;
 
+type AtomicFollowUpSaveResult = {
+  followUpId: string;
+  supportingExamIds: Record<string, string>;
+};
+
 const FOLLOW_UP_ID_MAP_KEY = "rekammedisku:supabase-follow-up-ids";
 const SUPPORTING_EXAM_ID_MAP_KEY = "rekammedisku:supabase-supporting-exam-ids";
 const PATIENT_ID_MAP_KEY = "rekammedisku:supabase-patient-ids";
@@ -459,222 +464,119 @@ async function persistFollowUpWithSupabaseInternal(
   const followUpMap = readMap(FOLLOW_UP_ID_MAP_KEY);
   const examMap = readMap(SUPPORTING_EXAM_ID_MAP_KEY);
   let remoteFollowUpId: string | null = followUpMap[entry.id] ?? null;
-  let insertedFollowUpId: string | null = null;
-  const insertedExamIds: string[] = [];
 
   try {
-    let remoteRow: FollowUpRow | null = null;
-
+    // Resolve a possibly stale/missing follow-up mapping before the atomic save.
     if (remoteFollowUpId) {
-      if (!entry.updatedAt) {
-        throw new Error(
-          "Versi data follow-up tidak tersedia. Muat ulang catatan sebelum menyimpan perubahan.",
-        );
-      }
-
-      const nextUpdatedAt = new Date().toISOString();
-      const { data, error } = await supabase
+      const { data: mappedRow, error: mappedRowError } = await supabase
         .from("follow_ups")
-        .update({
-          ...followUpPayload(entry, remotePatientId),
-          updated_at: nextUpdatedAt,
-        })
+        .select("id,updated_at")
         .eq("id", remoteFollowUpId)
         .eq("user_id", userId)
-        .eq("updated_at", entry.updatedAt)
-        .select()
-        .maybeSingle<FollowUpRow>();
+        .maybeSingle<Pick<FollowUpRow, "id" | "updated_at">>();
 
-      if (error) throw error;
+      if (mappedRowError) throw mappedRowError;
 
-      if (data) {
-        remoteRow = data;
-      } else {
-        // The local ID map can point to a row that was removed manually.
-        // Fall back to the logical patient + follow-up number identity.
+      if (!mappedRow) {
         delete followUpMap[entry.id];
         remoteFollowUpId = null;
+      } else if (entry.updatedAt && mappedRow.updated_at !== entry.updatedAt) {
+        throw new Error(
+          "Data follow-up sudah berubah di browser lain. Muat ulang data terbaru sebelum menyimpan perubahan.",
+        );
       }
     }
 
     if (!remoteFollowUpId) {
       const { data: existingRow, error: existingRowError } = await supabase
         .from("follow_ups")
-        .select("*")
+        .select("id,updated_at")
         .eq("patient_id", remotePatientId)
         .eq("number", entry.number)
         .eq("user_id", userId)
-        .maybeSingle<FollowUpRow>();
+        .maybeSingle<Pick<FollowUpRow, "id" | "updated_at">>();
 
       if (existingRowError) throw existingRowError;
 
       if (existingRow) {
-        if (!entry.updatedAt) {
+        if (!entry.updatedAt || existingRow.updated_at !== entry.updatedAt) {
           throw new Error(
-            "Follow-up dengan nomor yang sama sudah dibuat di browser lain. Muat ulang data terbaru sebelum menyimpan.",
+            "Data follow-up dengan nomor tersebut sudah ada atau sudah berubah. Muat ulang data terbaru sebelum menyimpan.",
           );
         }
 
-        if (existingRow.updated_at !== entry.updatedAt) {
-          throw new Error(
-            "Data follow-up sudah berubah di browser lain. Muat ulang data terbaru sebelum menyimpan perubahan.",
-          );
-        }
-
-        const nextUpdatedAt = new Date().toISOString();
-        const { data, error } = await supabase
-          .from("follow_ups")
-          .update({
-            ...followUpPayload(entry, remotePatientId),
-            updated_at: nextUpdatedAt,
-          })
-          .eq("id", existingRow.id)
-          .eq("user_id", userId)
-          .eq("updated_at", entry.updatedAt)
-          .select()
-          .maybeSingle<FollowUpRow>();
-
-        if (error) throw error;
-
-        if (!data) {
-          throw new Error(
-            "Data follow-up sudah berubah di browser lain. Muat ulang data terbaru sebelum menyimpan perubahan.",
-          );
-        }
-
-        remoteRow = data;
-        remoteFollowUpId = data.id;
-        followUpMap[entry.id] = data.id;
-      } else {
-        const { data, error } = await supabase
-          .from("follow_ups")
-          .insert({
-            user_id: userId,
-            ...followUpPayload(entry, remotePatientId),
-          })
-          .select()
-          .single<FollowUpRow>();
-
-        if (error) throw error;
-        remoteRow = data;
-        insertedFollowUpId = data.id;
-        followUpMap[entry.id] = data.id;
+        remoteFollowUpId = existingRow.id;
       }
     }
 
-    if (!remoteRow) {
-      throw new Error("Follow-up tidak berhasil ditemukan atau disimpan.");
+    const supportingExams = entry.supportingExams ?? [];
+
+    // Storage is prepared before the DB transaction. If this preparation fails,
+    // no follow-up/exam row has been committed yet.
+    for (const exam of supportingExams) {
+      await ensureRemoteAttachment(exam);
     }
 
-    if (insertedFollowUpId) {
-      for (const exam of entry.supportingExams ?? []) {
-        await ensureRemoteAttachment(exam);
+    const rpcSupportingExams = supportingExams.map((exam) => ({
+      id: exam.id,
+      name: exam.name,
+      exam_type: exam.examType ?? null,
+      exam_date: exam.isoDate ?? toIsoDate(exam.date),
+      result: exam.result ?? null,
+      attachment_name: exam.attachmentName ?? null,
+      attachment_id: exam.attachmentId ?? null,
+      attachment_type: exam.attachmentType ?? null,
+      attachment_size: exam.attachmentSize ?? null,
+      attachment_count: exam.attachmentCount ?? null,
+      icon: exam.icon,
+    }));
 
-        const { data, error } = await supabase
-          .from("supporting_exams")
-          .insert({
-            user_id: userId,
-            ...examPayload(exam, remoteRow.id),
-          })
-          .select()
-          .single<SupportingExamRow>();
+    const { data, error } = await supabase.rpc("save_follow_up_with_exams", {
+      p_follow_up_id: remoteFollowUpId,
+      p_expected_updated_at: entry.updatedAt ?? null,
+      p_follow_up: followUpPayload(entry, remotePatientId),
+      p_supporting_exams: rpcSupportingExams,
+    });
 
-        if (error) throw error;
+    if (error) throw error;
 
-        examMap[exam.id] = data.id;
-        insertedExamIds.push(data.id);
+    // save_follow_up_with_exams commits the follow-up and all supporting exams
+    // in one PostgreSQL transaction. No local/cloud rollback is needed after
+    // this point: the caller already has the same optimistic local entry.
+    try {
+      const result = data as AtomicFollowUpSaveResult;
+
+      if (
+        !result ||
+        typeof result.followUpId !== "string" ||
+        !result.followUpId ||
+        !result.supportingExamIds ||
+        typeof result.supportingExamIds !== "object"
+      ) {
+        throw new Error("Respons penyimpanan follow-up dari Supabase tidak valid.");
       }
-    }
 
-    if (!insertedFollowUpId) {
-      const { data: existingExams, error: existingExamsError } = await supabase
-        .from("supporting_exams")
-        .select(
-          "id,user_id,follow_up_id,name,exam_type,exam_date,attachment_id",
-        )
-        .eq("follow_up_id", remoteRow.id)
-        .eq("user_id", userId);
+      followUpMap[entry.id] = result.followUpId;
 
-      if (existingExamsError) throw existingExamsError;
-
-      const currentExamIds = new Set<string>();
-
-      for (const exam of entry.supportingExams ?? []) {
-        await ensureRemoteAttachment(exam);
-
-        let mappedExamId: string | null = examMap[exam.id] ?? null;
-
-        if (!mappedExamId) {
-          mappedExamId = findExistingSupportingExamId(
-            exam,
-            existingExams ?? [],
-          );
+      for (const exam of supportingExams) {
+        const remoteExamId = result.supportingExamIds[exam.id];
+        if (typeof remoteExamId === "string" && remoteExamId) {
+          examMap[exam.id] = remoteExamId;
         }
-
-        if (mappedExamId) {
-          const { error } = await supabase
-            .from("supporting_exams")
-            .update(examPayload(exam, remoteRow.id))
-            .eq("id", mappedExamId)
-            .eq("follow_up_id", remoteRow.id)
-            .eq("user_id", userId);
-
-          if (error) throw error;
-
-          examMap[exam.id] = mappedExamId;
-          currentExamIds.add(mappedExamId);
-          continue;
-        }
-
-        const { data, error } = await supabase
-          .from("supporting_exams")
-          .insert({
-            user_id: userId,
-            ...examPayload(exam, remoteRow.id),
-          })
-          .select()
-          .single<SupportingExamRow>();
-
-        if (error) throw error;
-
-        examMap[exam.id] = data.id;
-        currentExamIds.add(data.id);
       }
 
-      const staleExamIds = (existingExams ?? [])
-        .map((exam) => exam.id)
-        .filter((id) => !currentExamIds.has(id));
-
-      if (staleExamIds.length) {
-        const { error } = await supabase
-          .from("supporting_exams")
-          .delete()
-          .in("id", staleExamIds)
-          .eq("user_id", userId);
-
-        if (error) throw error;
-      }
+      saveMap(FOLLOW_UP_ID_MAP_KEY, followUpMap);
+      saveMap(SUPPORTING_EXAM_ID_MAP_KEY, examMap);
+    } catch (postCommitError) {
+      // DB commit already succeeded. A local mapping problem must never make
+      // the caller restore the pre-save UI state; the next workspace sync can
+      // reconstruct the mappings from Supabase.
+      console.warn(
+        "Follow-up cloud save committed, but local ID mapping could not be refreshed.",
+        postCommitError,
+      );
     }
-
-    saveMap(FOLLOW_UP_ID_MAP_KEY, followUpMap);
-    saveMap(SUPPORTING_EXAM_ID_MAP_KEY, examMap);
   } catch (error) {
-    if (insertedFollowUpId) {
-      if (insertedExamIds.length) {
-        await supabase
-          .from("supporting_exams")
-          .delete()
-          .in("id", insertedExamIds)
-          .eq("user_id", userId);
-      }
-
-      await supabase
-        .from("follow_ups")
-        .delete()
-        .eq("id", insertedFollowUpId)
-        .eq("user_id", userId);
-    }
-
     throw new Error(getErrorMessage(error));
   }
 }
