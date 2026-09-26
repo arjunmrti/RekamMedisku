@@ -4,6 +4,7 @@ import {
   loadActiveRotation,
   loadActiveRotationId,
   loadRotations,
+  upsertRotation,
 } from "../src/data/localRotations";
 
 class MemoryStorage {
@@ -130,4 +131,26 @@ test("workspace tanpa stase aktif tidak memilih stase secara otomatis", () => {
   assert.equal(loadActiveRotationId(), "");
   assert.equal(loadActiveRotation().id, "");
   assert.equal(loadActiveRotation().name, "Belum ada stase");
+});
+
+
+test("mengubah stase aktif menjadi Selesai mengosongkan konteks aktif", () => {
+  storage.clear();
+  storage.setItem(
+    "rekammedisku:rotations",
+    JSON.stringify([rotation("rotation-test", "Neurologi")]),
+  );
+  storage.setItem("rekammedisku:active-rotation", "rotation-test");
+
+  const result = upsertRotation({
+    id: "rotation-test",
+    name: "Neurologi",
+    specialty: "Neurologi",
+    startDate: "2026-09-01",
+    endDate: "2026-09-30",
+    status: "Selesai",
+  });
+
+  assert.equal(result[0]?.status, "Selesai");
+  assert.equal(loadActiveRotationId(), "");
 });
