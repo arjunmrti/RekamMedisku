@@ -234,14 +234,8 @@ export async function syncRotationsWithSupabase(): Promise<Rotation[]> {
       )?.[0] ?? activeRemoteRow.id;
 
     setActiveRotationId(activeLocalId);
-  } else if (nextLocal.length) {
-    const currentActiveId = loadActiveRotationId();
-
-    setActiveRotationId(
-      nextLocal.some((rotation) => rotation.id === currentActiveId)
-        ? currentActiveId
-        : nextLocal[0].id,
-    );
+  } else {
+    setActiveRotationId("");
   }
 
   return nextLocal;
