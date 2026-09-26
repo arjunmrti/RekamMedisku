@@ -1,8 +1,5 @@
 import type { FollowUpEntry, SupportingExam } from "../types/followUp";
-import {
-  loadSavedFollowUps,
-  replaceSavedFollowUps,
-} from "./localFollowUps";
+import { replaceSavedFollowUps } from "./localFollowUps";
 import { updatePatient } from "./localPatients";
 import { syncPatientsWithSupabase } from "./supabasePatients";
 import { supabase } from "../utils/supabase";
@@ -539,7 +536,6 @@ async function syncFollowUpsWithSupabaseInternal(): Promise<
   const patientMap = await ensurePatientMap();
   const followUpMap = readMap(FOLLOW_UP_ID_MAP_KEY);
   const examMap = readMap(SUPPORTING_EXAM_ID_MAP_KEY);
-  const localFollowUps = loadSavedFollowUps();
 
   const remoteToLocalPatientId = new Map(
     Object.entries(patientMap).map(([localId, remoteId]) => [remoteId, localId]),
