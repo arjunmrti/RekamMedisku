@@ -15,10 +15,7 @@ import {
 } from "../../utils/patientLocation";
 import type { Rotation } from "../../types/rotation";
 import { createPatientId } from "../../data/localPatients";
-import {
-  loadSlaberanLocations,
-  saveSlaberanLocations,
-} from "../../data/localSlaberanLocations";
+import { loadSlaberanLocations } from "../../data/localSlaberanLocations";
 import { syncSlaberanLocationsWithSupabase } from "../../data/supabaseSlaberanLocations";
 import { toLocalIsoDate } from "../../utils/date";
 import Icon from "../ui/Icon";
