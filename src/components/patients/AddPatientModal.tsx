@@ -46,6 +46,12 @@ export default function AddPatientModal({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    setAdmissionDate(patient?.admissionDate ?? toLocalIsoDate());
+  }, [open, patient?.id]);
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -190,17 +196,17 @@ export default function AddPatientModal({
             </Field>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Tanggal Masuk">
-              <input
-                required
-                type="date"
-                value={admissionDate}
-                onChange={(event) => setAdmissionDate(event.target.value)}
-                className="field-control"
-              />
-            </Field>
+          <Field label="Tanggal Masuk">
+            <input
+              required
+              type="date"
+              value={admissionDate}
+              onChange={(event) => setAdmissionDate(event.target.value)}
+              className="field-control"
+            />
+          </Field>
 
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Ruangan / Bangsal">
               <input
                 required
