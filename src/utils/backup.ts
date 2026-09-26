@@ -26,6 +26,12 @@ import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
 import type { PatientListItem } from "../types/patient";
 import type { Rotation } from "../types/rotation";
+import {
+  isValidDisplayTime,
+  isValidIsoDate,
+  isValidIsoDateTime,
+  isValidTimeInput,
+} from "./date";
 
 function mergeFollowUps(
   patientId: string,
@@ -244,7 +250,9 @@ function isFollowUp(value: unknown): value is FollowUpEntry {
     value.number >= 0 &&
     typeof value.date === "string" &&
     typeof value.isoDate === "string" &&
+    isValidIsoDate(value.isoDate) &&
     typeof value.time === "string" &&
+    isValidDisplayTime(value.time) &&
     isFollowUpStatus(value.status) &&
     isTemplateType(value.templateType) &&
     typeof value.subjective === "string" &&
@@ -283,6 +291,30 @@ function normalizePatient(value: unknown): PatientListItem | null {
   }
 
   if (value.gender !== "Laki-laki" && value.gender !== "Perempuan") {
+    return null;
+  }
+
+  if (
+    value.lastFollowUpAt !== undefined &&
+    (typeof value.lastFollowUpAt !== "string" ||
+      !isValidIsoDateTime(value.lastFollowUpAt))
+  ) {
+    return null;
+  }
+
+  if (
+    value.createdAt !== undefined &&
+    (typeof value.createdAt !== "string" ||
+      !isValidIsoDateTime(value.createdAt))
+  ) {
+    return null;
+  }
+
+  if (
+    value.admissionDate !== undefined &&
+    (typeof value.admissionDate !== "string" ||
+      !isValidIsoDate(value.admissionDate))
+  ) {
     return null;
   }
 
@@ -340,11 +372,17 @@ function isRotation(value: unknown): value is Rotation {
 
   const validDates =
     typeof value.startDate === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(value.startDate) &&
+    isValidIsoDate(value.startDate) &&
     typeof value.endDate === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(value.endDate) &&
+    isValidIsoDate(value.endDate) &&
     new Date(value.startDate + "T00:00:00").getTime() <=
       new Date(value.endDate + "T00:00:00").getTime();
+
+  const validTimestamps =
+    typeof value.createdAt === "string" &&
+    isValidIsoDateTime(value.createdAt) &&
+    typeof value.updatedAt === "string" &&
+    isValidIsoDateTime(value.updatedAt);
 
   return (
     typeof value.id === "string" &&
@@ -352,9 +390,8 @@ function isRotation(value: unknown): value is Rotation {
     value.name.trim().length > 0 &&
     specialties.includes(value.specialty as string) &&
     validDates &&
-    statuses.includes(value.status as string) &&
-    typeof value.createdAt === "string" &&
-    typeof value.updatedAt === "string"
+    validTimestamps &&
+    statuses.includes(value.status as string)
   );
 }
 
@@ -382,8 +419,8 @@ function validateFollowUpMap(
       allEntryIds.add(entry.id);
 
       if (
-        !/^\d{4}-\d{2}-\d{2}$/.test(entry.isoDate) ||
-        entry.time.trim().length === 0
+        !isValidIsoDate(entry.isoDate) ||
+        !isValidDisplayTime(entry.time)
       ) {
         return false;
       }
@@ -404,6 +441,7 @@ function isSupportingExamForm(value: unknown): boolean {
     typeof value.id === "string" &&
     typeof value.examType === "string" &&
     typeof value.date === "string" &&
+    isValidIsoDate(value.date) &&
     typeof value.result === "string" &&
     typeof value.attachmentName === "string" &&
     (value.attachmentId === undefined ||
@@ -502,10 +540,10 @@ function validateDraftMap(
       return false;
     }
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.followUpDate)) {
+    if (!isValidIsoDate(draft.followUpDate)) {
       return false;
     }
-    if (!/^\d{2}:\d{2}$/.test(draft.followUpTime)) {
+    if (!isValidTimeInput(draft.followUpTime)) {
       return false;
     }
   }
@@ -553,6 +591,14 @@ export function parseBackupText(
 
     if (!validateDraftMap(parsed.followUpDrafts, patientIds)) {
       return { ok: false, error: "Struktur data draf tidak valid." };
+    }
+
+    if (
+      parsed.exportedAt !== undefined &&
+      (typeof parsed.exportedAt !== "string" ||
+        !isValidIsoDateTime(parsed.exportedAt))
+    ) {
+      return { ok: false, error: "Tanggal ekspor backup tidak valid." };
     }
 
     if (

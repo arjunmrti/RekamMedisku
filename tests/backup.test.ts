@@ -77,6 +77,75 @@ function withAttachment(
   };
 }
 
+function withDraft(): BackupPayload {
+  return {
+    ...basePayload,
+    followUpDrafts: {
+      [patient.id]: {
+        followUpDate: "2026-09-26",
+        followUpTime: "09:30",
+        subjective: {
+          keluhan: "",
+          riwayatKeluhanSerupa: "",
+          pastHistory: "",
+          medicationHistory: "",
+          allergies: "",
+          otherHistory: "",
+        },
+        objective: {
+          generalCondition: "",
+          systolic: "",
+          diastolic: "",
+          pulse: "",
+          respiratoryRate: "",
+          temperature: "",
+          spo2: "",
+          oxygenVia: "",
+          painNrs: "",
+          physicalFindings: "",
+          supportingExamText: "",
+        },
+        neurology: {
+          generalCondition: "",
+          consciousness: "",
+          gcsEye: "",
+          gcsMotor: "",
+          gcsVerbal: "",
+          fkl: "",
+          cranialNerve: "",
+          pupil: "",
+          neckStiffness: "",
+          brudzinski: "",
+          kernig: "",
+          movement: "",
+          tone: "",
+          sensory: "",
+          upperStrength: "",
+          lowerStrength: "",
+          physiologicReflex: "",
+          pathologicReflex: "",
+          autonomic: "",
+          provocation: "",
+        },
+        internalMedicine: {
+          generalCondition: "",
+          consciousness: "",
+          headNeck: "",
+          thorax: "",
+          abdomen: "",
+          extremities: "",
+          relevantSystemicFindings: "",
+        },
+        supportingExams: [],
+        assessments: [""],
+        assessmentCodes: [],
+        planning: "",
+        instruction: "",
+      },
+    },
+  };
+}
+
 test("backup lama tanpa field attachments tetap valid", () => {
   const result = parseBackupText(serializeBackup(basePayload));
 
@@ -110,6 +179,64 @@ test("backup ditolak jika attachment yang direferensikan tidak ikut dibawa", () 
 test("backup ditolak jika Base64 attachment tidak valid", () => {
   const payload = withAttachment("att-invalid");
   payload.attachments![0].dataBase64 = "not-base64";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak tanggal kalender follow-up yang tidak valid", () => {
+  const payload = withAttachment("att-invalid-date");
+  payload.followUpsByPatient[patient.id][0].isoDate = "2026-02-30";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak jam follow-up yang tidak valid", () => {
+  const payload = withAttachment("att-invalid-time");
+  payload.followUpsByPatient[patient.id][0].time = "24.61";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak tanggal draf yang tidak valid", () => {
+  const payload = withDraft();
+  payload.followUpDrafts[patient.id].followUpDate = "2026-04-31";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak jam draf yang tidak valid", () => {
+  const payload = withDraft();
+  payload.followUpDrafts[patient.id].followUpTime = "12:60";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak admissionDate pasien yang tidak valid", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    patients: [{ ...patient, admissionDate: "2026-02-30" }],
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak timestamp ekspor yang tidak valid", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    exportedAt: "2026-02-30T10:00:00.000Z",
+  };
 
   const result = parseBackupText(serializeBackup(payload));
 
