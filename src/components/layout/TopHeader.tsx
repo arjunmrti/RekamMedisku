@@ -52,7 +52,7 @@ export default function TopHeader({
             />
           </label>
         ) : (
-          <div className="hidden min-w-0 lg:block">
+          <div className="hidden min-w-0 sm:block xl:hidden">
             <p className="text-xs font-semibold text-slate-500">
               RekamMedisku
             </p>
