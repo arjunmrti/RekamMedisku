@@ -10,7 +10,7 @@ type AddPatientModalProps = {
   onClose: () => void;
   rotation: Rotation;
   patient?: PatientListItem | null;
-  onSubmit: (patient: PatientListItem) => string | null;
+  onSubmit: (patient: PatientListItem) => string | null | Promise<string | null>;
 };
 
 export default function AddPatientModal({
@@ -34,6 +34,7 @@ export default function AddPatientModal({
     () => patient?.admissionDate ?? toLocalIsoDate(),
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -52,8 +53,10 @@ export default function AddPatientModal({
     setAdmissionDate(patient?.admissionDate ?? toLocalIsoDate());
   }, [open, patient?.id]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (submitting) return;
 
     const parsedAge = Number(age);
     if (!name.trim() || !rm.trim() || !Number.isFinite(parsedAge) || parsedAge < 0) {
@@ -71,8 +74,12 @@ export default function AddPatientModal({
       return;
     }
 
-    const result = onSubmit({
-      id: patient?.id ?? createPatientId(rotation.id, rm),
+    setErrorMessage("");
+    setSubmitting(true);
+
+    try {
+      const result = await onSubmit({
+        id: patient?.id ?? createPatientId(rotation.id, rm),
       rotationId: patient?.rotationId ?? rotation.id,
       name: name.trim(),
       age: parsedAge,
@@ -86,16 +93,22 @@ export default function AddPatientModal({
       lastFollowUpAt: patient?.lastFollowUpAt,
       createdAt: patient?.createdAt ?? new Date().toISOString(),
       admissionDate,
-      status: patient?.status ?? "Aktif",
-    });
+        status: patient?.status ?? "Aktif",
+      });
 
-    if (result) {
-      setErrorMessage(result);
-      return;
+      if (result) {
+        setErrorMessage(result);
+        return;
+      }
+
+      onClose();
+    } catch {
+      setErrorMessage(
+        "Pasien belum tersimpan. Periksa koneksi lalu coba lagi.",
+      );
+    } finally {
+      setSubmitting(false);
     }
-
-    setErrorMessage("");
-    onClose();
   };
 
   if (!open) return null;
@@ -129,6 +142,7 @@ export default function AddPatientModal({
           <button
             type="button"
             onClick={onClose}
+            disabled={submitting}
             aria-label="Tutup modal"
             className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-xl text-slate-400 hover:bg-slate-100 hover:text-slate-600"
           >
@@ -241,17 +255,23 @@ export default function AddPatientModal({
             <button
               type="button"
               onClick={onClose}
-              className="min-h-11 rounded-xl px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100"
+              disabled={submitting}
+              className="min-h-11 rounded-xl px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Batal
             </button>
 
             <button
               type="submit"
+              disabled={submitting}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700"
             >
               <Icon name="check" className="h-4 w-4" />
-              {editing ? "Simpan Perubahan" : "Simpan Pasien"}
+              {submitting
+                ? "Menyimpan..."
+                : editing
+                  ? "Simpan Perubahan"
+                  : "Simpan Pasien"}
             </button>
           </div>
         </form>
