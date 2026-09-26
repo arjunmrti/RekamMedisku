@@ -380,6 +380,7 @@ export default function AddPatientModal({
                     const nextType = event.target.value as PatientLocationType;
                     setCurrentLocationType(nextType);
                     setCurrentLocationId("");
+                    setCurrentLocationName("");
                   }}
                   className="field-control"
                 >
