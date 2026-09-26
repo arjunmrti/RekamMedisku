@@ -65,7 +65,7 @@ export default function AuthGate({ children }: AuthGateProps) {
       cancelled = true;
       stopWorkspaceSync?.();
     };
-  }, [session]);
+  }, [session?.user.id]);
 
   if (loading || workspaceLoading) {
     return (
