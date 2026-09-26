@@ -116,6 +116,20 @@ WHERE p.current_location_id IS NULL
         ELSE 'ward'
       END;
 
+UPDATE public.patients p
+SET admission_location_id = l.id
+FROM public.slaberan_locations l
+WHERE p.admission_location_id IS NULL
+  AND p.admission_location_name IS NOT NULL
+  AND btrim(p.admission_location_name) <> ''
+  AND l.user_id = p.user_id
+  AND lower(btrim(l.name)) = lower(btrim(p.admission_location_name))
+  AND l.type =
+      CASE
+        WHEN p.admission_location_type = 'special' THEN 'special'
+        ELSE 'ward'
+      END;
+
 CREATE TABLE IF NOT EXISTS public.slaberan_templates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
