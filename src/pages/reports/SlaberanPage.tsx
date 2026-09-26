@@ -92,7 +92,7 @@ export default function SlaberanPage({
   const [templates, setTemplates] = useState<SlaberanTemplateRecord[]>(
     getReportTemplates(),
   );
-  const [locations: activeLocations, setLocations] = useState(loadSlaberanLocations());
+  const [locations, setLocations] = useState(loadSlaberanLocations());
 
   const allPatients = useMemo(
     () =>
@@ -131,7 +131,7 @@ export default function SlaberanPage({
     () =>
       allPatients.filter(
         (patient) =>
-          patient.doctor.replace(/s*\(konsul\)\s*$/i, "").trim() === doctor,
+          patient.doctor.replace(/\s*\(konsul\)\s*$/i, "").trim() === doctor,
       ),
     [allPatients, doctor],
   );
