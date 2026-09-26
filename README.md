@@ -1,32 +1,79 @@
-# React + TypeScript + Vite
+# RekamMedisku
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+RekamMedisku adalah **personal clinical documentation workspace** untuk mahasiswa kedokteran/co-assistant. Aplikasi ini membantu mengelola stase, pasien, catatan follow-up, timeline klinis, pembuatan laporan, serta backup data secara lokal di browser.
 
-Currently, two official plugins are available:
+> RekamMedisku bukan sistem rekam medis rumah sakit dan bukan pengganti EMR resmi. Data aplikasi MVP disimpan secara lokal pada browser pengguna.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Fitur utama
 
-## React Compiler
+- **Rotation Management** — mengelola daftar stase, status stase, dan stase aktif.
+- **Patient Management** — menambah, melihat, mengubah, serta menghapus pasien secara permanen.
+- **Follow-up Documentation** — mencatat follow-up pasien menggunakan struktur SOAP dan field pemeriksaan yang relevan.
+- **Patient Timeline & Profile** — melihat riwayat dokumentasi pasien secara terstruktur.
+- **Report Generator** — menyusun catatan menjadi format laporan yang dapat dibagikan.
+- **Backup & Restore** — export dan restore data aplikasi beserta riwayat operasi backup.
+- **Local-first storage** — data utama menggunakan `localStorage` dan IndexedDB tanpa backend/auth pada MVP.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the Oxlint configuration
+- React 19
+- TypeScript
+- Vite
+- Tailwind CSS 4
+- Oxlint
+- Node.js test runner
+- localStorage + IndexedDB
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Menjalankan project
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Pastikan Node.js dan npm sudah tersedia.
+
+```bash
+npm ci
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Aplikasi development tersedia pada alamat yang ditampilkan oleh Vite.
+
+## Quality checks
+
+Project menyediakan satu command QA yang menjalankan seluruh pemeriksaan utama:
+
+```bash
+npm run qa
+```
+
+Command tersebut menjalankan:
+
+1. `npm run lint`
+2. `npm run test`
+3. `npm run build`
+
+Build production dapat diverifikasi secara terpisah dengan:
+
+```bash
+npm run build
+```
+
+## Struktur utama
+
+```text
+src/
+├─ data/          # persistence, backup, attachment, dan data access layer
+├─ pages/         # halaman utama aplikasi
+├─ types/         # TypeScript types
+└─ ...
+tests/             # automated tests
+scripts/            # test runner
+.github/workflows/  # GitHub Actions QA
+```
+
+## Catatan data lokal
+
+Karena MVP bersifat local-first, data aplikasi melekat pada browser/device yang digunakan. Menghapus site data, storage browser, atau menggunakan browser/device berbeda dapat membuat data lokal tidak tersedia.
+
+Untuk deployment production, mekanisme backup/restore dan validasi data lokal perlu dipertahankan sebagai bagian dari alur penggunaan.
+
+## Status
+
+RekamMedisku saat ini berada pada tahap **MVP / production-oriented frontend** dengan fokus pada stabilitas alur dokumentasi klinis, cleanup data demo, dan quality checks otomatis.
