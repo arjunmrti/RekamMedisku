@@ -3,12 +3,14 @@ export type PatientStatus = "Aktif" | "Diarsipkan";
 export type PatientLocationType = "ward" | "special";
 
 export type PatientLocation = {
+  locationId?: string;
   type: PatientLocationType;
   name: string;
   bed: string;
 };
 
 export type PatientAdmissionLocation = {
+  locationId?: string;
   type: PatientLocationType;
   name: string;
 };
