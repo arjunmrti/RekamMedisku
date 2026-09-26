@@ -218,12 +218,6 @@ export default function RotationManagementPage({
               </button>
             </header>
 
-            {syncing ? (
-              <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-2.5 text-[11px] font-medium text-slate-500">
-                Menyinkronkan data stase...
-              </div>
-            ) : null}
-
             {errorMessage ? (
               <div
                 role="alert"
