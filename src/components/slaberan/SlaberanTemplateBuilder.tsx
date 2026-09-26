@@ -7,6 +7,7 @@ import {
   updateSlaberanTemplate,
 } from "../../data/supabaseSlaberanTemplates";
 import { loadSlaberanTemplates } from "../../data/localSlaberanTemplates";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import {
   SLABERAN_PATIENT_FIELDS,
   SLABERAN_VARIABLES,
@@ -140,6 +141,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
   const [templates, setTemplates] = useState<SlaberanTemplateRecord[]>(
     loadSlaberanTemplates(),
   );
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const [selectedId, setSelectedId] = useState("");
   const [draft, setDraft] = useState<SlaberanTemplateRecord | null>(null);
   const [saving, setSaving] = useState(false);
@@ -186,7 +188,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+  }, [refresh, workspaceSyncVersion]);
 
   useEffect(() => {
     if (!selectedId) return;
