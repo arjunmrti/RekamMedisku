@@ -219,14 +219,24 @@ function buildFollowUpEntry(
     .filter((item) => !item.endsWith(": "))
     .join("\n");
 
-  const gcs = [
+  const gcsValues = [
     values.neurology.gcsEye,
     values.neurology.gcsMotor,
     values.neurology.gcsVerbal,
-  ].every(Boolean)
-    ? values.neurology.gcsEye +
+  ];
+  const numericGcsValues = gcsValues.map(Number);
+  const gcsTotal =
+    gcsValues.every(Boolean) && numericGcsValues.every(Number.isFinite)
+      ? numericGcsValues.reduce((total, value) => total + value, 0)
+      : null;
+  const gcs = gcsValues.every(Boolean)
+    ? "E" +
+      values.neurology.gcsEye +
+      "/M" +
       values.neurology.gcsMotor +
-      values.neurology.gcsVerbal
+      "/V" +
+      values.neurology.gcsVerbal +
+      (gcsTotal !== null ? " = " + gcsTotal : "")
     : "";
 
   const templateObjective =
