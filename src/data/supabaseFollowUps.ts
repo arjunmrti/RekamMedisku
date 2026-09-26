@@ -3,6 +3,7 @@ import { replaceSavedFollowUps } from "./localFollowUps";
 import { updatePatient } from "./localPatients";
 import { syncPatientsWithSupabase } from "./supabasePatients";
 import { supabase } from "../utils/supabase";
+import { getAuthenticatedUserId } from "../utils/authenticatedUser";
 import { derivePatientFollowUpSummary } from "./patientFollowUpSummary";
 import {
   deleteAttachments,
@@ -370,17 +371,7 @@ function refreshPatientFollowUpSummary(
 }
 
 async function getCurrentUserId() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) throw error;
-  if (!user) {
-    throw new Error("Sesi RekamMedisku tidak ditemukan.");
-  }
-
-  return user.id;
+  return getAuthenticatedUserId();
 }
 
 async function ensurePatientMap() {
