@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { loadRotations } from "../src/data/localRotations";
+import {
+  loadActiveRotation,
+  loadActiveRotationId,
+  loadRotations,
+} from "../src/data/localRotations";
 
 class MemoryStorage {
   private values = new Map<string, string>();
@@ -111,4 +115,19 @@ test("workspace baru tidak membuat stase otomatis", () => {
 
   assert.deepEqual(loadRotations(), []);
   assert.equal(storage.getItem("rekammedisku:rotations"), null);
+});
+
+test("workspace tanpa stase aktif tidak memilih stase secara otomatis", () => {
+  storage.clear();
+  storage.setItem(
+    "rekammedisku:rotations",
+    JSON.stringify([
+      rotation("rotation-future", "Stase Mendatang", "Mendatang"),
+      rotation("rotation-done", "Stase Selesai", "Selesai"),
+    ]),
+  );
+
+  assert.equal(loadActiveRotationId(), "");
+  assert.equal(loadActiveRotation().id, "");
+  assert.equal(loadActiveRotation().name, "Belum ada stase");
 });
