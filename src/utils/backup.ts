@@ -487,6 +487,7 @@ function isSlaberanTemplate(value: unknown): value is SlaberanTemplateRecord {
       (block) =>
         isRecord(block) &&
         typeof block.id === "string" &&
+        typeof block.type === "string" &&
         validBlockTypes.has(block.type) &&
         typeof block.label === "string" &&
         typeof block.enabled === "boolean" &&
