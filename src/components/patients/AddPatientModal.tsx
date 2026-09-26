@@ -1,5 +1,9 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import type { PatientListItem } from "../../types/patient";
+import type {
+  PatientListItem,
+  PatientLocationType,
+} from "../../types/patient";
+import { normalizePatientLocation, normalizePatientAdmissionLocation } from "../../utils/patientLocation";
 import type { Rotation } from "../../types/rotation";
 import { createPatientId } from "../../data/localPatients";
 import { toLocalIsoDate } from "../../utils/date";
@@ -28,8 +32,26 @@ export default function AddPatientModal({
     () => patient?.gender ?? "Laki-laki",
   );
   const [doctor, setDoctor] = useState(() => patient?.doctor ?? "");
-  const [room, setRoom] = useState(() => patient?.room ?? "");
-  const [bed, setBed] = useState(() => patient?.bed ?? "");
+  const initialCurrentLocation = normalizePatientLocation(
+    patient?.currentLocation,
+    patient?.room,
+    patient?.bed,
+  );
+  const [currentLocationType, setCurrentLocationType] =
+    useState<PatientLocationType>(() => initialCurrentLocation.type);
+  const [currentLocationName, setCurrentLocationName] =
+    useState(() => initialCurrentLocation.name);
+  const [bed, setBed] = useState(() => initialCurrentLocation.bed);
+  const initialAdmissionLocation = normalizePatientAdmissionLocation(
+    patient?.admissionLocation,
+  );
+  const [admissionLocationType, setAdmissionLocationType] =
+    useState<PatientLocationType | "">(
+      () => initialAdmissionLocation?.type ?? "",
+    );
+  const [admissionLocationName, setAdmissionLocationName] = useState(
+    () => initialAdmissionLocation?.name ?? "",
+  );
   const [admissionDate, setAdmissionDate] = useState(
     () => patient?.admissionDate ?? toLocalIsoDate(),
   );
@@ -54,6 +76,19 @@ export default function AddPatientModal({
     if (!open) return;
 
     setAdmissionDate(patient?.admissionDate ?? toLocalIsoDate());
+    const currentLocation = normalizePatientLocation(
+      patient?.currentLocation,
+      patient?.room,
+      patient?.bed,
+    );
+    setCurrentLocationType(currentLocation.type);
+    setCurrentLocationName(currentLocation.name);
+    setBed(currentLocation.bed);
+    const admissionLocation = normalizePatientAdmissionLocation(
+      patient?.admissionLocation,
+    );
+    setAdmissionLocationType(admissionLocation?.type ?? "");
+    setAdmissionLocationName(admissionLocation?.name ?? "");
   }, [open, patient?.id]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -67,8 +102,8 @@ export default function AddPatientModal({
       return;
     }
 
-    if (!room.trim() || !bed.trim()) {
-      setErrorMessage("Ruangan dan nomor bed wajib diisi.");
+    if (!currentLocationName.trim() || !bed.trim()) {
+      setErrorMessage("Lokasi pasien saat ini dan nomor bed wajib diisi.");
       return;
     }
 
@@ -98,6 +133,20 @@ export default function AddPatientModal({
       updatedAt: patient?.updatedAt,
       admissionDate,
       admissionComplaint: admissionComplaint.trim() || undefined,
+      currentLocation: {
+        type: currentLocationType,
+        name: currentLocationName.trim(),
+        bed: bed.trim(),
+      },
+      room: currentLocationName.trim(),
+      bed: bed.trim(),
+      admissionLocation:
+        admissionLocationType && admissionLocationName.trim()
+          ? {
+              type: admissionLocationType,
+              name: admissionLocationName.trim(),
+            }
+          : undefined,
       status: patient?.status ?? "Aktif",
       });
 
@@ -241,27 +290,106 @@ export default function AddPatientModal({
             </span>
           </Field>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Ruangan / Bangsal">
-              <input
-                required
-                value={room}
-                onChange={(event) => setRoom(event.target.value)}
-                placeholder="Contoh: 3A / ICU / Anggrek"
-                className="field-control"
-              />
-            </Field>
+          <section className="rounded-2xl border border-slate-200 bg-slate-50/60 p-4">
+            <div className="mb-4">
+              <p className="text-xs font-bold text-slate-800">
+                Lokasi Pasien Saat Ini
+              </p>
+              <p className="mt-1 text-[10px] leading-relaxed text-slate-400">
+                Menentukan lokasi aktif pasien untuk kebutuhan Slaberan dan
+                perpindahan pasien berikutnya.
+              </p>
+            </div>
 
-            <Field label="Nomor Bed">
-              <input
-                required
-                value={bed}
-                onChange={(event) => setBed(event.target.value)}
-                placeholder="Contoh: 15"
-                className="field-control"
-              />
-            </Field>
-          </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Jenis Lokasi">
+                <select
+                  value={currentLocationType}
+                  onChange={(event) =>
+                    setCurrentLocationType(
+                      event.target.value as PatientLocationType,
+                    )
+                  }
+                  className="field-control"
+                >
+                  <option value="ward">Bangsal / Ruangan</option>
+                  <option value="special">Unit Khusus</option>
+                </select>
+              </Field>
+
+              <Field
+                label={
+                  currentLocationType === "special"
+                    ? "Nama Unit"
+                    : "Nama Bangsal / Ruangan"
+                }
+              >
+                <input
+                  required
+                  value={currentLocationName}
+                  onChange={(event) => setCurrentLocationName(event.target.value)}
+                  placeholder={
+                    currentLocationType === "special"
+                      ? "Contoh: ICU / IGD / CVCU/ICCU"
+                      : "Contoh: Anggrek"
+                  }
+                  className="field-control"
+                />
+              </Field>
+            </div>
+
+            <div className="mt-4">
+              <Field label="Nomor Bed">
+                <input
+                  required
+                  value={bed}
+                  onChange={(event) => setBed(event.target.value)}
+                  placeholder="Contoh: 15"
+                  className="field-control"
+                />
+              </Field>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="mb-4">
+              <p className="text-xs font-bold text-slate-800">
+                Lokasi Masuk Pertama
+              </p>
+              <p className="mt-1 text-[10px] leading-relaxed text-slate-400">
+                Opsional. Ini mencatat pasien pertama kali masuk dari lokasi
+                mana dan tidak mengubah lokasi pasien saat ini.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label="Jenis Lokasi Masuk">
+                <select
+                  value={admissionLocationType}
+                  onChange={(event) =>
+                    setAdmissionLocationType(
+                      event.target.value as PatientLocationType | "",
+                    )
+                  }
+                  className="field-control"
+                >
+                  <option value="">Belum diisi</option>
+                  <option value="ward">Bangsal / Ruangan</option>
+                  <option value="special">Unit Khusus</option>
+                </select>
+              </Field>
+
+              <Field label="Nama Lokasi Masuk">
+                <input
+                  value={admissionLocationName}
+                  onChange={(event) => setAdmissionLocationName(event.target.value)}
+                  placeholder="Contoh: IGD"
+                  disabled={!admissionLocationType}
+                  className="field-control disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-400"
+                />
+              </Field>
+            </div>
+          </section>
 
           {errorMessage ? (
             <div
