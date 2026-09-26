@@ -73,7 +73,7 @@ export default function TopHeader({
   }).format(new Date());
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-2 border-b border-[#E5EAF1] bg-white px-3 sm:gap-3 sm:px-4 xl:h-[72px] xl:gap-6 xl:px-8">
+    <header className="sticky top-0 z-30 flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#E5EAF1] bg-white px-3 py-2 sm:flex-nowrap sm:gap-3 sm:px-4 sm:py-0 xl:h-[72px] xl:gap-6 xl:px-8">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           type="button"
@@ -84,8 +84,12 @@ export default function TopHeader({
           <Icon name="menu" className="h-5 w-5" />
         </button>
 
+        <div className="min-w-0 flex-1 sm:hidden">
+          <p className="truncate text-sm font-bold text-slate-800">{activeItem}</p>
+        </div>
+
         {searchEnabled ? (
-          <label className="relative block min-w-0 w-full max-w-md">
+          <label className="relative hidden min-w-0 w-full max-w-md sm:block">
             <span className="sr-only">Cari pasien</span>
             <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
               <Icon name="search" className="h-4 w-4" />
@@ -98,16 +102,24 @@ export default function TopHeader({
               className="h-10 w-full rounded-xl border border-[#D7E3F2] bg-white pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#1677FF] focus:ring-2 focus:ring-blue-500/10"
             />
           </label>
-        ) : (
-          <div className="min-w-0 flex-1 xl:hidden">
-            <p className="truncate text-center text-sm font-bold text-slate-800 sm:text-left">
-              {activeItem}
-            </p>
-            <p className="hidden truncate text-[11px] text-slate-400 sm:block">
-              Workspace dokumentasi klinis pribadi
-            </p>
-          </div>
-        )}
+        ) : null}
+      </div>
+
+      {searchEnabled ? (
+        <label className="order-3 relative block w-full sm:hidden">
+          <span className="sr-only">Cari pasien</span>
+          <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+            <Icon name="search" className="h-4 w-4" />
+          </span>
+          <input
+            type="search"
+            value={searchValue}
+            onChange={handleChange}
+            placeholder="Cari pasien, RM, atau kata kunci..."
+            className="h-10 w-full rounded-xl border border-[#D7E3F2] bg-white pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#1677FF] focus:ring-2 focus:ring-blue-500/10"
+          />
+        </label>
+      ) : null}
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-3 lg:gap-4 xl:gap-6">
