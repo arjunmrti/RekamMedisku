@@ -190,6 +190,15 @@ export default function PatientProfilePage({
     [followUps],
   );
 
+  const hydratedSelectedExam = useMemo(() => {
+    if (!selectedExam) return null;
+
+    return (
+      allSupportingExams.find((exam) => exam.id === selectedExam.id) ??
+      selectedExam
+    );
+  }, [allSupportingExams, selectedExam]);
+
   const handleTabChange = (tab: ProfileTab) => {
     setActiveTab(tab);
 
@@ -426,7 +435,7 @@ export default function PatientProfilePage({
       </main>
       </AppShell>
 
-      {selectedExam ? (
+      {hydratedSelectedExam ? (
       <div
         className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
         role="dialog"
@@ -443,9 +452,9 @@ export default function PatientProfilePage({
                 Pemeriksaan Penunjang
               </p>
               <h2 id="exam-detail-title" className="mt-1 text-lg font-bold text-slate-900">
-                {selectedExam.name}
+                {hydratedSelectedExam.name}
               </h2>
-              <p className="mt-1 text-xs text-slate-400">{selectedExam.date}</p>
+              <p className="mt-1 text-xs text-slate-400">{hydratedSelectedExam.date}</p>
             </div>
             <button
               type="button"
@@ -463,11 +472,11 @@ export default function PatientProfilePage({
                 Hasil yang dicatat
               </p>
               <p className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-slate-700">
-                {selectedExam.result || "Tidak ada hasil yang dicatat."}
+                {hydratedSelectedExam.result || "Tidak ada hasil yang dicatat."}
               </p>
             </div>
 
-            <SupportingExamAttachment exam={selectedExam} />
+            <SupportingExamAttachment exam={hydratedSelectedExam} />
           </div>
         </div>
       </div>
