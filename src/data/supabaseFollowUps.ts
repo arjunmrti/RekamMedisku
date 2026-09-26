@@ -3,6 +3,7 @@ import { replaceSavedFollowUps } from "./localFollowUps";
 import { updatePatient } from "./localPatients";
 import { syncPatientsWithSupabase } from "./supabasePatients";
 import { supabase } from "../utils/supabase";
+import { derivePatientFollowUpSummary } from "./patientFollowUpSummary";
 
 type FollowUpRow = {
   id: string;
@@ -284,27 +285,11 @@ function mergeEntry(
   );
 }
 
-function sortEntries(entries: FollowUpEntry[]) {
-  return [...entries].sort((a, b) =>
-    (b.isoDate + b.time).localeCompare(a.isoDate + a.time),
-  );
-}
-
 function refreshPatientFollowUpSummary(
   patientId: string,
   entries: FollowUpEntry[],
 ) {
-  const latest = sortEntries(entries)[0];
-
-  updatePatient(patientId, {
-    lastFollowUp: latest
-      ? latest.date + " · " + latest.time
-      : "Belum ada follow-up",
-    followUpNumber: latest?.number ?? 0,
-    lastFollowUpAt: latest
-      ? latest.isoDate + "T" + latest.time.replace(".", ":") + ":00"
-      : undefined,
-  });
+  updatePatient(patientId, derivePatientFollowUpSummary(entries));
 }
 
 async function getCurrentUserId() {
