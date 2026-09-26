@@ -122,30 +122,6 @@ async function getCurrentUserId() {
   return user.id;
 }
 
-async function insertLocalRotation(
-  rotation: Rotation,
-  userId: string,
-  idMap: RotationIdMap,
-) {
-  const { data, error } = await supabase
-    .from("rotations")
-    .insert({
-      user_id: userId,
-      name: rotation.name,
-      specialty: rotation.specialty,
-      start_date: rotation.startDate,
-      end_date: rotation.endDate,
-      status: rotation.status,
-    })
-    .select()
-    .single<RotationRow>();
-
-  if (error) throw error;
-
-  idMap[rotation.id] = data.id;
-  return data;
-}
-
 function mergeRotationIntoLocal(
   rotations: Rotation[],
   nextRotation: Rotation,
@@ -284,97 +260,67 @@ export async function upsertRotationWithSupabase(input: {
       throw new Error("Stase gagal disiapkan untuk disimpan.");
     }
 
-    const userId = await getCurrentUserId();
     const idMap = readIdMap();
     const remoteId = getRemoteId(localId, idMap);
 
-    let remoteRow: RotationRow;
+    const { data, error } = await supabase.rpc(
+      "upsert_rotation_with_activation",
+      {
+        p_rotation_id: remoteId,
+        p_expected_updated_at:
+          input.updatedAt ??
+          previousRotations.find((rotation) => rotation.id === localId)
+            ?.updatedAt ??
+          null,
+        p_name: nextRotation.name,
+        p_specialty: nextRotation.specialty,
+        p_start_date: nextRotation.startDate,
+        p_end_date: nextRotation.endDate,
+        p_status: nextRotation.status,
+      },
+    );
 
-    if (remoteId) {
-      const expectedUpdatedAt =
-        input.updatedAt ??
-        previousRotations.find((rotation) => rotation.id === localId)?.updatedAt;
-
-      if (!expectedUpdatedAt) {
-        throw new Error(
-          "Versi data stase tidak tersedia. Muat ulang stase sebelum menyimpan perubahan.",
-        );
-      }
-
-      const nextUpdatedAt = new Date().toISOString();
-      const { data, error } = await supabase
-        .from("rotations")
-        .update({
-          name: nextRotation.name,
-          specialty: nextRotation.specialty,
-          start_date: nextRotation.startDate,
-          end_date: nextRotation.endDate,
-          status: nextRotation.status,
-          updated_at: nextUpdatedAt,
-        })
-        .eq("id", remoteId)
-        .eq("user_id", userId)
-        .eq("updated_at", expectedUpdatedAt)
-        .select()
-        .maybeSingle<RotationRow>();
-
-      if (error) throw error;
-
-      if (!data) {
-        throw new Error(
-          "Data stase sudah berubah di browser lain. Muat ulang stase terbaru sebelum menyimpan perubahan.",
-        );
-      }
-
-      remoteRow = data;
-    } else {
-      remoteRow = (await insertLocalRotation(
-        nextRotation,
-        userId,
-        idMap,
-      )) as RotationRow;
-    }
+    if (error) throw error;
 
     remoteCommitted = true;
 
-    // The direct remote mutation is already committed. Reflect its authoritative
-    // fields/timestamp locally before any separate activation call.
-    let persistedRotations = mergeRotationIntoLocal(
-      previousRotations.filter((rotation) => rotation.id !== localId),
-      toRotation(remoteRow, localId),
-    );
-    saveRotations(persistedRotations);
-    idMap[localId] = remoteRow.id;
+    const rows = (data ?? []) as RotationRow[];
 
-    if (nextRotation.status === "Aktif") {
-      const { data: activatedRows, error: activateError } =
-        await supabase.rpc("activate_rotation", {
-          target_rotation_id: remoteRow.id,
-        });
+    if (!rows.length) {
+      throw new Error(
+        "Supabase tidak mengembalikan data stase setelah penyimpanan.",
+      );
+    }
 
-      if (activateError) throw activateError;
+    let nextLocal: Rotation[] = [];
 
-      const rows = (activatedRows ?? []) as RotationRow[];
+    for (const row of rows) {
+      const localRotationId =
+        Object.entries(idMap).find(
+          ([, mappedRemoteId]) => mappedRemoteId === row.id,
+        )?.[0] ??
+        (row.id === remoteId ? localId : row.id);
 
-      if (rows.length) {
-        for (const row of rows) {
-          const mappedLocalId =
-            Object.entries(idMap).find(
-              ([, mappedRemoteId]) => mappedRemoteId === row.id,
-            )?.[0] ?? row.id;
+      idMap[localRotationId] = row.id;
+      nextLocal = mergeRotationIntoLocal(
+        nextLocal,
+        toRotation(row, localRotationId),
+      );
+    }
 
-          idMap[mappedLocalId] = row.id;
-          persistedRotations = mergeRotationIntoLocal(
-            persistedRotations,
-            toRotation(row, mappedLocalId),
-          );
-        }
+    saveRotations(nextLocal);
 
-        saveRotations(persistedRotations);
-      }
+    const activeRemoteRow =
+      rows.find((row) => normalizeStatus(row.status) === "Aktif") ?? null;
 
-      setActiveRotationId(localId);
-    } else if (previousActiveId === localId) {
+    if (activeRemoteRow) {
+      const activeLocalId =
+        Object.entries(idMap).find(
+          ([, mappedRemoteId]) => mappedRemoteId === activeRemoteRow.id,
+        )?.[0] ?? activeRemoteRow.id;
+
+      setActiveRotationId(activeLocalId);
+    } else {
       setActiveRotationId("");
     }
 
@@ -387,7 +333,7 @@ export async function upsertRotationWithSupabase(input: {
       );
     }
 
-    return persistedRotations;
+    return nextLocal;
   } catch (error) {
     if (!remoteCommitted) {
       saveRotations(previousRotations);

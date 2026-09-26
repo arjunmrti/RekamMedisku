@@ -1,5 +1,14 @@
 import type { BackupPayload } from "../types/backup";
 import { supabase } from "../utils/supabase";
+
+export class SupabaseRestoreCommittedError extends Error {
+  readonly remoteCommitted = true;
+
+  constructor(message: string) {
+    super(message);
+    this.name = "SupabaseRestoreCommittedError";
+  }
+}
 import {
   rollbackBackupAttachmentUploadsWithSupabase,
   uploadBackupAttachmentsWithSupabase,
@@ -135,15 +144,34 @@ export async function restoreWorkspaceBackupWithSupabase(
     throw new Error(getSupabaseErrorMessage(error));
   }
 
-  const result = validateRestoreResult(data);
+  let result: RestoreWorkspaceResult;
+
+  try {
+    result = validateRestoreResult(data);
+  } catch (validationError) {
+    // The restore RPC has already committed if we reached this point. Never
+    // let a malformed response make the caller roll back the local snapshot.
+    throw new SupabaseRestoreCommittedError(
+      validationError instanceof Error
+        ? validationError.message
+        : "Respons restore workspace dari Supabase tidak valid.",
+    );
+  }
 
   // The RPC replaces the user's entire synced workspace in one transaction.
-  // Refresh local ID maps immediately so any Realtime event can resolve remote
-  // rows back to the IDs used by this backup.
-  saveIdMap(ROTATION_ID_MAP_KEY, result.rotationIds);
-  saveIdMap(PATIENT_ID_MAP_KEY, result.patientIds);
-  saveIdMap(FOLLOW_UP_ID_MAP_KEY, result.followUpIds);
-  saveIdMap(SUPPORTING_EXAM_ID_MAP_KEY, result.supportingExamIds);
+  // ID-map persistence is local bookkeeping only; failure here must not make a
+  // committed cloud restore look like a failed restore.
+  try {
+    saveIdMap(ROTATION_ID_MAP_KEY, result.rotationIds);
+    saveIdMap(PATIENT_ID_MAP_KEY, result.patientIds);
+    saveIdMap(FOLLOW_UP_ID_MAP_KEY, result.followUpIds);
+    saveIdMap(SUPPORTING_EXAM_ID_MAP_KEY, result.supportingExamIds);
+  } catch (mapError) {
+    console.warn(
+      "Restore cloud berhasil, tetapi pemetaan ID lokal belum dapat disimpan. Sinkronisasi berikutnya akan membangunnya kembali.",
+      mapError,
+    );
+  }
 
   return result;
 }

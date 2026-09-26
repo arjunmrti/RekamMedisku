@@ -850,7 +850,14 @@ export async function restoreBackupPayload(
       syncStatus: "synced",
     };
   } catch (error) {
-    if (remoteRestored) {
+    if (
+      remoteRestored ||
+      (typeof error === "object" &&
+        error !== null &&
+        "remoteCommitted" in error &&
+        (error as { remoteCommitted?: unknown }).remoteCommitted === true)
+    ) {
+      remoteRestored = true;
       // Cloud is already authoritative. Keep the restored local snapshot and
       // surface this as a partial success so the UI does not claim nothing
       // changed. The next explicit/realtime/polling sync can reconcile again.

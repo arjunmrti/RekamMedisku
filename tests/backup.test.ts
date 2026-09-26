@@ -490,6 +490,35 @@ test("restore mempertahankan local baru ketika cloud sudah sukses tetapi sync ga
   assert.equal(snapshot.activeRotationId, validRotation.id);
 });
 
+test("restore tidak rollback local jika cloud sudah commit tetapi persist mengembalikan error committed", async () => {
+  const payload = withRotations({
+    ...basePayload,
+    patients: [{ ...patient, name: "Pasien Baru" }],
+  });
+
+  const { state, getSnapshot } = createRestoreLocalState();
+
+  const committedError = new Error("respons restore invalid");
+  Object.assign(committedError, { remoteCommitted: true });
+
+  const result = await restoreBackupPayload(payload, {
+    localState: state,
+    persistRemote: async () => {
+      throw committedError;
+    },
+    syncRemote: async () => {
+      throw new Error("sync tertunda");
+    },
+  });
+
+  const snapshot = getSnapshot();
+
+  assert.equal(result.syncStatus, "partial");
+  assert.equal(snapshot.patients[0]?.name, "Pasien Baru");
+  assert.equal(snapshot.rotations[0]?.id, validRotation.id);
+  assert.equal(snapshot.activeRotationId, validRotation.id);
+});
+
 test("restore rollback local jika cloud restore gagal", async () => {
   const payload = withRotations({
     ...basePayload,
