@@ -13,7 +13,6 @@ import {
 } from "../../data/supabaseRotations";
 import { loadPatients } from "../../data/localPatients";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
-import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
 import Icon from "../../components/ui/Icon";
@@ -70,45 +69,7 @@ export default function RotationManagementPage({
   const [switchTarget, setSwitchTarget] = useState<Rotation | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingRotation, setEditingRotation] = useState<Rotation | null>(null);
-  const [syncing, setSyncing] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function syncWorkspace() {
-      setSyncing(true);
-      setErrorMessage("");
-
-      try {
-        await syncWorkspaceWithSupabase();
-        const nextRotations = loadRotations();
-
-        if (cancelled) return;
-
-        setRotations(nextRotations);
-        setActiveRotation(loadActiveRotation());
-      } catch (error) {
-        if (!cancelled) {
-          setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : "Gagal memuat data stase dari Supabase.",
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setSyncing(false);
-        }
-      }
-    }
-
-    void syncWorkspace();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (workspaceSyncVersion === 0) return;
@@ -256,12 +217,6 @@ export default function RotationManagementPage({
                 Tambah Stase
               </button>
             </header>
-
-            {syncing ? (
-              <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-2.5 text-[11px] font-medium text-slate-500">
-                Menyinkronkan data stase...
-              </div>
-            ) : null}
 
             {errorMessage ? (
               <div

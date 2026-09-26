@@ -345,33 +345,6 @@ export default function FollowUpFormPage({
     () => loadSavedFollowUps()[patient.id] ?? [],
   );
 
-  useEffect(() => {
-    let cancelled = false;
-
-    void syncWorkspaceWithSupabase()
-      .then(() => {
-        const entries = loadSavedFollowUps()[patient.id] ?? [];
-        if (!cancelled) {
-          setPreviousFollowUps(entries);
-          setErrorMessage("");
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setErrorMessage(
-            getSupabaseFollowUpErrorMessage(
-              error,
-              "Data follow-up online gagal dimuat. Data lokal tetap digunakan.",
-            ),
-          );
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [patient.id]);
-
   const latestFollowUp = previousFollowUps[0] ?? null;
 
   const sectionStats = useMemo(() => {

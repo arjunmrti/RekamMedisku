@@ -8,7 +8,6 @@ import ProfileTabs, { type ProfileTab } from "../../components/patient-profile/P
 import SupportingExams from "../../components/patient-profile/SupportingExams";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
 import {
-  getSupabaseFollowUpErrorMessage,
 } from "../../data/supabaseFollowUps";
 import { loadRotations } from "../../data/localRotations";
 import type { PatientListItem } from "../../types/patient";
@@ -16,7 +15,6 @@ import Icon from "../../components/ui/Icon";
 import type { SupportingExam } from "../../types/followUp";
 import { getAttachment } from "../../data/localAttachments";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
-import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 
 type PatientProfilePageProps = NavigationProps & {
   patient: PatientListItem;
@@ -143,33 +141,6 @@ export default function PatientProfilePage({
   const [followUps, setFollowUps] = useState(() =>
     loadSavedFollowUps()[patient.id] ?? [],
   );
-  const [followUpError, setFollowUpError] = useState("");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    void syncWorkspaceWithSupabase()
-      .then(() => {
-        if (!cancelled) {
-          setFollowUps(loadSavedFollowUps()[patient.id] ?? []);
-          setFollowUpError("");
-        }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          setFollowUpError(
-            getSupabaseFollowUpErrorMessage(
-              error,
-              "Data follow-up online gagal dimuat. Data lokal tetap digunakan.",
-            ),
-          );
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [patient.id]);
 
   useEffect(() => {
     if (workspaceSyncVersion === 0) return;
@@ -271,15 +242,6 @@ export default function PatientProfilePage({
           />
 
           <ProfileTabs activeTab={activeTab} onChange={handleTabChange} />
-
-          {followUpError ? (
-            <div
-              role="status"
-              className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-700"
-            >
-              {followUpError}
-            </div>
-          ) : null}
 
           <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
             <section className="min-w-0 space-y-6 xl:col-span-8">

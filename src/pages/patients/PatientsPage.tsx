@@ -9,13 +9,11 @@ import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients } from "../../data/localPatients";
 import {
   deletePatientWithSupabase,
-  getSupabasePatientErrorMessage,
   setPatientStatusWithSupabase,
   upsertPatientWithSupabase,
 } from "../../data/supabasePatients";
 import type { PatientListItem } from "../../types/patient";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
-import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import { isSamePatientIdentity } from "../../data/patientIdentity";
 
 type PatientsPageProps = NavigationProps & {
@@ -92,55 +90,8 @@ export default function PatientsPage({
     );
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientListItem | null>(null);
-  const [syncing, setSyncing] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const deletingPatientRef = useRef(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function syncWorkspace() {
-      setSyncing(true);
-      setErrorMessage("");
-
-      try {
-        await syncWorkspaceWithSupabase();
-        const nextPatients = loadPatients();
-
-        if (cancelled) return;
-
-        setPatients(nextPatients);
-        setSelectedPatient(
-          (current) =>
-            nextPatients.find(
-              (patient) =>
-                patient.id === current?.id &&
-                patient.rotationId === activeRotation.id,
-            ) ??
-            nextPatients.find(
-              (patient) => patient.rotationId === activeRotation.id,
-            ) ??
-            null,
-        );
-      } catch (error) {
-        console.error("Supabase patient sync failed:", error);
-
-        if (!cancelled) {
-          setErrorMessage(getSupabasePatientErrorMessage(error));
-        }
-      } finally {
-        if (!cancelled) {
-          setSyncing(false);
-        }
-      }
-    }
-
-    void syncWorkspace();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [activeRotation.id]);
 
   useEffect(() => {
     if (workspaceSyncVersion === 0) return;
@@ -376,12 +327,6 @@ export default function PatientsPage({
                   }
                   onAddPatient={openAddPatient}
                 />
-
-                {syncing ? (
-                  <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-2.5 text-[11px] font-medium text-slate-500">
-                    Menyinkronkan data pasien...
-                  </div>
-                ) : null}
 
                 {errorMessage ? (
                   <div
