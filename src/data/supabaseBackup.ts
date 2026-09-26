@@ -129,7 +129,7 @@ export async function restoreWorkspaceBackupWithSupabase(
   // The RPC only stores attachment metadata, so Storage must be populated first.
   // Track only newly-created objects so a failed DB restore can clean them up
   // without deleting pre-existing cloud attachments.
-  const newlyUploadedAttachmentIds = await uploadBackupAttachmentsWithSupabase(
+  const uploadedAttachmentState = await uploadBackupAttachmentsWithSupabase(
     payload.attachments,
   );
 
@@ -139,7 +139,7 @@ export async function restoreWorkspaceBackupWithSupabase(
 
   if (error) {
     await rollbackBackupAttachmentUploadsWithSupabase(
-      newlyUploadedAttachmentIds,
+      uploadedAttachmentState,
     );
     throw new Error(getSupabaseErrorMessage(error));
   }
