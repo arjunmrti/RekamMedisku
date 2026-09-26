@@ -3,7 +3,10 @@ import type {
   PatientListItem,
   PatientLocationType,
 } from "../../types/patient";
-import { normalizePatientLocation, normalizePatientAdmissionLocation } from "../../utils/patientLocation";
+import {
+  normalizePatientAdmissionLocation,
+  normalizePatientLocation,
+} from "../../utils/patientLocation";
 import type { Rotation } from "../../types/rotation";
 import { createPatientId } from "../../data/localPatients";
 import { toLocalIsoDate } from "../../utils/date";
@@ -123,8 +126,6 @@ export default function AddPatientModal({
       age: parsedAge,
       gender,
       rm: rm.trim(),
-      room: room.trim(),
-      bed: bed.trim(),
       doctor: doctor.trim() || "Belum ditentukan",
       lastFollowUp: patient?.lastFollowUp ?? "Belum ada follow-up",
       followUpNumber: patient?.followUpNumber ?? 0,
