@@ -147,6 +147,21 @@ export async function updateSlaberanLocation(
   return syncSlaberanLocationsWithSupabase();
 }
 
+export async function swapSlaberanLocations(
+  locationId: string,
+  targetLocationId: string,
+): Promise<SlaberanLocation[]> {
+  await getCurrentUserId();
+
+  const { error } = await supabase.rpc("swap_slaberan_locations", {
+    p_location_id: locationId,
+    p_target_location_id: targetLocationId,
+  });
+
+  if (error) throw new Error(getErrorMessage(error));
+  return syncSlaberanLocationsWithSupabase();
+}
+
 export async function deleteSlaberanLocation(
   locationId: string,
 ): Promise<SlaberanLocation[]> {
