@@ -139,6 +139,10 @@ BEGIN
 END;
 $;
 
+ALTER TABLE public.patients
+  ADD COLUMN IF NOT EXISTS current_location_id uuid,
+  ADD COLUMN IF NOT EXISTS admission_location_id uuid;
+
 DROP TRIGGER IF EXISTS trg_validate_patient_slaberan_locations
   ON public.patients;
 
@@ -150,10 +154,6 @@ CREATE TRIGGER trg_validate_patient_slaberan_locations
   ON public.patients
   FOR EACH ROW
   EXECUTE FUNCTION public.validate_patient_slaberan_locations();
-
-ALTER TABLE public.patients
-  ADD COLUMN IF NOT EXISTS current_location_id uuid,
-  ADD COLUMN IF NOT EXISTS admission_location_id uuid;
 
 ALTER TABLE public.patients
   DROP CONSTRAINT IF EXISTS patients_current_location_id_fkey;
