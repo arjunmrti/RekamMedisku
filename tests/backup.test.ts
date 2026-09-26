@@ -115,3 +115,133 @@ test("backup ditolak jika Base64 attachment tidak valid", () => {
 
   assert.equal(result.ok, false);
 });
+
+test("backup menolak tanggal kalender follow-up yang tidak valid", () => {
+  const payload = withAttachment("att-invalid-date");
+  payload.followUpsByPatient[patient.id][0].isoDate = "2026-02-30";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak jam follow-up yang tidak valid", () => {
+  const payload = withAttachment("att-invalid-time");
+  payload.followUpsByPatient[patient.id][0].time = "24.61";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak tanggal draf yang tidak valid", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    followUpDrafts: {
+      [patient.id]: {
+        followUpDate: "2026-04-31",
+        followUpTime: "09:30",
+        subjective: {
+          keluhan: "",
+          riwayatKeluhanSerupa: "",
+          pastHistory: "",
+          medicationHistory: "",
+          allergies: "",
+          otherHistory: "",
+        },
+        objective: {
+          generalCondition: "",
+          systolic: "",
+          diastolic: "",
+          pulse: "",
+          respiratoryRate: "",
+          temperature: "",
+          spo2: "",
+          oxygenVia: "",
+          painNrs: "",
+          physicalFindings: "",
+          supportingExamText: "",
+        },
+        neurology: {
+          generalCondition: "",
+          consciousness: "",
+          gcsEye: "",
+          gcsMotor: "",
+          gcsVerbal: "",
+          fkl: "",
+          cranialNerve: "",
+          pupil: "",
+          neckStiffness: "",
+          brudzinski: "",
+          kernig: "",
+          movement: "",
+          tone: "",
+          sensory: "",
+          upperStrength: "",
+          lowerStrength: "",
+          physiologicReflex: "",
+          pathologicReflex: "",
+          autonomic: "",
+          provocation: "",
+        },
+        internalMedicine: {
+          generalCondition: "",
+          consciousness: "",
+          headNeck: "",
+          thorax: "",
+          abdomen: "",
+          extremities: "",
+          relevantSystemicFindings: "",
+        },
+        supportingExams: [],
+        assessments: [""],
+        assessmentCodes: [],
+        planning: "",
+        instruction: "",
+      },
+    },
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak jam draf yang tidak valid", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    followUpDrafts: {
+      [patient.id]: {
+        ...basePayload.followUpDrafts[patient.id],
+        followUpDate: "2026-09-26",
+        followUpTime: "12:60",
+      } as never,
+    },
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak admissionDate pasien yang tidak valid", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    patients: [{ ...patient, admissionDate: "2026-02-30" }],
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak timestamp ekspor yang tidak valid", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    exportedAt: "2026-02-30T10:00:00.000Z",
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
