@@ -367,7 +367,7 @@ async function persistFollowUpWithSupabaseInternal(
 
   const followUpMap = readMap(FOLLOW_UP_ID_MAP_KEY);
   const examMap = readMap(SUPPORTING_EXAM_ID_MAP_KEY);
-  const remoteFollowUpId = followUpMap[entry.id];
+  let remoteFollowUpId = followUpMap[entry.id] ?? null;
   let insertedFollowUpId: string | null = null;
   const insertedExamIds: string[] = [];
 
@@ -381,27 +381,53 @@ async function persistFollowUpWithSupabaseInternal(
         .eq("id", remoteFollowUpId)
         .eq("user_id", userId)
         .select()
-        .single<FollowUpRow>();
+        .maybeSingle<FollowUpRow>();
 
       if (error) throw error;
-      remoteRow = data;
-    } else {
-      const { data, error } = await supabase
-        .from("follow_ups")
-        .insert({
-          user_id: userId,
-          ...followUpPayload(entry, remotePatientId),
-        })
-        .select()
-        .single<FollowUpRow>();
 
-      if (error) throw error;
-      remoteRow = data;
-      insertedFollowUpId = data.id;
-      followUpMap[entry.id] = data.id;
+      if (data) {
+        remoteRow = data;
+      } else {
+        // The local ID map can point to a row that was removed manually.
+        // Fall back to the logical patient + follow-up number identity.
+        delete followUpMap[entry.id];
+        remoteFollowUpId = null;
+      }
     }
 
     if (!remoteFollowUpId) {
+      const { data: existingRow, error: existingRowError } = await supabase
+        .from("follow_ups")
+        .select("*")
+        .eq("patient_id", remotePatientId)
+        .eq("number", entry.number)
+        .eq("user_id", userId)
+        .maybeSingle<FollowUpRow>();
+
+      if (existingRowError) throw existingRowError;
+
+      if (existingRow) {
+        remoteRow = existingRow;
+        remoteFollowUpId = existingRow.id;
+        followUpMap[entry.id] = existingRow.id;
+      } else {
+        const { data, error } = await supabase
+          .from("follow_ups")
+          .insert({
+            user_id: userId,
+            ...followUpPayload(entry, remotePatientId),
+          })
+          .select()
+          .single<FollowUpRow>();
+
+        if (error) throw error;
+        remoteRow = data;
+        insertedFollowUpId = data.id;
+        followUpMap[entry.id] = data.id;
+      }
+    }
+
+    if (!insertedFollowUpId) {
       for (const exam of entry.supportingExams ?? []) {
         const { data, error } = await supabase
           .from("supporting_exams")
