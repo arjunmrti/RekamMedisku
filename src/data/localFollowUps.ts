@@ -1,5 +1,4 @@
 import type { FollowUpEntry } from "../types/followUp";
-import { mockFollowUpsByPatient } from "./mockFollowUps";
 import type { FollowUpFormValues } from "../types/followUpForm";
 
 const DRAFT_PREFIX = "rekammedisku:follow-up-draft:";
@@ -53,17 +52,6 @@ export function clearFollowUpDraft(patientId: string) {
 }
 
 export function loadSavedFollowUps(): Record<string, FollowUpEntry[]> {
-  const stored = window.localStorage.getItem(SAVED_KEY);
-
-  if (!stored) {
-    const seeded = JSON.parse(JSON.stringify(mockFollowUpsByPatient)) as Record<
-      string,
-      FollowUpEntry[]
-    >;
-    window.localStorage.setItem(SAVED_KEY, JSON.stringify(seeded));
-    return seeded;
-  }
-
   return getStoredFollowUps();
 }
 
@@ -156,6 +144,7 @@ export function appendSavedFollowUp(
     JSON.stringify({ ...current, [patientId]: next }),
   );
 }
+
 export function replaceSavedFollowUps(
   followUpsByPatient: Record<string, FollowUpEntry[]>,
 ) {
