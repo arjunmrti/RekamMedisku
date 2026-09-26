@@ -23,11 +23,14 @@ jobs:
       - name: Install app dependencies
         run: npm ci
 
-      - name: Install Playwright
-        run: npx playwright@1.63.0 install --with-deps chromium
+      - name: Install Playwright test package
+        run: npm install --no-save --no-package-lock @playwright/test@1.63.0
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
 
       - name: Run browser E2E
-        run: npx playwright@1.63.0 test --config=e2e/playwright.config.ts
+        run: npx playwright test --config=e2e/playwright.config.ts
 
       - name: Upload Playwright report
         if: always()
