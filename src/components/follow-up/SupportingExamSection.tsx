@@ -11,6 +11,7 @@ type SupportingExamSectionProps = {
   onToggle: () => void;
   exams: SupportingExamForm[];
   onChange: (value: SupportingExamForm[]) => void;
+  onPendingAttachmentChange: (attachmentId: string | null) => void;
 };
 
 type AttachmentDownloadProps = {
@@ -128,6 +129,7 @@ export default function SupportingExamSection({
   onToggle,
   exams,
   onChange,
+  onPendingAttachmentChange,
 }: SupportingExamSectionProps) {
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -146,6 +148,7 @@ export default function SupportingExamSection({
       }
     }
 
+    onPendingAttachmentChange(null);
     setDraft(emptyExam());
     setEditingId(null);
     setAdding(false);
@@ -169,6 +172,7 @@ export default function SupportingExamSection({
       : [...exams, nextExam];
 
     onChange(nextExams);
+    onPendingAttachmentChange(null);
 
     if (
       previousExam?.attachmentId &&
@@ -191,6 +195,7 @@ export default function SupportingExamSection({
 
     if (exam?.attachmentId) {
       if (editingId === id) {
+        onPendingAttachmentChange(null);
         setDraft(emptyExam());
         setEditingId(null);
         setAdding(false);
@@ -235,6 +240,7 @@ export default function SupportingExamSection({
         attachmentType: file.type,
         attachmentSize: file.size,
       }));
+      onPendingAttachmentChange(attachmentId);
 
       if (
         previousAttachmentId &&
@@ -452,6 +458,7 @@ export default function SupportingExamSection({
                     <button
                       type="button"
                       onClick={() => {
+                        onPendingAttachmentChange(null);
                         setDraft(exam);
                         setEditingId(exam.id);
                         setAdding(true);
