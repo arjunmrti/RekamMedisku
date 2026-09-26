@@ -85,6 +85,17 @@ export function startWorkspaceSync(userId: string): () => void {
 
   startWatchdog();
 
+  const handleConnectivityRecovery = () => {
+    nextRetryAt = 0;
+    sync();
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      handleConnectivityRecovery();
+    }
+  };
+
   const channel = supabase
     .channel("rekammedisku-workspace-sync-" + userId)
     .on(
@@ -164,9 +175,14 @@ export function startWorkspaceSync(userId: string): () => void {
       }
     });
 
+  window.addEventListener("online", handleConnectivityRecovery);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
   activeCleanup = () => {
     disposed = true;
     stopWatchdog();
+    window.removeEventListener("online", handleConnectivityRecovery);
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
     void supabase.removeChannel(channel);
     activeCleanup = null;
   };
