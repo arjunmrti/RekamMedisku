@@ -1,6 +1,7 @@
 import type { SlaberanTemplateRecord } from "../types/slaberanTemplate";
 import { replaceSlaberanTemplates } from "./localSlaberanTemplates";
 import { supabase } from "../utils/supabase";
+import { getAuthenticatedUserId } from "../utils/authenticatedUser";
 
 type SlaberanTemplateRow = {
   id: string;
