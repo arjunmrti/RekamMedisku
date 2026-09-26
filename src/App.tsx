@@ -57,7 +57,18 @@ function App() {
 
       const refreshed = patients.find((patient) => patient.id === current.id);
 
-      return refreshed ?? null;
+      if (!refreshed) {
+        setActiveItem((currentItem) =>
+          currentItem === "Profil Pasien" ||
+          currentItem === "Follow-Up Baru" ||
+          currentItem === "Semua Laporan"
+            ? "Daftar Pasien"
+            : currentItem,
+        );
+        return null;
+      }
+
+      return refreshed;
     });
   }, [workspaceSyncVersion]);
   const handleNavigate = (label: string) => {
