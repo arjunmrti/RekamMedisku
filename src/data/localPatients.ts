@@ -1,3 +1,9 @@
+import { deleteAttachments } from "./localAttachments";
+import {
+  deleteFollowUpsForPatient,
+  getOtherPatientFollowUpAttachmentIds,
+  getPatientFollowUpAttachmentIds,
+} from "./localFollowUps";
 import type { PatientListItem, PatientStatus } from "../types/patient";
 
 const PATIENTS_KEY = "rekammedisku:patients";
@@ -70,6 +76,39 @@ export function savePatients(patients: PatientListItem[]) {
 
 export function replacePatients(patients: PatientListItem[]) {
   savePatients(patients);
+}
+
+export async function deletePatient(patientId: string): Promise<boolean> {
+  const patients = loadPatients();
+  const patientExists = patients.some((patient) => patient.id === patientId);
+
+  if (!patientExists) return false;
+
+  const attachmentIds = getPatientFollowUpAttachmentIds(patientId);
+  const sharedAttachmentIds = getOtherPatientFollowUpAttachmentIds(patientId);
+  const deletableAttachmentIds = attachmentIds.filter(
+    (attachmentId) => !sharedAttachmentIds.has(attachmentId),
+  );
+  const remainingPatients = patients.filter((patient) => patient.id !== patientId);
+  const rollbackFollowUps = deleteFollowUpsForPatient(patientId);
+
+  try {
+    savePatients(remainingPatients);
+    await deleteAttachments(deletableAttachmentIds);
+  } catch (error) {
+    try {
+      savePatients(patients);
+      rollbackFollowUps();
+    } catch {
+      throw new Error(
+        "Penghapusan pasien gagal dan pemulihan data lokal juga gagal.",
+      );
+    }
+
+    throw error;
+  }
+
+  return true;
 }
 
 export function updatePatient(
