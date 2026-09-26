@@ -246,7 +246,7 @@ function App() {
   if (activeItem === "Semua Laporan") {
     return (
       <ReportGeneratorPage
-        key={selectedPatient?.id ?? reportMode}
+        key={`${selectedPatient?.id ?? "none"}:${reportMode}`}
         {...navigationProps}
         patient={selectedPatient}
         mode={reportMode}
