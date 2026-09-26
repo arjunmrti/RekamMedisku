@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Icon from "../ui/Icon";
 import {
   createSlaberanLocation,
@@ -63,7 +63,7 @@ export default function SlaberanLocationManager({ onBack }: Props) {
     [locations],
   );
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setErrorMessage("");
     try {
       const next = await syncSlaberanLocationsWithSupabase();
@@ -76,11 +76,11 @@ export default function SlaberanLocationManager({ onBack }: Props) {
           : "Struktur lokasi gagal dimuat dari Supabase.",
       );
     }
-  };
+  }, []);
 
   useEffect(() => {
     void refresh();
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
     if (type !== "ward") {
