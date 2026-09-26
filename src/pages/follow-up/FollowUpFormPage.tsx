@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import AssessmentSection from "../../components/follow-up/AssessmentSection";
 import ObjectiveSection from "../../components/follow-up/ObjectiveSection";
@@ -338,6 +338,8 @@ export default function FollowUpFormPage({
       : "Belum ada perubahan tersimpan.",
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const saveInProgressRef = useRef(false);
   const [openSections, setOpenSections] =
     useState<Record<SectionKey, boolean>>({
       subjective: true,
@@ -508,6 +510,8 @@ export default function FollowUpFormPage({
   };
 
   const handleSaveFollowUp = () => {
+    if (saveInProgressRef.current) return;
+
     if (!values.subjective.keluhan.trim()) {
       setErrorMessage(
         "Keluhan Pagi Ini wajib diisi sebelum follow-up disimpan.",
@@ -520,6 +524,9 @@ export default function FollowUpFormPage({
       setErrorMessage("Tanggal dan waktu follow-up wajib diisi.");
       return;
     }
+
+    saveInProgressRef.current = true;
+    setIsSaving(true);
 
     const nextNumber =
       Math.max(0, ...previousFollowUps.map((entry) => entry.number)) + 1;
@@ -890,9 +897,10 @@ export default function FollowUpFormPage({
                   <button
                     type="button"
                     onClick={handleSaveFollowUp}
-                    className="flex-1 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 sm:flex-none"
+                    disabled={isSaving}
+                    className="flex-1 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none"
                   >
-                    Simpan Follow-Up
+                    {isSaving ? "Menyimpan..." : "Simpan Follow-Up"}
                   </button>
                 </div>
               </div>

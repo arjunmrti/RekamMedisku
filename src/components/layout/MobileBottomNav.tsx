@@ -5,12 +5,32 @@ type MobileBottomNavProps = {
   onNavigate: (label: string) => void;
 };
 
-const items: Array<{ label: string; icon: IconName; match: string[] }> = [
-  { label: "Beranda", icon: "home", match: ["Beranda"] },
-  { label: "Pasien", icon: "users", match: ["Pasien", "Daftar Pasien", "Profil Pasien", "Follow-Up Baru"] },
-  { label: "Laporan", icon: "document", match: ["Laporan", "Semua Laporan"] },
-  { label: "Data", icon: "database", match: ["Data", "Cadangan & Data"] },
-  { label: "Stase", icon: "brain", match: ["Stase Saya"] },
+const items: Array<{
+  label: string;
+  target: string;
+  icon: IconName;
+  match: string[];
+}> = [
+  { label: "Beranda", target: "Beranda", icon: "home", match: ["Beranda"] },
+  {
+    label: "Pasien",
+    target: "Daftar Pasien",
+    icon: "users",
+    match: ["Pasien", "Daftar Pasien", "Profil Pasien", "Follow-Up Baru"],
+  },
+  {
+    label: "Laporan",
+    target: "Semua Laporan",
+    icon: "document",
+    match: ["Laporan", "Semua Laporan"],
+  },
+  {
+    label: "Data",
+    target: "Cadangan & Data",
+    icon: "database",
+    match: ["Data", "Cadangan & Data"],
+  },
+  { label: "Stase", target: "Stase Saya", icon: "brain", match: ["Stase Saya"] },
 ];
 
 export default function MobileBottomNav({
@@ -27,7 +47,7 @@ export default function MobileBottomNav({
             <button
               key={item.label}
               type="button"
-              onClick={() => onNavigate(item.label)}
+              onClick={() => onNavigate(item.target)}
               aria-current={active ? "page" : undefined}
               className={
                 "flex min-h-11 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-semibold transition-colors " +
