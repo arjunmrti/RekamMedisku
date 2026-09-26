@@ -354,6 +354,7 @@ export default function FollowUpFormPage({
   );
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [pendingAttachmentId, setPendingAttachmentId] = useState<string | null>(null);
   const saveInProgressRef = useRef(false);
   const [openSections, setOpenSections] =
     useState<Record<SectionKey, boolean>>({
@@ -372,10 +373,15 @@ export default function FollowUpFormPage({
 
   const sectionStats = useMemo(() => {
     const subjectiveFilled = countFilled(values.subjective);
-    const templateFilled =
+    const templateValues =
       templateType === "Ilmu Penyakit Dalam"
-        ? countFilled(values.internalMedicine)
-        : countFilled(values.neurology);
+        ? values.internalMedicine
+        : Object.fromEntries(
+            Object.entries(values.neurology).filter(
+              ([key]) => key !== "generalCondition",
+            ),
+          );
+    const templateFilled = countFilled(templateValues);
     const objectiveFilled = countFilled(values.objective) + templateFilled;
     const assessmentFilled = values.assessments.filter((item) =>
       item.trim(),
@@ -396,7 +402,9 @@ export default function FollowUpFormPage({
           Object.keys(values.objective).length +
           (templateType === "Ilmu Penyakit Dalam"
             ? Object.keys(values.internalMedicine).length
-            : Object.keys(values.neurology).length),
+            : Object.keys(values.neurology).filter(
+                (key) => key !== "generalCondition",
+              ).length),
       },
       supportingExams: { filled: supportingFilled, total: 1 },
       assessment: {
@@ -449,7 +457,11 @@ export default function FollowUpFormPage({
 
     const timer = window.setTimeout(() => {
       saveFollowUpDraft(patient.id, values);
-      void cleanupUnreferencedAttachments(undefined, values.supportingExams);
+      void cleanupUnreferencedAttachments(
+        undefined,
+        values.supportingExams,
+        pendingAttachmentId ? [pendingAttachmentId] : undefined,
+      );
       setSaveMessage(
         "Draf tersimpan otomatis pukul " +
           new Intl.DateTimeFormat("id-ID", {
@@ -462,11 +474,11 @@ export default function FollowUpFormPage({
     }, 1200);
 
     return () => window.clearTimeout(timer);
-  }, [dirty, patient.id, values]);
+  }, [dirty, patient.id, pendingAttachmentId, values]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
-      if (!dirty) return;
+      if (!dirty && !pendingAttachmentId) return;
       event.preventDefault();
       event.returnValue = "";
     };
@@ -474,7 +486,7 @@ export default function FollowUpFormPage({
     window.addEventListener("beforeunload", handleBeforeUnload);
 
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [dirty]);
+  }, [dirty, pendingAttachmentId]);
 
   const updateValues = (next: FollowUpFormValues) => {
     setValues(next);
@@ -491,7 +503,7 @@ export default function FollowUpFormPage({
   };
 
   const canLeave = () => {
-    if (!dirty) return true;
+    if (!dirty && !pendingAttachmentId) return true;
     return window.confirm(
       "Ada perubahan yang belum disimpan. Tetap tinggalkan form?",
     );
@@ -504,6 +516,14 @@ export default function FollowUpFormPage({
   };
 
   const handleSaveDraft = () => {
+    if (pendingAttachmentId) {
+      setErrorMessage(
+        "Lampiran yang baru dipilih belum ditambahkan ke pemeriksaan. Klik Tambahkan terlebih dahulu.",
+      );
+      setOpenSections((current) => ({ ...current, supportingExams: true }));
+      return;
+    }
+
     saveFollowUpDraft(patient.id, values);
     void cleanupUnreferencedAttachments(undefined, values.supportingExams);
     setDirty(false);
@@ -520,6 +540,14 @@ export default function FollowUpFormPage({
 
   const handleSaveFollowUp = async () => {
     if (saveInProgressRef.current) return;
+
+    if (pendingAttachmentId) {
+      setErrorMessage(
+        "Lampiran yang baru dipilih belum ditambahkan ke pemeriksaan. Klik Tambahkan terlebih dahulu.",
+      );
+      setOpenSections((current) => ({ ...current, supportingExams: true }));
+      return;
+    }
 
     if (!values.subjective.keluhan.trim()) {
       setErrorMessage(
@@ -854,6 +882,14 @@ export default function FollowUpFormPage({
                   onChange={(supportingExams) =>
                     updateValues({ ...values, supportingExams })
                   }
+                  onPendingAttachmentChange={(attachmentId) => {
+                    setPendingAttachmentId(attachmentId);
+                    if (attachmentId) {
+                      setSaveMessage(
+                        "Lampiran dipilih. Klik Tambahkan untuk menyimpannya.",
+                      );
+                    }
+                  }}
                 />
               </div>
 
