@@ -202,6 +202,27 @@ export default function SlaberanPage({
   }, [doctors, selectedTemplate, templateId]);
 
   useEffect(() => {
+    if (workspaceSyncVersion === 0) return;
+
+    void Promise.all([
+      syncSlaberanLocationsWithSupabase(),
+      syncSlaberanTemplatesWithSupabase(),
+    ])
+      .then(([nextLocations, nextTemplates]) => {
+        setLocations(nextLocations);
+        setTemplates(
+          nextTemplates.length > 0
+            ? nextTemplates
+            : [createStarterSlaberanTemplate()],
+        );
+      })
+      .catch(() => {
+        setLocations(loadSlaberanLocations());
+        setTemplates(getReportTemplates());
+      });
+  }, [workspaceSyncVersion]);
+
+  useEffect(() => {
     setReportText("");
     setCopied(false);
     setEditing(false);
