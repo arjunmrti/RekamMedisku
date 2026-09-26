@@ -5,9 +5,6 @@ import KpiGrid from "../../components/dashboard/KpiGrid";
 import PatientTable from "../../components/dashboard/PatientTable";
 import RotationHistory from "../../components/dashboard/RotationHistory";
 import QuickActions from "../../components/dashboard/QuickActions";
-import QuoteWidget from "../../components/dashboard/QuoteWidget";
-import TipsWidget from "../../components/dashboard/TipsWidget";
-import EncouragementBanner from "../../components/dashboard/EncouragementBanner";
 import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients } from "../../data/localPatients";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
@@ -184,18 +181,8 @@ export default function DashboardPage({
               <RotationHistory />
             </section>
 
-            <aside className="space-y-4 lg:col-span-3">
+            <aside className="lg:col-span-3">
               <QuickActions onNavigate={onNavigate} />
-
-              <div className="space-y-3">
-                <QuoteWidget />
-                <TipsWidget
-                  activePatientCount={activePatients.length}
-                  pendingFollowUps={pendingFollowUps}
-                  followUpsToday={followUpsToday}
-                />
-                <EncouragementBanner />
-              </div>
             </aside>
           </div>
         </div>
