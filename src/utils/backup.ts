@@ -27,6 +27,10 @@ import type { FollowUpFormValues } from "../types/followUpForm";
 import type { PatientListItem } from "../types/patient";
 import type { Rotation } from "../types/rotation";
 import {
+  normalizePatientAdmissionLocation,
+  normalizePatientLocation,
+} from "./patientLocation";
+import {
   isValidDisplayTime,
   isValidIsoDate,
   isValidIsoDateTime,
@@ -334,6 +338,44 @@ function normalizePatient(value: unknown): PatientListItem | null {
       ? value.followUpNumber
       : 0;
 
+  const currentLocation = normalizePatientLocation(
+    isRecord(value.currentLocation)
+      ? {
+          type:
+            value.currentLocation.type === "special"
+              ? "special"
+              : value.currentLocation.type === "ward"
+                ? "ward"
+                : undefined,
+          name:
+            typeof value.currentLocation.name === "string"
+              ? value.currentLocation.name
+              : undefined,
+          bed:
+            typeof value.currentLocation.bed === "string"
+              ? value.currentLocation.bed
+              : undefined,
+        }
+      : undefined,
+    value.room,
+    value.bed,
+  );
+
+  const admissionLocation = normalizePatientAdmissionLocation(
+    isRecord(value.admissionLocation)
+      ? {
+          type:
+            value.admissionLocation.type === "special"
+              ? "special"
+              : "ward",
+          name:
+            typeof value.admissionLocation.name === "string"
+              ? value.admissionLocation.name
+              : "",
+        }
+      : undefined,
+  );
+
   return {
     id: value.id,
     rotationId,
@@ -341,8 +383,10 @@ function normalizePatient(value: unknown): PatientListItem | null {
     age: value.age,
     gender: value.gender,
     rm: value.rm,
-    room: value.room,
-    bed: value.bed,
+    room: currentLocation.name,
+    currentLocation,
+    admissionLocation,
+    bed: currentLocation.bed,
     doctor: value.doctor,
     lastFollowUp:
       typeof value.lastFollowUp === "string"
