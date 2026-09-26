@@ -9,6 +9,7 @@ import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients } from "../../data/localPatients";
 import {
   deletePatientWithSupabase,
+  getSupabasePatientErrorMessage,
   syncPatientsWithSupabase,
   setPatientStatusWithSupabase,
   upsertPatientWithSupabase,
@@ -118,12 +119,10 @@ export default function PatientsPage({
             null,
         );
       } catch (error) {
+        console.error("Supabase patient sync failed:", error);
+
         if (!cancelled) {
-          setErrorMessage(
-            error instanceof Error
-              ? error.message
-              : "Gagal memuat data pasien dari Supabase.",
-          );
+          setErrorMessage(getSupabasePatientErrorMessage(error));
         }
       } finally {
         if (!cancelled) {
