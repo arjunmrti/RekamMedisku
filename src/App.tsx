@@ -217,7 +217,7 @@ function App() {
       <FollowUpFormPage
         key={selectedPatient.id}
         {...navigationProps}
-        patient={selectedPatient}
+        patient={selectedPatient ?? undefined}
       />
     );
   }
