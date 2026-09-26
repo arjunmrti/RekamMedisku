@@ -4,6 +4,7 @@ import type {
 } from "../types/slaberanLocation";
 import { replaceSlaberanLocations } from "./localSlaberanLocations";
 import { supabase } from "../utils/supabase";
+import { getAuthenticatedUserId } from "../utils/authenticatedUser";
 
 type SlaberanLocationRow = {
   id: string;
