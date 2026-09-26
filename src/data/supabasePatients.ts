@@ -95,19 +95,6 @@ async function getCurrentUserId() {
   return user.id;
 }
 
-async function getRemoteRotationId(localRotationId: string) {
-  await syncRotationsWithSupabase();
-
-  const rotationMap = readMap(ROTATION_ID_MAP_KEY);
-  const remoteRotationId = rotationMap[localRotationId];
-
-  if (!remoteRotationId) {
-    throw new Error("Stase pasien belum tersinkron ke Supabase.");
-  }
-
-  return remoteRotationId;
-}
-
 function mergePatientIntoLocal(
   patients: PatientListItem[],
   nextPatient: PatientListItem,
