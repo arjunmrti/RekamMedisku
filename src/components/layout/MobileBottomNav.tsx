@@ -38,7 +38,7 @@ export default function MobileBottomNav({
   onNavigate,
 }: MobileBottomNavProps) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 px-1.5 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur md:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 px-1.5 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur md:hidden">
       <div className="mx-auto grid w-full max-w-lg grid-cols-5 gap-1">
         {items.map((item) => {
           const active = item.match.includes(activeItem);

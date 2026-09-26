@@ -73,7 +73,7 @@ export default function TopHeader({
 
         <span
           aria-hidden="true"
-          className="hidden h-10 w-10 items-center justify-center rounded-xl text-slate-300 sm:flex"
+          className="hidden h-10 w-10 items-center justify-center rounded-xl text-slate-300 lg:flex"
         >
           <Icon name="bell" className="h-5 w-5" />
         </span>
@@ -82,7 +82,7 @@ export default function TopHeader({
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#60708A] text-[11px] font-semibold text-white sm:h-10 sm:w-10">
             MF
           </div>
-          <div className="hidden min-w-0 sm:block">
+          <div className="hidden min-w-0 lg:block">
             <span className="block truncate text-sm font-bold leading-tight text-slate-800">
               Muhammad Fadel
             </span>
