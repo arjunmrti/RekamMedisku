@@ -192,13 +192,8 @@ function App() {
     setActiveItem("Beranda");
   };
 
-  const navigationActiveItem =
-    activeItem === "Profil Pasien" || activeItem === "Follow-Up Baru"
-      ? "Daftar Pasien"
-      : activeItem;
-
   const navigationProps = {
-    activeItem: navigationActiveItem,
+    activeItem,
     onNavigate: handleNavigate,
   };
 
