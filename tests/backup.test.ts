@@ -10,6 +10,8 @@ import type { BackupPayload } from "../src/types/backup";
 import type { FollowUpFormValues } from "../src/types/followUpForm";
 import type { Rotation } from "../src/types/rotation";
 import type { StoredAttachment } from "../src/data/localAttachments";
+import type { PatientListItem } from "../src/types/patient";
+import type { FollowUpEntry } from "../src/types/followUp";
 
 const patient = {
   id: "p-test",
@@ -68,13 +70,13 @@ function withRotations(
 }
 
 function createRestoreLocalState(
-  initialPatients: typeof patient[] = [{ ...patient, name: "Pasien Lama" }],
+  initialPatients: PatientListItem[] = [{ ...patient, name: "Pasien Lama" }],
   initialRotations: Rotation[] = [secondRotation],
 ): {
   state: RestoreBackupLocalState;
   getSnapshot: () => {
-    patients: typeof initialPatients;
-    followUps: Record<string, unknown[]>;
+    patients: PatientListItem[];
+    followUps: Record<string, FollowUpEntry[]>;
     rotations: Rotation[];
     activeRotationId: string;
     drafts: Record<string, FollowUpFormValues>;
@@ -82,7 +84,7 @@ function createRestoreLocalState(
   };
 } {
   let patients = initialPatients;
-  let followUps: Record<string, unknown[]> = { [patient.id]: [] };
+  let followUps: Record<string, FollowUpEntry[]> = { [patient.id]: [] };
   let rotations = initialRotations;
   let activeRotationId = initialRotations.find(
     (rotation) => rotation.status === "Aktif",
@@ -95,8 +97,7 @@ function createRestoreLocalState(
     replacePatients: (value) => {
       patients = value;
     },
-    loadSavedFollowUps: () =>
-      followUps as ReturnType<RestoreBackupLocalState["loadSavedFollowUps"]>,
+    loadSavedFollowUps: () => followUps,
     replaceSavedFollowUps: (value) => {
       followUps = value;
     },
