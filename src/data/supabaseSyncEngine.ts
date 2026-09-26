@@ -4,7 +4,8 @@ import { syncSlaberanLocationsWithSupabase } from "./supabaseSlaberanLocations";
 import { syncSlaberanTemplatesWithSupabase } from "./supabaseSlaberanTemplates";
 
 const WORKSPACE_SYNC_EVENT = "rekammedisku:workspace-synced";
-const REALTIME_WATCHDOG_INTERVAL_MS = 30_000;
+const REALTIME_WATCHDOG_INTERVAL_MS = 60_000;
+const SYNC_RETRY_DELAYS_MS = [5_000, 15_000, 30_000, 60_000];
 
 let syncInFlight: Promise<void> | null = null;
 let activeCleanup: (() => void) | null = null;
@@ -36,13 +37,31 @@ export function startWorkspaceSync(userId: string): () => void {
   if (activeCleanup) return activeCleanup;
 
   let disposed = false;
+  let consecutiveFailures = 0;
+  let nextRetryAt = 0;
 
   const sync = () => {
-    if (disposed) return;
+    if (disposed || Date.now() < nextRetryAt) return;
 
-    void syncWorkspaceWithSupabase().catch((error) => {
-      console.error("Supabase workspace sync failed:", error);
-    });
+    void syncWorkspaceWithSupabase()
+      .then(() => {
+        consecutiveFailures = 0;
+        nextRetryAt = 0;
+      })
+      .catch((error) => {
+        const delayIndex = Math.min(
+          consecutiveFailures,
+          SYNC_RETRY_DELAYS_MS.length - 1,
+        );
+        const delay = SYNC_RETRY_DELAYS_MS[delayIndex];
+        consecutiveFailures += 1;
+        nextRetryAt = Date.now() + delay;
+
+        console.error(
+          "Supabase workspace sync failed; backing off before the next automatic retry.",
+          error,
+        );
+      });
   };
 
   let watchdogTimer: number | null = null;
