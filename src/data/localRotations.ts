@@ -4,6 +4,7 @@ const ROTATIONS_KEY = "rekammedisku:rotations";
 const ACTIVE_ROTATION_KEY = "rekammedisku:active-rotation";
 
 const LEGACY_DEMO_ROTATION_IDS = new Set([
+  "rotation-neurologi",
   "rotation-interna",
   "rotation-bedah",
   "rotation-pediatri",
