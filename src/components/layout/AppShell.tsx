@@ -43,19 +43,6 @@ export default function AppShell({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mobileMenuOpen]);
 
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMobileMenuOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [mobileMenuOpen]);
-
   return (
     <div className="min-h-screen bg-[#F7F9FC] text-slate-800">
       <div className="flex min-h-screen">
@@ -84,7 +71,12 @@ export default function AppShell({
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          <div className="relative flex h-full w-[300px] max-w-[88vw] flex-col border-r border-slate-200 bg-white p-4 shadow-xl">
+          <div
+            className="relative flex h-full w-[300px] max-w-[88vw] flex-col border-r border-slate-200 bg-white p-4 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menu navigasi"
+          >
             <div className="mb-5 flex items-center justify-between px-2">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1677FF] text-white shadow-sm shadow-blue-500/20">
