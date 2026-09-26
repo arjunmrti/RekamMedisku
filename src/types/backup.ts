@@ -8,6 +8,8 @@ import type { SlaberanTemplateRecord } from "./slaberanTemplate";
 export type BackupOperationType = "Export" | "Restore";
 export type BackupOperationStatus = "Berhasil" | "Sebagian" | "Gagal";
 
+export const BACKUP_SCHEMA_VERSION = 1;
+
 export type BackupHistoryEntry = {
   id: string;
   timestamp: string;
@@ -27,7 +29,7 @@ export type BackupAttachment = {
 };
 
 export type BackupPayload = {
-  schemaVersion: 1;
+  schemaVersion: number;
   product: "RekamMedisku";
   exportedAt: string;
   patients: PatientListItem[];
