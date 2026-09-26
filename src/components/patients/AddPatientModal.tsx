@@ -92,6 +92,7 @@ export default function AddPatientModal({
       followUpNumber: patient?.followUpNumber ?? 0,
       lastFollowUpAt: patient?.lastFollowUpAt,
       createdAt: patient?.createdAt ?? new Date().toISOString(),
+      updatedAt: patient?.updatedAt,
       admissionDate,
         status: patient?.status ?? "Aktif",
       });
@@ -102,9 +103,11 @@ export default function AddPatientModal({
       }
 
       onClose();
-    } catch {
+    } catch (error) {
       setErrorMessage(
-        "Pasien belum tersimpan. Periksa koneksi lalu coba lagi.",
+        error instanceof Error
+          ? error.message
+          : "Pasien belum tersimpan. Periksa koneksi lalu coba lagi.",
       );
     } finally {
       setSubmitting(false);
