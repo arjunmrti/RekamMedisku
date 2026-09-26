@@ -21,6 +21,7 @@ const patient: PatientListItem = {
   doctor: "dr. Penguji",
   lastFollowUp: "26 September 2026 · 10.00",
   followUpNumber: 2,
+  admissionDate: "2026-09-01",
   status: "Aktif",
 };
 
@@ -121,13 +122,18 @@ test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", ()
     neurologyFollowUp,
     "Neurologi",
     {
-      rotationName: "Rotasi Neurologi September",
+      rotationName: "Neurologi",
       generatedAt: new Date(2026, 8, 26, 19, 0),
     },
   );
 
-  assert.match(report, /^Selamat malam Dok, izin melaporkan follow-up pasien:/);
-  assert.match(report, /Stase: Rotasi Neurologi September/);
+  assert.match(
+    report,
+    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Neurologi\. Mohon izin melaporkan follow-up pasien:/,
+  );
+  assert.match(report, /Stase: Neurologi/);
+  assert.match(report, /Tanggal Masuk: 01 September 2026/);
+  assert.match(report, /Tanggal Follow-Up: 26 September 2026/);
   assert.match(report, /Pemeriksaan neurologis:/);
   assert.match(report, /- Kesadaran: Compos mentis/);
   assert.match(report, /- GCS E\/M\/V: 456/);
@@ -137,6 +143,10 @@ test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", ()
   assert.match(report, /  Lampiran: rontgen\.png/);
   assert.match(report, /P: Lanjut observasi\./);
   assert.match(report, /I: Kontrol keluhan bila memburuk\./);
+  assert.match(
+    report,
+    /Terimakasih sebelumnya dokter, Mohon arahan dan bimbingannya dok🙏🏻$/,
+  );
 });
 
 test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
@@ -145,16 +155,18 @@ test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
     internalMedicineFollowUp,
     "Ilmu Penyakit Dalam",
     {
-      rotationName: "Interna Agustus",
+      rotationName: "Ilmu Penyakit Dalam",
       generatedAt: new Date(2026, 8, 26, 12, 0),
     },
   );
 
   assert.match(
     report,
-    /^Selamat siang Dok, izin melaporkan follow-up pasien:/,
+    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Ilmu Penyakit Dalam\. Mohon izin melaporkan follow-up pasien:/,
   );
-  assert.match(report, /Stase: Interna Agustus/);
+  assert.match(report, /Stase: Ilmu Penyakit Dalam/);
+  assert.match(report, /Tanggal Masuk: 01 September 2026/);
+  assert.match(report, /Tanggal Follow-Up: 26 September 2026/);
   assert.match(report, /Pemeriksaan sistemik Ilmu Penyakit Dalam:/);
 
   const generalConditionMatches = report.match(/- Keadaan Umum: Baik/g) ?? [];

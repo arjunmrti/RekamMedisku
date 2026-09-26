@@ -12,6 +12,19 @@ export function formatReportDate(date: string) {
   return date || "Tanggal belum tersedia";
 }
 
+function formatAdmissionDate(date: string | undefined) {
+  if (!date) return "";
+
+  const parsed = new Date(date + "T00:00:00");
+  if (Number.isNaN(parsed.getTime())) return "";
+
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(parsed);
+}
+
 export function getReportGreeting(date = new Date()) {
   const hour = date.getHours();
 
@@ -107,7 +120,6 @@ export function buildWhatsAppReport(
 ) {
   const exams = followUp.supportingExams ?? [];
   const rotationName = options.rotationName?.trim() || templateType;
-  const greeting = getReportGreeting(options.generatedAt);
   const planning =
     followUp.planning?.trim() ||
     followUp.plan?.trim() ||
@@ -161,7 +173,10 @@ export function buildWhatsAppReport(
       : templateHeading + "\nBelum ada catatan.";
 
   return [
-    greeting + ", izin melaporkan follow-up pasien:",
+    "Assalamualaikum warahmatullahi wabarakatuh dok. Tabe dok, mohon izin dok. " +
+      "Perkenalkan saya Muh. Fadel dengan Stambuk 11120252020 MPPD Stase " +
+      rotationName +
+      ". Mohon izin melaporkan follow-up pasien:",
     "",
     "Nama: " + patient.name,
     "Umur: " + patient.age + " tahun",
@@ -170,12 +185,8 @@ export function buildWhatsAppReport(
     "Bed: " + patient.bed,
     "DPJP: " + patient.doctor,
     "Stase: " + rotationName,
-    "Follow-Up #" +
-      followUp.number +
-      " · " +
-      formatReportDate(followUp.date) +
-      " · " +
-      followUp.time,
+    "Tanggal Masuk: " + formatAdmissionDate(patient.admissionDate),
+    "Tanggal Follow-Up: " + formatReportDate(followUp.date),
     "",
     "S:",
     cleanBlock(followUp.subjective),
@@ -193,7 +204,6 @@ export function buildWhatsAppReport(
     "",
     planBlock,
     "",
-    "Mohon arahan lebih lanjut, Dok.",
-    "Terima kasih.",
+    "Terimakasih sebelumnya dokter, Mohon arahan dan bimbingannya dok🙏🏻",
   ].join("\n");
 }
