@@ -11,15 +11,13 @@ import { loadSavedFollowUps } from "../../data/localFollowUps";
 import type { PatientListItem } from "../../types/patient";
 import type { FollowUpEntry } from "../../types/followUp";
 import { toLocalIsoDate } from "../../utils/date";
+import {
+  getCompletedFollowUps,
+  hasCompletedFollowUpToday,
+} from "../../utils/dashboardFollowUp";
 
 function getFollowUps(patientId: string): FollowUpEntry[] {
-  const local = loadSavedFollowUps()[patientId] ?? [];
-
-  return [...local]
-    .filter((entry, index, entries) => {
-      return entries.findIndex((candidate) => candidate.id === entry.id) === index;
-    })
-    .sort((a, b) => (b.isoDate + b.time).localeCompare(a.isoDate + a.time));
+  return getCompletedFollowUps(loadSavedFollowUps()[patientId] ?? []);
 }
 
 function enrichPatient(
@@ -89,10 +87,10 @@ export default function DashboardPage({
   const pendingFollowUps = useMemo(() => {
     const today = toLocalIsoDate();
 
-    return activePatients.filter((patient) => {
-      const latest = getFollowUps(patient.id)[0];
-      return !latest || latest.isoDate !== today;
-    }).length;
+    return activePatients.filter(
+      (patient) =>
+        !hasCompletedFollowUpToday(getFollowUps(patient.id), today),
+    ).length;
   }, [activePatients]);
 
   const filteredPatients = useMemo(() => {

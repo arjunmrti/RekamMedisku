@@ -24,6 +24,7 @@
     "src/types/rotation.ts",
     "src/utils/backup.ts",
     "src/types/backup.ts",
-    "src/utils/objectiveFormatter.ts"
+    "src/utils/objectiveFormatter.ts",
+    "src/utils/dashboardFollowUp.ts"
   ]
 }
