@@ -551,7 +551,7 @@ export default function FollowUpFormPage({
         onSearchChange={() => undefined}
         searchEnabled={false}
       >
-        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-24">
+        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-24 md:pb-8">
           <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
               <Icon name="alert" className="h-5 w-5" />
@@ -588,7 +588,7 @@ export default function FollowUpFormPage({
         onSearchChange={() => undefined}
         searchEnabled={false}
       >
-        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-24">
+        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-24 md:pb-8">
           <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
               <Icon name="document" className="h-5 w-5" />
@@ -625,7 +625,7 @@ export default function FollowUpFormPage({
       onSearchChange={() => undefined}
       searchEnabled={false}
     >
-      <div className="flex-1 overflow-y-auto pb-24">
+      <div className="flex-1 overflow-y-auto pb-24 md:pb-8">
         <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 items-start xl:grid-cols-[minmax(0,1040px)_320px]">
           <main className="min-w-0 space-y-5 px-4 py-5 sm:px-6 lg:px-8 lg:py-7">
             <div className="space-y-2">
