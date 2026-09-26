@@ -38,6 +38,9 @@ export function normalizePatientLocation(
     type,
     name,
     bed,
+    ...(value?.locationId?.trim()
+      ? { locationId: value.locationId.trim() }
+      : {}),
   };
 }
 
@@ -50,5 +53,8 @@ export function normalizePatientAdmissionLocation(
   return {
     type: normalizePatientLocationType(value?.type, name),
     name,
+    ...(value?.locationId?.trim()
+      ? { locationId: value.locationId.trim() }
+      : {}),
   };
 }
