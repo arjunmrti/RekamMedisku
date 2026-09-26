@@ -155,6 +155,10 @@ export function getSupabasePatientErrorMessage(
       return "Penghapusan pasien belum dapat diselesaikan. Pastikan migrasi Package 2 untuk relasi riwayat pasien sudah diterapkan di Supabase.";
     }
 
+    if (candidate.code === "PGRST202") {
+      return "Fitur hapus pasien belum aktif di Supabase. Jalankan migration Package 3 terlebih dahulu.";
+    }
+
     if (typeof candidate.message === "string" && candidate.message) {
       const parts = [candidate.message];
 
@@ -336,7 +340,7 @@ export async function deletePatientWithSupabase(
   const patientMap = readMap(PATIENT_ID_MAP_KEY);
 
   try {
-    const userId = await getCurrentUserId();
+    await getCurrentUserId();
     let remotePatientId = patientMap[patient.id];
 
     if (!remotePatientId) {
