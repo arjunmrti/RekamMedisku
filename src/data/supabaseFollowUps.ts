@@ -679,13 +679,20 @@ async function syncFollowUpsWithSupabaseInternal(): Promise<
     (id) => !nextSavedAttachmentIds.has(id) && !draftAttachmentIds.has(id),
   );
 
-  if (staleSavedAttachmentIds.length) {
-    await deleteAttachments(staleSavedAttachmentIds);
-  }
-
   saveMap(FOLLOW_UP_ID_MAP_KEY, followUpMap);
   saveMap(SUPPORTING_EXAM_ID_MAP_KEY, examMap);
   replaceSavedFollowUps(nextLocal);
+
+  // Local attachment cleanup is derived from the authoritative cloud result.
+  // Never make the whole workspace sync fail because IndexedDB cleanup fails.
+  if (staleSavedAttachmentIds.length) {
+    void deleteAttachments(staleSavedAttachmentIds).catch((cleanupError) => {
+      console.warn(
+        "Cleanup lampiran lokal setelah sync follow-up gagal dan akan dicoba lagi pada sync berikutnya.",
+        cleanupError,
+      );
+    });
+  }
 
   return nextLocal;
 }
