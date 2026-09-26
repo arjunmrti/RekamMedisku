@@ -538,13 +538,15 @@ export default function FollowUpFormPage({
     saveInProgressRef.current = true;
     setIsSaving(true);
 
+    let previousSaved: ReturnType<typeof loadSavedFollowUps> | null = null;
+
     try {
       const syncedEntries = await syncFollowUpsForPatientWithSupabase(
         patient.id,
       );
       setPreviousFollowUps(syncedEntries);
 
-      const previousSaved = loadSavedFollowUps();
+      previousSaved = loadSavedFollowUps();
       const nextNumber =
         Math.max(0, ...syncedEntries.map((entry) => entry.number)) + 1;
       const entry = buildFollowUpEntry(values, nextNumber, templateType);
@@ -573,7 +575,9 @@ export default function FollowUpFormPage({
         onNavigate("Profil Pasien");
       }, 600);
     } catch (error) {
-      replaceSavedFollowUps(previousSaved);
+      if (previousSaved) {
+        replaceSavedFollowUps(previousSaved);
+      }
       setErrorMessage(getSupabaseFollowUpErrorMessage(error));
       setSaveMessage("Follow-up belum tersimpan.");
     } finally {
