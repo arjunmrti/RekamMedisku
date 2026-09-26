@@ -5,6 +5,7 @@ import KpiGrid from "../../components/dashboard/KpiGrid";
 import PatientTable from "../../components/dashboard/PatientTable";
 import RotationHistory from "../../components/dashboard/RotationHistory";
 import QuickActions from "../../components/dashboard/QuickActions";
+import DashboardStatusPanel from "../../components/dashboard/DashboardStatusPanel";
 import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients } from "../../data/localPatients";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
@@ -168,8 +169,8 @@ export default function DashboardPage({
             onChangeRotation={() => onNavigate("Stase Saya")}
           />
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-            <section className="min-w-0 space-y-6 lg:col-span-9">
+          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+            <section className="min-w-0 space-y-6 lg:col-span-12 xl:col-span-8">
               <KpiGrid cards={kpis} />
 
               <PatientTable
@@ -181,8 +182,14 @@ export default function DashboardPage({
               <RotationHistory />
             </section>
 
-            <aside className="lg:col-span-3">
+            <aside className="min-w-0 space-y-6 lg:col-span-12 xl:col-span-4">
               <QuickActions onNavigate={onNavigate} />
+              <DashboardStatusPanel
+                activePatients={activePatients.length}
+                followUpsToday={followUpsToday}
+                pendingFollowUps={pendingFollowUps}
+                archivedPatients={archivedPatientCount}
+              />
             </aside>
           </div>
         </div>
