@@ -92,15 +92,7 @@ function toTemplate(row: SlaberanTemplateRow): SlaberanTemplateRecord {
 }
 
 async function getCurrentUserId() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) throw error;
-  if (!user) throw new Error("Sesi RekamMedisku tidak ditemukan.");
-
-  return user.id;
+  return getAuthenticatedUserId();
 }
 
 async function clearDefaultTemplate(userId: string, excludedId?: string) {
