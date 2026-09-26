@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import SlaberanPage from "./SlaberanPage";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import ReportPatientContext from "../../components/report/ReportPatientContext";
 import ReportPreview from "../../components/report/ReportPreview";
@@ -16,8 +17,12 @@ import type { ReportStep, ReportTemplateType } from "../../types/report";
 import Icon from "../../components/ui/Icon";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
+export type ReportMode = "follow-up" | "slaberan";
+
 type ReportGeneratorPageProps = NavigationProps & {
-  patient: PatientListItem;
+  patient?: PatientListItem;
+  mode?: ReportMode;
+  onModeChange?: (mode: ReportMode) => void;
 };
 
 async function copyTextToClipboard(text: string) {
@@ -79,7 +84,55 @@ export default function ReportGeneratorPage({
   activeItem,
   onNavigate,
   patient,
+  mode = "follow-up",
+  onModeChange,
 }: ReportGeneratorPageProps) {
+  if (mode === "slaberan") {
+    return (
+      <SlaberanPage
+        activeItem={activeItem}
+        onNavigate={onNavigate}
+      />
+    );
+  }
+
+  if (!patient) {
+    return (
+      <AppShell
+        activeItem={activeItem}
+        onNavigate={onNavigate}
+        searchValue=""
+        onSearchChange={() => undefined}
+        searchEnabled={false}
+      >
+        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
+          <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
+              <Icon name="document" className="h-5 w-5" />
+            </div>
+            <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
+              Report Generator
+            </p>
+            <h1 className="mt-2 text-xl font-bold text-slate-900">
+              Pilih pasien terlebih dahulu
+            </h1>
+            <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-500">
+              Laporan Follow-Up dibuat dari pasien aktif pada stase yang sedang
+              digunakan.
+            </p>
+            <button
+              type="button"
+              onClick={() => onNavigate("Daftar Pasien")}
+              className="mt-6 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700"
+            >
+              Buka Daftar Pasien
+            </button>
+          </section>
+        </main>
+      </AppShell>
+    );
+  }
+
   const workspaceSyncVersion = useWorkspaceSyncVersion();
   const activeRotation = loadActiveRotation();
   const patientRotation = loadRotations().find(
@@ -313,7 +366,20 @@ export default function ReportGeneratorPage({
     >
       <main className="flex-1 overflow-y-auto px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:pb-8 md:pb-8 sm:px-6 lg:px-8 lg:py-7">
         <div className="mx-auto w-full max-w-[1400px] space-y-6">
-          <header className="space-y-2">
+          <header className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-lg bg-[#1677FF] px-3 py-2 text-[11px] font-semibold text-white">
+                Follow-Up
+              </span>
+              <button
+                type="button"
+                onClick={() => onModeChange?.("slaberan")}
+                className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-[#1677FF]"
+              >
+                Slaberan
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={() => onNavigate("Profil Pasien")}
@@ -329,7 +395,7 @@ export default function ReportGeneratorPage({
                   P4 · WhatsApp Report Generator
                 </p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                  Buat Laporan
+                  Buat Laporan Follow-Up
                 </h1>
                 <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
                   Ubah follow-up tersimpan menjadi draft laporan yang siap
