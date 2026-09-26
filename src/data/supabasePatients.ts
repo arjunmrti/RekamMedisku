@@ -1,5 +1,5 @@
 import type { PatientListItem, PatientStatus } from "../types/patient";
-import { loadPatients, savePatients } from "./localPatients";
+import { deletePatient, loadPatients, savePatients } from "./localPatients";
 import { syncRotationsWithSupabase } from "./supabaseRotations";
 import { supabase } from "../utils/supabase";
 
@@ -365,10 +365,7 @@ export async function deletePatientWithSupabase(
     }
 
     try {
-      const localDeleted = await import("./localPatients").then(
-        ({ deletePatient: deleteLocalPatient }) =>
-          deleteLocalPatient(patient.id),
-      );
+      const localDeleted = await deletePatient(patient.id);
 
       if (!localDeleted) {
         throw new Error("Pasien tidak ditemukan pada penyimpanan lokal.");
