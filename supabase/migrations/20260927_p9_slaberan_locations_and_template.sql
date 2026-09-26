@@ -88,9 +88,9 @@ CREATE POLICY slaberan_locations_delete_own
   TO authenticated
   USING (user_id = auth.uid());
 
--- Preserve existing patient records by creating a flat location record from
--- legacy room data where no explicit location record exists yet. The user can
--- later organize those locations into floors without inventing a historical floor.
+-- Preserve legacy patient locations without violating the P10 hierarchy.
+-- Legacy wards have no historical floor in the old patient model, so they are
+-- grouped under a clearly synthetic floor that the user can reorganize later.
 INSERT INTO public.slaberan_locations (
   user_id,
   parent_id,
@@ -100,13 +100,49 @@ INSERT INTO public.slaberan_locations (
 SELECT DISTINCT
   p.user_id,
   NULL,
-  CASE
-    WHEN p.current_location_type = 'special' THEN 'special'
-    ELSE 'ward'
-  END,
+  'floor',
+  'Lantai Belum Diatur'
+FROM public.patients p
+WHERE p.user_id IS NOT NULL
+  AND COALESCE(p.current_location_type, 'ward') <> 'special'
+  AND btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room)) <> ''
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.slaberan_locations (
+  user_id,
+  parent_id,
+  type,
+  name
+)
+SELECT DISTINCT
+  p.user_id,
+  floor.id,
+  'ward',
+  btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room))
+FROM public.patients p
+JOIN public.slaberan_locations floor
+  ON floor.user_id = p.user_id
+ AND floor.type = 'floor'
+ AND lower(btrim(floor.name)) = lower('Lantai Belum Diatur')
+WHERE p.user_id IS NOT NULL
+  AND COALESCE(p.current_location_type, 'ward') <> 'special'
+  AND btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room)) <> ''
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.slaberan_locations (
+  user_id,
+  parent_id,
+  type,
+  name
+)
+SELECT DISTINCT
+  p.user_id,
+  NULL,
+  'special',
   btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room))
 FROM public.patients p
 WHERE p.user_id IS NOT NULL
+  AND p.current_location_type = 'special'
   AND btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room)) <> ''
 ON CONFLICT DO NOTHING;
 
