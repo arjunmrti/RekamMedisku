@@ -116,7 +116,6 @@ export default function AppShell({
                 { label: "Semua Laporan", icon: "document" as IconName },
                 { label: "Cadangan & Data", icon: "database" as IconName },
                 { label: "Stase Saya", icon: "brain" as IconName },
-                { label: "Pengaturan", icon: "settings" as IconName },
               ].map((item) => {
                 const active = activeItem === item.label;
 
