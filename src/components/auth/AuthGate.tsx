@@ -24,6 +24,7 @@ export default function AuthGate({ children }: AuthGateProps) {
 
     let cancelled = false;
 
+    const authenticatedUserId = session.user.id;
     let stopWorkspaceSync: (() => void) | null = null;
 
     async function hydrateWorkspace() {
