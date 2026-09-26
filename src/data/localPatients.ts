@@ -28,9 +28,15 @@ function readJson<T>(key: string, fallback: T): T {
 }
 
 function normalizePatient(patient: PatientListItem): PatientListItem {
+  // Never invent a rotation for legacy/incomplete local records. An empty
+  // rotationId keeps the record isolated until an authoritative Supabase sync
+  // supplies its real rotation context.
+  const rotationId =
+    typeof patient.rotationId === "string" ? patient.rotationId.trim() : "";
+
   return {
     ...patient,
-    rotationId: patient.rotationId ?? "rotation-neurologi",
+    rotationId,
     lastFollowUpAt: patient.lastFollowUpAt ?? undefined,
     createdAt: patient.createdAt ?? undefined,
     admissionDate: patient.admissionDate ?? undefined,
