@@ -12,7 +12,7 @@ import {
 import { loadRotations } from "../../data/localRotations";
 import type { PatientListItem } from "../../types/patient";
 import Icon from "../../components/ui/Icon";
-import type { SupportingExam } from "../../types/followUp";
+import type { FollowUpEntry, SupportingExam } from "../../types/followUp";
 import { getAttachment } from "../../data/localAttachments";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
@@ -20,8 +20,15 @@ type PatientProfilePageProps = NavigationProps & {
   patient: PatientListItem;
 };
 
-function sortFollowUps(entries: PatientProfilePageProps["patient"] extends never ? never : Awaited<never>): never {
-  throw new Error("unreachable");
+function sortFollowUps(entries: FollowUpEntry[]) {
+  return [...entries].sort((a, b) => {
+    const dateTimeA = a.isoDate + "T" + a.time.replace(".", ":");
+    const dateTimeB = b.isoDate + "T" + b.time.replace(".", ":");
+    const dateTimeCompare = dateTimeB.localeCompare(dateTimeA);
+
+    if (dateTimeCompare !== 0) return dateTimeCompare;
+    return b.number - a.number;
+  });
 }
 
 function SupportingExamAttachment({ exam }: { exam: SupportingExam }) {
@@ -152,25 +159,27 @@ export default function PatientProfilePage({
     setFollowUps(loadSavedFollowUps()[patient.id] ?? []);
   }, [workspaceSyncVersion, patient.id]);
 
-  const latestFollowUp = followUps[0] ?? null;
+  const orderedFollowUps = useMemo(() => sortFollowUps(followUps), [followUps]);
+  const latestFollowUp =
+    orderedFollowUps.find((entry) => entry.status === "Tersimpan") ?? null;
 
   const allSupportingExams = useMemo(() => {
     const seen = new Set<string>();
 
-    return followUps
+    return orderedFollowUps
       .flatMap((entry) => entry.supportingExams ?? [])
       .filter((exam) => {
         if (seen.has(exam.id)) return false;
         seen.add(exam.id);
         return true;
       });
-  }, [followUps]);
+  }, [orderedFollowUps]);
 
   const latestSupportingExams = useMemo(
     () =>
-      followUps.find((entry) => (entry.supportingExams?.length ?? 0) > 0)
+      orderedFollowUps.find((entry) => (entry.supportingExams?.length ?? 0) > 0)
         ?.supportingExams ?? [],
-    [followUps],
+    [orderedFollowUps],
   );
 
   const hydratedSelectedExam = useMemo(() => {
@@ -291,7 +300,7 @@ export default function PatientProfilePage({
                     </p>
                   ) : (
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      {followUps.map((entry) => (
+                      {orderedFollowUps.map((entry) => (
                         <button
                           type="button"
                           key={entry.id}
@@ -396,7 +405,7 @@ export default function PatientProfilePage({
               className="min-w-0 xl:col-span-4"
             >
               <FollowUpTimeline
-                entries={followUps}
+                entries={orderedFollowUps}
                 onOpenDetail={handleOpenLatest}
               />
             </div>
