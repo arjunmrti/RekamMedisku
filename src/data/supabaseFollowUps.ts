@@ -415,9 +415,36 @@ async function persistFollowUpWithSupabaseInternal(
           );
         }
 
-        remoteRow = existingRow;
-        remoteFollowUpId = existingRow.id;
-        followUpMap[entry.id] = existingRow.id;
+        if (existingRow.updated_at !== entry.updatedAt) {
+          throw new Error(
+            "Data follow-up sudah berubah di browser lain. Muat ulang data terbaru sebelum menyimpan perubahan.",
+          );
+        }
+
+        const nextUpdatedAt = new Date().toISOString();
+        const { data, error } = await supabase
+          .from("follow_ups")
+          .update({
+            ...followUpPayload(entry, remotePatientId),
+            updated_at: nextUpdatedAt,
+          })
+          .eq("id", existingRow.id)
+          .eq("user_id", userId)
+          .eq("updated_at", entry.updatedAt)
+          .select()
+          .maybeSingle<FollowUpRow>();
+
+        if (error) throw error;
+
+        if (!data) {
+          throw new Error(
+            "Data follow-up sudah berubah di browser lain. Muat ulang data terbaru sebelum menyimpan perubahan.",
+          );
+        }
+
+        remoteRow = data;
+        remoteFollowUpId = data.id;
+        followUpMap[entry.id] = data.id;
       } else {
         const { data, error } = await supabase
           .from("follow_ups")
