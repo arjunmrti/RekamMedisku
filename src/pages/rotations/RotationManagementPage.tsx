@@ -66,7 +66,7 @@ export default function RotationManagementPage({
   const [activeRotation, setActiveRotation] = useState<Rotation>(() =>
     loadActiveRotation(),
   );
-  const [patients] = useState<PatientListItem[]>(() => loadPatients());
+  const [patients, setPatients] = useState<PatientListItem[]>(() => loadPatients());
   const [switchTarget, setSwitchTarget] = useState<Rotation | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingRotation, setEditingRotation] = useState<Rotation | null>(null);
@@ -114,6 +114,7 @@ export default function RotationManagementPage({
 
     setRotations(loadRotations());
     setActiveRotation(loadActiveRotation());
+    setPatients(loadPatients());
   }, [workspaceSyncVersion]);
 
   const patientCounts = useMemo(() => {
