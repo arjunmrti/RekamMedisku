@@ -327,27 +327,6 @@ async function ensurePatientMap() {
   return readMap(PATIENT_ID_MAP_KEY);
 }
 
-async function insertSupportingExams(
-  userId: string,
-  followUpId: string,
-  exams: SupportingExam[],
-  examMap: IdMap,
-) {
-  for (const exam of exams) {
-    const { data, error } = await supabase
-      .from("supporting_exams")
-      .insert({
-        user_id: userId,
-        ...examPayload(exam, followUpId),
-      })
-      .select()
-      .single<SupportingExamRow>();
-
-    if (error) throw error;
-    examMap[exam.id] = data.id;
-  }
-}
-
 export async function persistFollowUpWithSupabase(
   patientId: string,
   entry: FollowUpEntry,
