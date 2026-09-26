@@ -144,6 +144,14 @@ export function getSupabasePatientErrorMessage(
       hint?: unknown;
     };
 
+    if (candidate.code === "23505") {
+      return "Nomor RM tersebut sudah digunakan pada stase ini.";
+    }
+
+    if (candidate.code === "23503") {
+      return "Penghapusan pasien belum dapat diselesaikan. Pastikan migrasi Package 2 untuk relasi riwayat pasien sudah diterapkan di Supabase.";
+    }
+
     if (typeof candidate.message === "string" && candidate.message) {
       const parts = [candidate.message];
 
@@ -337,20 +345,11 @@ export async function deletePatientWithSupabase(
       throw new Error("Pasien belum tersinkron ke Supabase.");
     }
 
-    const { count, error: followUpCheckError } = await supabase
-      .from("follow_ups")
-      .select("id", { count: "exact", head: true })
-      .eq("patient_id", remotePatientId)
-      .eq("user_id", userId);
-
-    if (followUpCheckError) throw followUpCheckError;
-
-    if ((count ?? 0) > 0) {
-      throw new Error(
-        "Pasien memiliki riwayat follow-up di Supabase. Penghapusan akan tersedia setelah data follow-up tersinkron.",
-      );
-    }
-
+    /*
+     * Package 2 membuat relasi follow-up dan supporting exam memakai
+     * ON DELETE CASCADE. Satu DELETE pada parent patient menjadi operasi
+     * sumber kebenaran untuk seluruh riwayat pasien di cloud.
+     */
     const { data: deletedRows, error: deleteError } = await supabase
       .from("patients")
       .delete()
@@ -372,26 +371,12 @@ export async function deletePatientWithSupabase(
         throw new Error("Pasien tidak ditemukan pada penyimpanan lokal.");
       }
     } catch (localError) {
-      const { data: restored, error: restoreError } = await supabase
-        .from("patients")
-        .insert({
-          id: remotePatientId,
-          user_id: userId,
-          ...patientPayload(
-            patient,
-            readMap(ROTATION_ID_MAP_KEY)[patient.rotationId] ?? patient.rotationId,
-          ),
-        })
-        .select()
-        .single<PatientRow>();
-
-      if (restoreError || !restored) {
-        savePatients(previousPatients);
-        throw new Error(
-          "Penghapusan gagal dan pemulihan pasien di Supabase juga gagal.",
-        );
-      }
-
+      /*
+       * Penghapusan cloud sudah berhasil. Kembalikan cache lokal ke snapshot
+       * sebelumnya agar state UI tidak terlihat setengah terhapus; sync berikutnya
+       * akan menyelaraskannya kembali dengan Supabase.
+       */
+      savePatients(previousPatients);
       throw localError;
     }
 
