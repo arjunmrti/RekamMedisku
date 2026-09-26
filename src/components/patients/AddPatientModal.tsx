@@ -366,11 +366,11 @@ export default function AddPatientModal({
               <Field label="Jenis Lokasi">
                 <select
                   value={currentLocationType}
-                  onChange={(event) =>
-                    setCurrentLocationType(
-                      event.target.value as PatientLocationType,
-                    )
-                  }
+                  onChange={(event) => {
+                    const nextType = event.target.value as PatientLocationType;
+                    setCurrentLocationType(nextType);
+                    setCurrentLocationId("");
+                  }}
                   className="field-control"
                 >
                   <option value="ward">Bangsal / Ruangan</option>
@@ -455,11 +455,12 @@ export default function AddPatientModal({
               <Field label="Jenis Lokasi Masuk">
                 <select
                   value={admissionLocationType}
-                  onChange={(event) =>
-                    setAdmissionLocationType(
-                      event.target.value as PatientLocationType | "",
-                    )
-                  }
+                  onChange={(event) => {
+                    const nextType = event.target.value as PatientLocationType | "";
+                    setAdmissionLocationType(nextType);
+                    setAdmissionLocationId("");
+                    setAdmissionLocationName("");
+                  }}
                   className="field-control"
                 >
                   <option value="">Belum diisi</option>
