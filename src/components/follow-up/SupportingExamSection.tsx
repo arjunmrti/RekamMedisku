@@ -2,11 +2,8 @@ import { useEffect, useState, type ChangeEvent } from "react";
 import FormSection from "./FormSection";
 import Icon from "../ui/Icon";
 import { toLocalIsoDate } from "../../utils/date";
-import {
-  deleteAttachment,
-  getAttachment,
-  saveAttachment,
-} from "../../data/localAttachments";
+import { getAttachment, saveAttachment } from "../../data/localAttachments";
+import { deleteAttachmentIfUnreferenced } from "../../data/attachmentReferences";
 import type { SupportingExamForm } from "../../types/followUpForm";
 
 type SupportingExamSectionProps = {
@@ -119,7 +116,7 @@ export default function SupportingExamSection({
       );
 
       if (!stillReferenced) {
-        void deleteAttachment(draft.attachmentId);
+        void deleteAttachmentIfUnreferenced(draft.attachmentId, exams);
       }
     }
 
@@ -141,22 +138,21 @@ export default function SupportingExamSection({
       ...draft,
       id: editingId ?? draft.id,
     };
+    const nextExams = editingId
+      ? exams.map((exam) => (exam.id === editingId ? nextExam : exam))
+      : [...exams, nextExam];
 
     if (editingId) {
-      onChange(
-        exams.map((exam) =>
-          exam.id === editingId ? nextExam : exam,
-        ),
-      );
-    } else {
-      onChange([...exams, nextExam]);
-    }
+      onChange(nextExams);
 
     if (
       previousExam?.attachmentId &&
       previousExam.attachmentId !== draft.attachmentId
     ) {
-      void deleteAttachment(previousExam.attachmentId);
+      void deleteAttachmentIfUnreferenced(
+        previousExam.attachmentId,
+        nextExams,
+      );
     }
 
     resetDraft(false);
@@ -164,10 +160,18 @@ export default function SupportingExamSection({
 
   const removeExam = (id: string) => {
     const exam = exams.find((entry) => entry.id === id);
-    onChange(exams.filter((entry) => entry.id !== id));
+    const nextExams = exams.filter((entry) => entry.id !== id);
+
+    onChange(nextExams);
 
     if (exam?.attachmentId) {
-      void deleteAttachment(exam.attachmentId);
+      if (editingId === id) {
+        setDraft(emptyExam());
+        setEditingId(null);
+        setAdding(false);
+      }
+
+      void deleteAttachmentIfUnreferenced(exam.attachmentId, nextExams);
     }
   };
 
@@ -207,7 +211,7 @@ export default function SupportingExamSection({
           (exam) => exam.attachmentId === previousAttachmentId,
         )
       ) {
-        void deleteAttachment(previousAttachmentId);
+        void deleteAttachmentIfUnreferenced(previousAttachmentId, exams);
       }
     } catch {
       setAttachmentError(
