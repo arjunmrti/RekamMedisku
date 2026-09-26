@@ -155,7 +155,7 @@ export default function RotationManagementPage({
         searchValue=""
         onSearchChange={() => undefined}
       >
-        <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 md:pb-8 sm:px-6 lg:px-8 lg:py-7 lg:pb-8">
+        <main className="flex-1 overflow-y-auto px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:pb-8 md:pb-8 sm:px-6 lg:px-8 lg:py-7 lg:pb-8">
           <div className="mx-auto w-full max-w-[1400px] space-y-6">
             <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>

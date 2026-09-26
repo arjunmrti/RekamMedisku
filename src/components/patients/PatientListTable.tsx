@@ -88,7 +88,7 @@ export default function PatientListTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="hidden overflow-x-auto xl:block">
         <table className="w-full min-w-[900px] border-collapse text-left">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
@@ -197,7 +197,7 @@ export default function PatientListTable({
         </table>
       </div>
 
-      <div className="divide-y divide-slate-100 lg:hidden">
+      <div className="divide-y divide-slate-100 xl:hidden">
         {patients.map((patient) => (
           <div key={patient.id} className="p-4">
             <button
