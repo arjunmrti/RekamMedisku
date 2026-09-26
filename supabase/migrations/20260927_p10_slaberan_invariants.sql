@@ -126,6 +126,15 @@ REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated
 CREATE INDEX IF NOT EXISTS supporting_exams_user_id_idx
   ON public.supporting_exams (user_id);
 
+CREATE INDEX IF NOT EXISTS patients_current_location_id_idx
+  ON public.patients (current_location_id);
+
+CREATE INDEX IF NOT EXISTS patients_admission_location_id_idx
+  ON public.patients (admission_location_id);
+
+CREATE INDEX IF NOT EXISTS slaberan_locations_parent_id_idx
+  ON public.slaberan_locations (parent_id);
+
 -- Evaluate auth.uid() once per statement rather than once per row.
 DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
 CREATE POLICY "Users can view own profile"
