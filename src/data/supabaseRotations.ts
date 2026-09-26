@@ -341,14 +341,11 @@ export async function upsertRotationWithSupabase(input: {
     saveIdMap(idMap);
 
     if (nextRotation.status === "Aktif") {
-      const { error: deactivateError } = await supabase
-        .from("rotations")
-        .update({ status: "Selesai" })
-        .eq("user_id", userId)
-        .eq("status", "Aktif")
-        .neq("id", remoteRow.id);
+      const { error: activateError } = await supabase.rpc("activate_rotation", {
+        target_rotation_id: remoteRow.id,
+      });
 
-      if (deactivateError) throw deactivateError;
+      if (activateError) throw activateError;
     }
 
     return await syncRotationsWithSupabase();
@@ -391,22 +388,11 @@ export async function activateRotationWithSupabase(
       throw new Error("Stase belum tersinkron ke Supabase.");
     }
 
-    const { error: activateError } = await supabase
-      .from("rotations")
-      .update({ status: "Aktif" })
-      .eq("id", remoteId)
-      .eq("user_id", userId);
+    const { error: activationError } = await supabase.rpc("activate_rotation", {
+      target_rotation_id: remoteId,
+    });
 
-    if (activateError) throw activateError;
-
-    const { error: deactivateError } = await supabase
-      .from("rotations")
-      .update({ status: "Selesai" })
-      .eq("user_id", userId)
-      .eq("status", "Aktif")
-      .neq("id", remoteId);
-
-    if (deactivateError) throw deactivateError;
+    if (activationError) throw activationError;
 
     saveLocalActiveRotation(rotationId);
 
