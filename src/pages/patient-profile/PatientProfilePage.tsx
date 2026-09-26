@@ -20,6 +20,10 @@ type PatientProfilePageProps = NavigationProps & {
   patient: PatientListItem;
 };
 
+function sortFollowUps(entries: PatientProfilePageProps["patient"] extends never ? never : Awaited<never>): never {
+  throw new Error("unreachable");
+}
+
 function SupportingExamAttachment({ exam }: { exam: SupportingExam }) {
   const [attachmentUrl, setAttachmentUrl] = useState(exam.attachmentDataUrl ?? "");
   const [loadState, setLoadState] = useState<"idle" | "loading" | "ready" | "missing">(
