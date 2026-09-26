@@ -4,12 +4,20 @@ import { updatePatient } from "./localPatients";
 import { syncPatientsWithSupabase } from "./supabasePatients";
 import { supabase } from "../utils/supabase";
 import { derivePatientFollowUpSummary } from "./patientFollowUpSummary";
-import { deleteAttachments } from "./localAttachments";
+import {
+  deleteAttachments,
+  getAttachment,
+  saveStoredAttachment,
+} from "./localAttachments";
 import {
   getDraftFollowUpAttachmentIds,
   getSavedFollowUpAttachmentIds,
   getAttachmentIdsFromFollowUps,
 } from "./attachmentReferences";
+import {
+  downloadAttachmentWithSupabase,
+  uploadAttachmentWithSupabase,
+} from "./supabaseAttachments";
 
 type FollowUpRow = {
   id: string;
@@ -223,6 +231,62 @@ function followUpPayload(entry: FollowUpEntry, remotePatientId: string) {
     plan: entry.plan,
     summary: entry.summary,
   };
+}
+
+async function ensureRemoteAttachment(exam: SupportingExam) {
+  if (!exam.attachmentId) return;
+
+  const blob = await getAttachment(exam.attachmentId);
+
+  if (!blob) {
+    throw new Error(
+      "Lampiran " +
+        (exam.attachmentName ?? exam.attachmentId) +
+        " tidak tersedia di perangkat. Pulihkan backup atau lampiran lokal terlebih dahulu.",
+    );
+  }
+
+  await uploadAttachmentWithSupabase(
+    exam.attachmentId,
+    blob,
+    exam.attachmentType ?? blob.type,
+  );
+}
+
+async function hydrateRemoteAttachment(row: SupportingExamRow) {
+  if (!row.attachment_id) return;
+
+  const existing = await getAttachment(row.attachment_id);
+  if (existing) return;
+
+  try {
+    const blob = await downloadAttachmentWithSupabase(row.attachment_id);
+    if (!blob) return;
+
+    if (
+      row.attachment_size !== null &&
+      Number.isFinite(row.attachment_size) &&
+      blob.size !== row.attachment_size
+    ) {
+      console.warn(
+        "Ukuran lampiran cloud tidak sesuai metadata:",
+        row.attachment_id,
+      );
+      return;
+    }
+
+    await saveStoredAttachment({
+      id: row.attachment_id,
+      name: row.attachment_name ?? row.attachment_id,
+      type: row.attachment_type ?? blob.type,
+      size: row.attachment_size ?? blob.size,
+      blob,
+    });
+  } catch (error) {
+    // A missing legacy object must not prevent unrelated cloud records from
+    // syncing. The UI will show the attachment as unavailable until repaired.
+    console.warn("Gagal memulihkan lampiran cloud ke browser:", error);
+  }
 }
 
 function examPayload(exam: SupportingExam, remoteFollowUpId: string) {
@@ -476,6 +540,8 @@ async function persistFollowUpWithSupabaseInternal(
 
     if (insertedFollowUpId) {
       for (const exam of entry.supportingExams ?? []) {
+        await ensureRemoteAttachment(exam);
+
         const { data, error } = await supabase
           .from("supporting_exams")
           .insert({
@@ -504,6 +570,8 @@ async function persistFollowUpWithSupabaseInternal(
       const currentExamIds = new Set<string>();
 
       for (const exam of entry.supportingExams ?? []) {
+        await ensureRemoteAttachment(exam);
+
         const mappedExamId = examMap[exam.id];
 
         if (mappedExamId) {
@@ -616,6 +684,11 @@ async function syncFollowUpsWithSupabaseInternal(): Promise<
   }
 
   const remoteExamIds = new Set(remoteExams.map((row) => row.id));
+
+  for (const row of remoteExams) {
+    await hydrateRemoteAttachment(row);
+  }
+
   const examsByFollowUp = new Map<string, SupportingExam[]>();
 
   for (const row of remoteExams) {
