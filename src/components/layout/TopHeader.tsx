@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Icon from "../ui/Icon";
+import { useAuth } from "../../hooks/useAuth";
 import { supabase } from "../../utils/supabase";
 
 type TopHeaderProps = {
@@ -17,8 +18,11 @@ export default function TopHeader({
   activeItem,
   onMenuClick,
 }: TopHeaderProps) {
+  const { user } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const notificationRef = useRef<HTMLDivElement | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -26,11 +30,17 @@ export default function TopHeader({
   };
 
   useEffect(() => {
-    if (!profileOpen) return;
+    if (!profileOpen && !notificationOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
-      if (!profileRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+
+      if (!profileRef.current?.contains(target)) {
         setProfileOpen(false);
+      }
+
+      if (!notificationRef.current?.contains(target)) {
+        setNotificationOpen(false);
       }
     };
 
@@ -47,7 +57,7 @@ export default function TopHeader({
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [profileOpen]);
+  }, [profileOpen, notificationOpen]);
 
   const handleSignOut = async () => {
     if (isSigningOut) return;
@@ -64,6 +74,39 @@ export default function TopHeader({
       setIsSigningOut(false);
     }
   };
+
+  const metadata =
+    user?.user_metadata &&
+    typeof user.user_metadata === "object" &&
+    !Array.isArray(user.user_metadata)
+      ? (user.user_metadata as Record<string, unknown>)
+      : {};
+
+  const metadataName =
+    typeof metadata.full_name === "string" && metadata.full_name.trim()
+      ? metadata.full_name.trim()
+      : typeof metadata.name === "string" && metadata.name.trim()
+        ? metadata.name.trim()
+        : "";
+
+  const displayName =
+    metadataName ||
+    user?.email?.split("@")[0] ||
+    "Pengguna RekamMedisku";
+
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("")
+    .padEnd(2, "P")
+    .slice(0, 2);
+
+  const accountLabel =
+    typeof metadata.role === "string" && metadata.role.trim()
+      ? metadata.role.trim()
+      : "Akun RekamMedisku";
 
   const today = new Intl.DateTimeFormat("id-ID", {
     weekday: "long",
@@ -138,12 +181,45 @@ export default function TopHeader({
           <span>{today}</span>
         </div>
 
-        <span
-          aria-hidden="true"
-          className="hidden h-10 w-10 items-center justify-center rounded-xl text-slate-300 lg:flex"
-        >
-          <Icon name="bell" className="h-5 w-5" />
-        </span>
+        <div ref={notificationRef} className="relative hidden lg:block">
+          <button
+            type="button"
+            onClick={() => {
+              setNotificationOpen((current) => !current);
+              setProfileOpen(false);
+            }}
+            aria-label="Buka notifikasi"
+            aria-haspopup="menu"
+            aria-expanded={notificationOpen}
+            className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20"
+          >
+            <Icon name="bell" className="h-5 w-5" />
+          </button>
+
+          {notificationOpen ? (
+            <div
+              role="menu"
+              aria-label="Notifikasi"
+              className="absolute right-0 top-[calc(100%+10px)] z-50 w-[280px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_50px_-22px_rgba(15,23,42,0.3)]"
+            >
+              <div className="border-b border-slate-100 bg-slate-50/70 px-4 py-3">
+                <p className="text-xs font-bold text-slate-800">Notifikasi</p>
+                <p className="mt-0.5 text-[11px] text-slate-400">
+                  Pembaruan workspace akan muncul di sini.
+                </p>
+              </div>
+              <div className="px-4 py-8 text-center">
+                <Icon name="bell" className="mx-auto h-6 w-6 text-slate-300" />
+                <p className="mt-2 text-xs font-semibold text-slate-600">
+                  Belum ada notifikasi
+                </p>
+                <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
+                  Tidak ada pembaruan baru untuk saat ini.
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         <div ref={profileRef} className="relative border-l border-slate-200 pl-2 sm:pl-3">
           <button
@@ -158,10 +234,10 @@ export default function TopHeader({
             </div>
             <div className="hidden min-w-0 lg:block">
               <span className="block truncate text-sm font-bold leading-tight text-slate-800">
-                Muhammad Fadel
+                {displayName}
               </span>
               <span className="block text-[11px] font-medium text-slate-400">
-                Mahasiswa Kedokteran
+                {accountLabel}
               </span>
             </div>
             <Icon
@@ -182,11 +258,11 @@ export default function TopHeader({
               <div className="border-b border-slate-100 bg-slate-50/70 p-4">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#60708A] text-[11px] font-semibold text-white">
-                    MF
+                    {initials}
                   </div>
                   <div className="min-w-0">
                     <p className="truncate text-xs font-bold text-slate-800">
-                      Muhammad Fadel
+                      {displayName}
                     </p>
                     <p className="mt-0.5 truncate text-[11px] text-slate-400">
                       Akun RekamMedisku
