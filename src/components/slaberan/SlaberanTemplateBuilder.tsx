@@ -361,8 +361,22 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
     setErrorMessage("");
     try {
       const copy = cloneSlaberanTemplate(draft);
+      const baseName = copy.name.trim() || "Template Slaberan";
+      const existingNames = new Set(
+        templates
+          .filter((template) => template.id !== copy.id)
+          .map((template) => template.name.trim().toLowerCase()),
+      );
+      let duplicateName = baseName + " (2)";
+      let suffix = 2;
+
+      while (existingNames.has(duplicateName.toLowerCase())) {
+        suffix += 1;
+        duplicateName = baseName + " (" + suffix + ")";
+      }
+
       const created = await createSlaberanTemplate({
-        name: copy.name,
+        name: duplicateName,
         doctor: copy.doctor,
         specialty: copy.specialty,
         hospital: copy.hospital,
