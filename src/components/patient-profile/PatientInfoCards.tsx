@@ -18,7 +18,7 @@ export default function PatientInfoCards({
   onOpenLatest,
 }: PatientInfoCardsProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-3" data-purpose="patient-meta-grid">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" data-purpose="patient-meta-grid">
       <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
         <div className="mb-4 flex items-center gap-2 text-xs font-bold text-slate-800">
           <Icon name="user" className="h-4 w-4 text-[#1677FF]" />
