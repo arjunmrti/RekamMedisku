@@ -289,9 +289,14 @@ async function hydrateRemoteAttachment(row: SupportingExamRow) {
   }
 }
 
+type SupportingExamIdentityRow = Pick<
+  SupportingExamRow,
+  "id" | "name" | "exam_type" | "exam_date" | "attachment_id"
+>;
+
 function findExistingSupportingExamId(
   exam: SupportingExam,
-  existingExams: SupportingExamRow[],
+  existingExams: SupportingExamIdentityRow[],
 ): string | null {
   const isoDate = exam.isoDate ?? toIsoDate(exam.date);
 
@@ -597,7 +602,7 @@ async function persistFollowUpWithSupabaseInternal(
       for (const exam of entry.supportingExams ?? []) {
         await ensureRemoteAttachment(exam);
 
-        let mappedExamId = examMap[exam.id];
+        let mappedExamId: string | null = examMap[exam.id] ?? null;
 
         if (!mappedExamId) {
           mappedExamId = findExistingSupportingExamId(
