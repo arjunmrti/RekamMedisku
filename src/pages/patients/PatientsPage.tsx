@@ -6,7 +6,11 @@ import PatientListTable from "../../components/patients/PatientListTable";
 import PatientSummaryPanel from "../../components/patients/PatientSummaryPanel";
 import AddPatientModal from "../../components/patients/AddPatientModal";
 import { loadActiveRotation } from "../../data/localRotations";
-import { loadPatients, savePatients } from "../../data/localPatients";
+import {
+  deletePatient,
+  loadPatients,
+  savePatients,
+} from "../../data/localPatients";
 import type { PatientListItem } from "../../types/patient";
 
 type PatientsPageProps = NavigationProps & {
@@ -211,6 +215,36 @@ export default function PatientsPage({
     );
   };
 
+  const handleDeletePatient = async (patient: PatientListItem) => {
+    const confirmed = window.confirm(
+      "Hapus permanen pasien " +
+        patient.name +
+        "? Semua data pasien, riwayat follow-up, draft, dan lampiran terkait akan dihapus dan tidak dapat dipulihkan.",
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const deleted = await deletePatient(patient.id);
+
+      if (!deleted) return;
+
+      const nextPatients = patients.filter((item) => item.id !== patient.id);
+      setPatients(nextPatients);
+      setSelectedPatient(
+        (current) =>
+          current?.id === patient.id
+            ? nextPatients.find((item) => item.rotationId === activeRotation.id) ??
+              null
+            : current,
+      );
+    } catch {
+      window.alert(
+        "Pasien belum dihapus karena data lampiran gagal dibersihkan. Silakan coba lagi.",
+      );
+    }
+  };
+
   return (
     <>
       <AppShell
@@ -281,6 +315,7 @@ export default function PatientsPage({
                   onOpenProfile={onOpenPatientProfile}
                   onEditPatient={openEditPatient}
                   onToggleArchive={handleToggleArchive}
+                  onDeletePatient={handleDeletePatient}
                 />
 
                 <PatientListTable
@@ -289,6 +324,7 @@ export default function PatientsPage({
                   onSelectPatient={setSelectedPatient}
                   onEditPatient={openEditPatient}
                   onToggleArchive={handleToggleArchive}
+                  onDeletePatient={handleDeletePatient}
                 />
               </section>
             </div>
