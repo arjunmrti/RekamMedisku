@@ -18,9 +18,10 @@ import {
   saveRotations,
   setActiveRotationId,
 } from "../data/localRotations";
-import type {
-  BackupAttachment,
-  BackupPayload,
+import {
+  BACKUP_SCHEMA_VERSION,
+  type BackupAttachment,
+  type BackupPayload,
 } from "../types/backup";
 import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
@@ -174,7 +175,7 @@ export function buildBackupPayload(
   }
 
   return {
-    schemaVersion: 1,
+    schemaVersion: BACKUP_SCHEMA_VERSION,
     product: "RekamMedisku",
     exportedAt: new Date().toISOString(),
     patients,
@@ -803,7 +804,7 @@ export function parseBackupText(
       return { ok: false, error: "File bukan backup RekamMedisku yang valid." };
     }
 
-    if (parsed.schemaVersion !== 1) {
+    if (parsed.schemaVersion !== BACKUP_SCHEMA_VERSION) {
       return {
         ok: false,
         error: "Versi backup tidak didukung oleh MVP saat ini.",
@@ -926,7 +927,7 @@ export function parseBackupText(
     return {
       ok: true,
       data: {
-        schemaVersion: 1,
+        schemaVersion: BACKUP_SCHEMA_VERSION,
         product: "RekamMedisku",
         exportedAt:
           typeof parsed.exportedAt === "string"
