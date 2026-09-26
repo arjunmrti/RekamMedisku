@@ -164,3 +164,76 @@ test("urutan template memisahkan ringkasan bangsal dari daftar pasien", () => {
   assert.ok(patientIndex > wardIndex);
   assert.match(report, /ICU \(0\)/);
 });
+
+test("format baris pasien mengikuti konfigurasi template", () => {
+  const customTemplate: SlaberanTemplateRecord = {
+    ...template,
+    blocks: [
+      {
+        id: "patients-custom",
+        type: "patient-list",
+        label: "Pasien",
+        enabled: true,
+        config: {
+          fields: ["name", "age", "diagnosis"],
+          patientSeparator: " | ",
+          patientPrefix: "• ",
+          showPatientIndex: false,
+          emptyText: "Kosong",
+        },
+      },
+    ],
+  };
+
+  const report = renderSlaberanTemplate({
+    template: customTemplate,
+    doctor: "dr. Supardi",
+    date: "2026-09-27",
+    patients: [patient("p-1", "Bima", "ward-1-anggrek", "Anggrek")],
+    followUpsByPatient: {
+      "p-1": [
+        {
+          id: "fu-1",
+          number: 1,
+          date: "27 September 2026",
+          isoDate: "2026-09-27",
+          time: "08.00",
+          status: "Tersimpan",
+          subjective: "",
+          objective: "",
+          assessment: "Vertigo",
+          plan: "",
+          summary: "",
+        },
+      ],
+    },
+    locations,
+  });
+
+  assert.equal(report, "• Bima | 23 Tahun | Vertigo");
+});
+
+test("blok nonaktif benar-benar tidak menghasilkan output", () => {
+  const disabledTemplate: SlaberanTemplateRecord = {
+    ...template,
+    blocks: [
+      ...template.blocks.map((block) => ({
+        ...block,
+        enabled: block.type !== "ward-summary",
+      })),
+    ],
+  };
+
+  const report = renderSlaberanTemplate({
+    template: disabledTemplate,
+    doctor: "dr. Supardi",
+    date: "2026-09-27",
+    patients: [patient("p-1", "Bima", "ward-1-anggrek", "Anggrek")],
+    followUpsByPatient: followUps,
+    locations,
+  });
+
+  assert.equal(report.includes("Lantai 1"), false);
+  assert.equal(report.includes("Anggrek (1)"), false);
+  assert.match(report, /Bima/);
+});
