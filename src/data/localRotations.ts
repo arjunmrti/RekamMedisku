@@ -147,10 +147,7 @@ export function upsertRotation(input: {
     specialty: input.specialty,
     startDate: input.startDate,
     endDate: input.endDate,
-    status:
-      id === activeId && input.status !== "Aktif"
-        ? "Aktif"
-        : input.status,
+    status: input.status,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
