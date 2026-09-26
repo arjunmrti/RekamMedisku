@@ -15,6 +15,7 @@ import {
   upsertPatientWithSupabase,
 } from "../../data/supabasePatients";
 import type { PatientListItem } from "../../types/patient";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
 type PatientsPageProps = NavigationProps & {
   onOpenPatientProfile: (patient: PatientListItem) => void;
@@ -74,6 +75,7 @@ export default function PatientsPage({
   onNavigate,
   onOpenPatientProfile,
 }: PatientsPageProps) {
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const [filterSearch, setFilterSearch] = useState("");
   const [status, setStatus] = useState<
     "Semua" | "Aktif" | "Diarsipkan"
@@ -137,6 +139,28 @@ export default function PatientsPage({
       cancelled = true;
     };
   }, [activeRotation.id]);
+
+  useEffect(() => {
+    if (workspaceSyncVersion === 0) return;
+
+    const latestPatients = loadPatients();
+    setPatients(latestPatients);
+    setSelectedPatient((current) => {
+      if (current) {
+        return (
+          latestPatients.find(
+            (patient) => patient.id === current.id && patient.rotationId === activeRotation.id,
+          ) ?? null
+        );
+      }
+
+      return (
+        latestPatients.find(
+          (patient) => patient.rotationId === activeRotation.id,
+        ) ?? null
+      );
+    });
+  }, [workspaceSyncVersion, activeRotation.id]);
 
   const activeRotationPatients = useMemo(
     () => patients.filter((patient) => patient.rotationId === activeRotation.id),
