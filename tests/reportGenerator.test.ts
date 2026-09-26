@@ -122,16 +122,16 @@ test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", ()
     neurologyFollowUp,
     "Neurologi",
     {
-      rotationName: "Rotasi Neurologi September",
+      rotationName: "Neurologi",
       generatedAt: new Date(2026, 8, 26, 19, 0),
     },
   );
 
   assert.match(
     report,
-    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Rotasi Neurologi September\. Mohon izin melaporkan follow-up pasien:/,
+    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Neurologi\. Mohon izin melaporkan follow-up pasien:/,
   );
-  assert.match(report, /Stase: Rotasi Neurologi September/);
+  assert.match(report, /Stase: Neurologi/);
   assert.match(report, /Tanggal Masuk: 01 September 2026/);
   assert.match(report, /Tanggal Follow-Up: 26 September 2026/);
   assert.match(report, /Pemeriksaan neurologis:/);
@@ -155,16 +155,16 @@ test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
     internalMedicineFollowUp,
     "Ilmu Penyakit Dalam",
     {
-      rotationName: "Interna Agustus",
+      rotationName: "Ilmu Penyakit Dalam",
       generatedAt: new Date(2026, 8, 26, 12, 0),
     },
   );
 
   assert.match(
     report,
-    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Interna Agustus\. Mohon izin melaporkan follow-up pasien:/,
+    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Ilmu Penyakit Dalam\. Mohon izin melaporkan follow-up pasien:/,
   );
-  assert.match(report, /Stase: Interna Agustus/);
+  assert.match(report, /Stase: Ilmu Penyakit Dalam/);
   assert.match(report, /Tanggal Masuk: 01 September 2026/);
   assert.match(report, /Tanggal Follow-Up: 26 September 2026/);
   assert.match(report, /Pemeriksaan sistemik Ilmu Penyakit Dalam:/);
