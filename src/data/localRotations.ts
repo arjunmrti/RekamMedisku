@@ -174,6 +174,11 @@ export function upsertRotation(input: {
   }
 
   saveRotations(updated);
+
+  if (id === activeId) {
+    setActiveRotationId("");
+  }
+
   return updated;
 }
 
