@@ -39,9 +39,14 @@ export function getSavedFollowUpAttachmentIds(): Set<string> {
 
 export function getDraftFollowUpAttachmentIds(): Set<string> {
   const ids = new Set<string>();
+  const storage = window.localStorage;
 
-  for (const key of Object.keys(window.localStorage)) {
-    if (!key.startsWith("rekammedisku:follow-up-draft:")) continue;
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index);
+
+    if (!key || !key.startsWith("rekammedisku:follow-up-draft:")) {
+      continue;
+    }
 
     const patientId = key.slice("rekammedisku:follow-up-draft:".length);
     const draft = loadFollowUpDraft(patientId);
