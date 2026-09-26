@@ -81,11 +81,17 @@ function newBlock(type: SlaberanTemplateBlockType): SlaberanTemplateBlock {
     },
     "patient-list": {
       fields: ["name", "age", "rm", "doctor", "bed", "diagnosis"],
+      patientSeparator: "/",
+      showPatientIndex: true,
+      emptyText: "Belum ada pasien.",
     },
     "special-unit-list": {
       showEmptyRooms: true,
       highlightOccupied: true,
       fields: ["name", "age", "rm", "doctor", "bed", "diagnosis"],
+      patientSeparator: "/",
+      showPatientIndex: true,
+      emptyText: "Belum ada pasien.",
     },
     summary: {
       showDoctorCount: true,
@@ -675,8 +681,72 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
             ))}
           </div>
 
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <label>
+              <span className="mb-1 block text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                Separator field
+              </span>
+              <input
+                value={config.patientSeparator ?? "/"}
+                onChange={(event) =>
+                  updateBlockConfig(block.id, {
+                    patientSeparator: event.target.value,
+                  })
+                }
+                className={inputClass()}
+                maxLength={4}
+              />
+            </label>
+
+            <label>
+              <span className="mb-1 block text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                Prefix pasien
+              </span>
+              <input
+                value={config.patientPrefix ?? ""}
+                onChange={(event) =>
+                  updateBlockConfig(block.id, {
+                    patientPrefix: event.target.value,
+                  })
+                }
+                className={inputClass()}
+                placeholder="Contoh: • "
+                maxLength={8}
+              />
+            </label>
+
+            <label>
+              <span className="mb-1 block text-[9px] font-semibold uppercase tracking-wide text-slate-400">
+                Teks kosong
+              </span>
+              <input
+                value={config.emptyText ?? "Belum ada pasien."}
+                onChange={(event) =>
+                  updateBlockConfig(block.id, {
+                    emptyText: event.target.value,
+                  })
+                }
+                className={inputClass()}
+              />
+            </label>
+          </div>
+
+          <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-600">
+            <input
+              type="checkbox"
+              checked={config.showPatientIndex ?? true}
+              onChange={(event) =>
+                updateBlockConfig(block.id, {
+                  showPatientIndex: event.target.checked,
+                })
+              }
+              className="rounded border-slate-300"
+            />
+            Tampilkan nomor urut pasien
+          </label>
+
           {block.type === "special-unit-list" ? (
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               {([
                 ["showEmptyRooms", "Tampilkan unit kosong"],
                 ["highlightOccupied", "Tebalkan unit berisi pasien"],
