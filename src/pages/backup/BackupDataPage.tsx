@@ -732,7 +732,7 @@ export default function BackupDataPage({
       {toast ? (
         <div
           role="status"
-          className="fixed bottom-20 left-4 z-50 flex max-w-sm items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-lg sm:left-6 md:bottom-6 lg:bottom-6"
+          className="fixed bottom-20 left-4 z-50 flex max-w-sm items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-lg sm:left-6 md:bottom-6"
         >
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white">
             <Icon name="check" className="h-3.5 w-3.5" strokeWidth={2.5} />
