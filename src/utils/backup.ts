@@ -512,12 +512,25 @@ function validateAttachments(
 
 function validateDraftMap(
   value: unknown,
-  patientIds: Set<string>,
+  patients: PatientListItem[],
 ): value is Record<string, FollowUpFormValues> {
   if (!isRecord(value)) return false;
 
+  const patientIds = new Set(patients.map((patient) => patient.id));
+  const rotationIdsByPatient = new Map(
+    patients.map((patient) => [patient.id, patient.rotationId]),
+  );
+
   for (const [patientId, draft] of Object.entries(value)) {
     if (!patientIds.has(patientId) || !isRecord(draft)) return false;
+
+    if (
+      draft.rotationId !== undefined &&
+      (typeof draft.rotationId !== "string" ||
+        draft.rotationId !== rotationIdsByPatient.get(patientId))
+    ) {
+      return false;
+    }
     if (
       typeof draft.followUpDate !== "string" ||
       typeof draft.followUpTime !== "string" ||
@@ -595,8 +608,11 @@ export function parseBackupText(
       return { ok: false, error: "Struktur data follow-up tidak valid." };
     }
 
-    if (!validateDraftMap(parsed.followUpDrafts, patientIds)) {
-      return { ok: false, error: "Struktur data draf tidak valid." };
+    if (!validateDraftMap(parsed.followUpDrafts, patients)) {
+      return {
+        ok: false,
+        error: "Struktur data draf atau konteks stase tidak valid.",
+      };
     }
 
     if (
