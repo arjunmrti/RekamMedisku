@@ -4,6 +4,7 @@ import {
   deleteFollowUpsForPatient,
   getOtherPatientFollowUpAttachmentIds,
   getPatientFollowUpAttachmentIds,
+  loadSavedFollowUps,
 } from "../src/data/localFollowUps";
 
 class MemoryStorage {
@@ -149,6 +150,13 @@ function draftWithAttachment(attachmentId: string) {
     instruction: "",
   };
 }
+
+test("storage kosong tidak melakukan seeding follow-up demo", () => {
+  storage.clear();
+
+  assert.deepEqual(loadSavedFollowUps(), {});
+  assert.equal(storage.getItem("rekammedisku:follow-ups"), null);
+});
 
 test("attachment pasien menggabungkan follow-up dan draft tanpa duplikat", () => {
   storage.clear();
