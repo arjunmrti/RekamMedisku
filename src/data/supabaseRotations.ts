@@ -261,6 +261,7 @@ function getErrorMessage(error: unknown) {
  */
 export async function upsertRotationWithSupabase(input: {
   id?: string;
+  updatedAt?: string;
   name: string;
   specialty: RotationSpecialty;
   startDate: string;
@@ -292,6 +293,17 @@ export async function upsertRotationWithSupabase(input: {
     let remoteRow: RotationRow;
 
     if (remoteId) {
+      const expectedUpdatedAt =
+        input.updatedAt ??
+        previousRotations.find((rotation) => rotation.id === localId)?.updatedAt;
+
+      if (!expectedUpdatedAt) {
+        throw new Error(
+          "Versi data stase tidak tersedia. Muat ulang stase sebelum menyimpan perubahan.",
+        );
+      }
+
+      const nextUpdatedAt = new Date().toISOString();
       const { data, error } = await supabase
         .from("rotations")
         .update({
@@ -300,13 +312,22 @@ export async function upsertRotationWithSupabase(input: {
           start_date: nextRotation.startDate,
           end_date: nextRotation.endDate,
           status: nextRotation.status,
+          updated_at: nextUpdatedAt,
         })
         .eq("id", remoteId)
         .eq("user_id", userId)
+        .eq("updated_at", expectedUpdatedAt)
         .select()
-        .single<RotationRow>();
+        .maybeSingle<RotationRow>();
 
       if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "Data stase sudah berubah di browser lain. Muat ulang data terbaru sebelum menyimpan perubahan.",
+        );
+      }
+
       remoteRow = data;
     } else {
       remoteRow = (await insertLocalRotation(
