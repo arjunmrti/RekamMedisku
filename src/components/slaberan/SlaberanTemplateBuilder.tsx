@@ -181,7 +181,19 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
     if (!selectedId) return;
 
     const selected = templates.find((template) => template.id === selectedId);
-    if (selected) setDraft(cloneDraft(selected));
+
+    setDraft((current) => {
+      if (!selected) {
+        return current?.id === selectedId ? null : current;
+      }
+
+      // Do not overwrite an in-progress editor when a background sync refreshes
+      // the template list. The current draft remains the user's source of truth
+      // until they explicitly save or switch templates.
+      if (current?.id === selectedId) return current;
+
+      return cloneDraft(selected);
+    });
   }, [selectedId, templates]);
 
   const isUnsaved = Boolean(draft && !templates.some((item) => item.id === draft.id));
