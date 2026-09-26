@@ -1,4 +1,5 @@
 import type { SlaberanTemplateRecord } from "../types/slaberanTemplate";
+import { replaceSlaberanTemplates } from "./localSlaberanTemplates";
 import { supabase } from "../utils/supabase";
 
 type SlaberanTemplateRow = {
@@ -29,15 +30,19 @@ function getErrorMessage(error: unknown) {
 
     if (typeof candidate.message === "string" && candidate.message) {
       const parts = [candidate.message];
+
       if (typeof candidate.code === "string" && candidate.code) {
         parts.push("Kode: " + candidate.code);
       }
+
       if (typeof candidate.details === "string" && candidate.details) {
         parts.push("Detail: " + candidate.details);
       }
+
       if (typeof candidate.hint === "string" && candidate.hint) {
         parts.push("Petunjuk: " + candidate.hint);
       }
+
       return parts.join(" · ");
     }
   }
@@ -48,6 +53,7 @@ function getErrorMessage(error: unknown) {
 
 function parseBlocks(value: unknown): SlaberanTemplateRecord["blocks"] {
   if (!Array.isArray(value)) return [];
+
   return value.filter(
     (item): item is SlaberanTemplateRecord["blocks"][number] =>
       typeof item === "object" &&
@@ -96,6 +102,20 @@ async function getCurrentUserId() {
   return user.id;
 }
 
+async function clearDefaultTemplate(userId: string, excludedId?: string) {
+  let query = supabase
+    .from("slaberan_templates")
+    .update({ is_default: false })
+    .eq("user_id", userId)
+    .eq("is_default", true);
+
+  if (excludedId) query = query.neq("id", excludedId);
+
+  const { error } = await query;
+
+  if (error) throw new Error(getErrorMessage(error));
+}
+
 export async function syncSlaberanTemplatesWithSupabase(): Promise<
   SlaberanTemplateRecord[]
 > {
@@ -111,16 +131,19 @@ export async function syncSlaberanTemplatesWithSupabase(): Promise<
 
   if (error) throw new Error(getErrorMessage(error));
 
-  return ((data ?? []) as SlaberanTemplateRow[]).map(toTemplate);
+  const templates = ((data ?? []) as SlaberanTemplateRow[]).map(toTemplate);
+  replaceSlaberanTemplates(templates);
+  return templates;
 }
 
 export async function createSlaberanTemplate(
-  input: Omit<
-    SlaberanTemplateRecord,
-    "id" | "createdAt" | "updatedAt"
-  >,
+  input: Omit<SlaberanTemplateRecord, "id" | "createdAt" | "updatedAt">,
 ): Promise<SlaberanTemplateRecord> {
   const userId = await getCurrentUserId();
+
+  if (input.isDefault) {
+    await clearDefaultTemplate(userId);
+  }
 
   const { data, error } = await supabase
     .from("slaberan_templates")
@@ -143,14 +166,13 @@ export async function createSlaberanTemplate(
     .single<SlaberanTemplateRow>();
 
   if (error) throw new Error(getErrorMessage(error));
+
   return toTemplate(data);
 }
 
 export async function updateSlaberanTemplate(
   templateId: string,
-  input: Partial<
-    Omit<SlaberanTemplateRecord, "id" | "createdAt" | "updatedAt">
-  >,
+  input: Partial<Omit<SlaberanTemplateRecord, "id" | "createdAt" | "updatedAt">>,
 ): Promise<SlaberanTemplateRecord> {
   const userId = await getCurrentUserId();
   const update: Record<string, unknown> = {
@@ -172,6 +194,10 @@ export async function updateSlaberanTemplate(
   }
   if (input.isDefault !== undefined) update.is_default = input.isDefault;
 
+  if (input.isDefault === true) {
+    await clearDefaultTemplate(userId, templateId);
+  }
+
   const { data, error } = await supabase
     .from("slaberan_templates")
     .update(update)
@@ -183,6 +209,7 @@ export async function updateSlaberanTemplate(
     .single<SlaberanTemplateRow>();
 
   if (error) throw new Error(getErrorMessage(error));
+
   return toTemplate(data);
 }
 
@@ -198,4 +225,5 @@ export async function deleteSlaberanTemplate(
     .eq("user_id", userId);
 
   if (error) throw new Error(getErrorMessage(error));
+  await syncSlaberanTemplatesWithSupabase();
 }
