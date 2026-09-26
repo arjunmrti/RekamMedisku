@@ -22,6 +22,8 @@ import type {
   BackupAttachment,
   BackupPayload,
 } from "../types/backup";
+import { restoreWorkspaceBackupWithSupabase } from "../data/supabaseBackup";
+import { syncWorkspaceWithSupabase } from "../data/supabaseSyncEngine";
 import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
 import type { PatientListItem } from "../types/patient";
@@ -321,7 +323,11 @@ function normalizePatient(value: unknown): PatientListItem | null {
   const rotationId =
     typeof value.rotationId === "string" && value.rotationId.trim()
       ? value.rotationId
-      : "rotation-neurologi";
+      : null;
+
+  if (!rotationId) {
+    return null;
+  }
 
   const followUpNumber =
     typeof value.followUpNumber === "number" &&
@@ -484,7 +490,9 @@ function validateAttachments(
   followUpsByPatient: Record<string, FollowUpEntry[]>,
   followUpDrafts: Record<string, FollowUpFormValues>,
 ): value is BackupAttachment[] | undefined {
-  if (value === undefined) return true;
+  if (value === undefined) {
+    return collectAttachmentIds(followUpsByPatient, followUpDrafts).size === 0;
+  }
   if (!Array.isArray(value)) return false;
 
   const attachmentIds = new Set<string>();
@@ -694,12 +702,21 @@ export function parseBackupText(
 export async function restoreBackupPayload(
   payload: BackupPayload,
 ) {
+  if (!payload.rotations) {
+    throw new Error(
+      "Backup tanpa data stase tidak dapat dipulihkan ke workspace cloud. Buat backup baru terlebih dahulu.",
+    );
+  }
+
   const previousPatients = loadPatients();
   const previousFollowUps = loadSavedFollowUps();
   const previousRotations = loadRotations();
   const previousActiveRotationId = loadActiveRotationId();
   const previousDrafts: Record<string, FollowUpFormValues> = {};
-  const previousAttachments = await loadAllAttachments();
+  const shouldReplaceAttachments = payload.attachments !== undefined;
+  const previousAttachments = shouldReplaceAttachments
+    ? await loadAllAttachments()
+    : [];
 
   for (const patient of previousPatients) {
     const draft = loadFollowUpDraft(patient.id);
@@ -710,45 +727,54 @@ export async function restoreBackupPayload(
 
   const restoredAttachments: StoredAttachment[] = [];
 
-  for (const attachment of payload.attachments ?? []) {
-    const blob = base64ToBlob(attachment.dataBase64, attachment.type);
+  if (shouldReplaceAttachments) {
+    for (const attachment of payload.attachments ?? []) {
+      const blob = base64ToBlob(attachment.dataBase64, attachment.type);
 
-    if (blob.size !== attachment.size) {
-      throw new Error(
-        "Ukuran lampiran " + attachment.name + " tidak cocok dengan backup.",
-      );
+      if (blob.size !== attachment.size) {
+        throw new Error(
+          "Ukuran lampiran " + attachment.name + " tidak cocok dengan backup.",
+        );
+      }
+
+      restoredAttachments.push({
+        id: attachment.id,
+        name: attachment.name,
+        type: attachment.type,
+        size: attachment.size,
+        blob,
+      });
     }
-
-    restoredAttachments.push({
-      id: attachment.id,
-      name: attachment.name,
-      type: attachment.type,
-      size: attachment.size,
-      blob,
-    });
   }
 
   try {
-    await replaceAllAttachments(restoredAttachments);
+    // Persist the synced workspace first. The RPC replaces rotations, patients,
+    // follow-ups, and supporting-exam metadata atomically in Supabase.
+    await restoreWorkspaceBackupWithSupabase(payload);
+
+    if (shouldReplaceAttachments) {
+      await replaceAllAttachments(restoredAttachments);
+    }
 
     replacePatients(payload.patients);
     replaceSavedFollowUps(payload.followUpsByPatient);
-
-    if (payload.rotations && payload.rotations.length > 0) {
-      saveRotations(payload.rotations);
-      if (payload.activeRotationId) {
-        setActiveRotationId(payload.activeRotationId);
-      }
-    }
+    saveRotations(payload.rotations);
+    setActiveRotationId(payload.activeRotationId ?? "");
 
     clearAllFollowUpDrafts();
 
     for (const [patientId, draft] of Object.entries(payload.followUpDrafts)) {
       saveFollowUpDraft(patientId, draft);
     }
+
+    // Reconcile local derived fields and notify the rest of the app from the
+    // authoritative cloud snapshot before returning success.
+    await syncWorkspaceWithSupabase();
   } catch (error) {
     try {
-      await replaceAllAttachments(previousAttachments);
+      if (shouldReplaceAttachments) {
+        await replaceAllAttachments(previousAttachments);
+      }
 
       replacePatients(previousPatients);
       replaceSavedFollowUps(previousFollowUps);
@@ -759,8 +785,14 @@ export async function restoreBackupPayload(
       for (const [patientId, draft] of Object.entries(previousDrafts)) {
         saveFollowUpDraft(patientId, draft);
       }
+
+      // Supabase remains the source of truth when its atomic restore succeeded.
+      // A sync here repairs local state if a browser-local write failed.
+      if (payload.rotations) {
+        await syncWorkspaceWithSupabase();
+      }
     } catch {
-      // Preserve the original restore error when rollback itself fails.
+      // Preserve the original restore error when local rollback/reconciliation fails.
     }
 
     throw error;
