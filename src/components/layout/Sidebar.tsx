@@ -83,7 +83,11 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
               <NavButton
                 label={group.item}
                 icon={group.icon}
-                active={activeItem === group.item}
+                active={
+                  activeItem === group.item ||
+                  (group.item === "Daftar Pasien" &&
+                    ["Profil Pasien", "Follow-Up Baru"].includes(activeItem))
+                }
                 onClick={() => onNavigate(group.item)}
               />
             </div>
