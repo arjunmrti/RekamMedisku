@@ -3,6 +3,7 @@ import Icon from "../ui/Icon";
 import {
   createSlaberanLocation,
   deleteSlaberanLocation,
+  swapSlaberanLocations,
   syncSlaberanLocationsWithSupabase,
   updateSlaberanLocation,
 } from "../../data/supabaseSlaberanLocations";
@@ -138,10 +139,7 @@ export default function SlaberanLocationManager({ onBack }: Props) {
     setBusy(true);
     setErrorMessage("");
     try {
-      await updateSlaberanLocation(location.id, { sortOrder: target.sortOrder });
-      await updateSlaberanLocation(target.id, {
-        sortOrder: location.sortOrder,
-      });
+      await swapSlaberanLocations(location.id, target.id);
       await refresh();
     } catch (error) {
       setErrorMessage(
