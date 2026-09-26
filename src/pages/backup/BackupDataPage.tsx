@@ -310,7 +310,7 @@ export default function BackupDataPage({
         "Gagal",
         restoreState.fileName,
         restoreState.size,
-        "Restore gagal diterapkan ke penyimpanan lokal.",
+        "Restore gagal diterapkan ke workspace.",
       );
       appendBackupHistory(entry);
       setHistory((current) => [entry, ...current].slice(0, 30));
