@@ -17,6 +17,7 @@ import {
   getSupabaseFollowUpErrorMessage,
   persistFollowUpWithSupabase,
 } from "../../data/supabaseFollowUps";
+import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import { loadActiveRotation } from "../../data/localRotations";
 import { updatePatient } from "../../data/localPatients";
 import { toLocalIsoDate, toLocalTimeInput } from "../../utils/date";
