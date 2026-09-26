@@ -286,20 +286,28 @@ export default function BackupDataPage({
         persistRemote: restoreWorkspaceBackupWithSupabase,
         syncRemote: syncWorkspaceWithSupabase,
       });
+      const isPartial = counts.syncStatus === "partial";
+      const status = isPartial ? "Sebagian" : "Berhasil";
+      const note =
+        "Restore " +
+        (isPartial
+          ? "cloud berhasil, tetapi sinkronisasi ulang tertunda: "
+          : "selesai: ") +
+        counts.patientCount +
+        " pasien, " +
+        counts.followUpCount +
+        " follow-up, " +
+        counts.draftCount +
+        " draf, " +
+        counts.attachmentCount +
+        " lampiran.";
+
       const entry = createBackupHistoryEntry(
         "Restore",
-        "Berhasil",
+        status,
         restoreState.fileName,
         restoreState.size,
-        "Restore selesai: " +
-          counts.patientCount +
-          " pasien, " +
-          counts.followUpCount +
-          " follow-up, " +
-          counts.draftCount +
-          " draf, " +
-          counts.attachmentCount +
-          " lampiran.",
+        note,
       );
 
       appendBackupHistory(entry);
@@ -308,18 +316,22 @@ export default function BackupDataPage({
       setRotations(loadRotations());
       setRotationFilter("Semua");
       setRestoreOpen(false);
-      setToast("Data berhasil dipulihkan dari " + restoreState.fileName);
+      setToast(
+        isPartial
+          ? "Restore berhasil. Sinkronisasi cloud akan dicoba lagi otomatis."
+          : "Data berhasil dipulihkan dari " + restoreState.fileName,
+      );
     } catch {
       const entry = createBackupHistoryEntry(
         "Restore",
         "Gagal",
         restoreState.fileName,
         restoreState.size,
-        "Restore gagal diterapkan ke workspace.",
+        "Restore gagal diterapkan ke workspace. Data lokal dikembalikan ke kondisi sebelumnya.",
       );
       appendBackupHistory(entry);
       setHistory((current) => [entry, ...current].slice(0, 30));
-      setToast("Restore gagal. Data belum diubah.");
+      setToast("Restore gagal. Cloud tidak berhasil diperbarui.");
     } finally {
       setIsProcessing(false);
     }
@@ -547,7 +559,9 @@ export default function BackupDataPage({
                                   "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-semibold " +
                                   (entry.status === "Berhasil"
                                     ? "border-emerald-100 bg-emerald-50 text-emerald-600"
-                                    : "border-rose-100 bg-rose-50 text-rose-600")
+                                    : entry.status === "Sebagian"
+                                      ? "border-amber-100 bg-amber-50 text-amber-700"
+                                      : "border-rose-100 bg-rose-50 text-rose-600")
                                 }
                               >
                                 <Icon
