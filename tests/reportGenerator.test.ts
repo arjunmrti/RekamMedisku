@@ -21,6 +21,7 @@ const patient: PatientListItem = {
   doctor: "dr. Penguji",
   lastFollowUp: "26 September 2026 · 10.00",
   followUpNumber: 2,
+  admissionDate: "2026-09-20",
   status: "Aktif",
 };
 
@@ -73,7 +74,6 @@ const internalMedicineFollowUp: FollowUpEntry = {
     "Keadaan Umum: Baik",
     "TD: 120/80 mmHg",
     "Nadi: 80 x/menit",
-    "Keadaan Umum: Baik",
     "Kesadaran: Compos mentis",
     "Kepala & Leher: Tidak ada kelainan",
     "Hasil Penunjang: Hb normal",
@@ -115,28 +115,54 @@ test("sapaan laporan mengikuti waktu lokal pengguna", () => {
   );
 });
 
-test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", () => {
+test("format chat Neurologi mengikuti struktur SOAP client", () => {
   const report = buildWhatsAppReport(
     patient,
     neurologyFollowUp,
     "Neurologi",
     {
-      rotationName: "Rotasi Neurologi September",
-      generatedAt: new Date(2026, 8, 26, 19, 0),
+      rotationName: "Neurologi",
+      reporter: {
+        name: "Muh. Fadel",
+        stambuk: "11120252020",
+        program: "MPPD",
+      },
     },
   );
 
-  assert.match(report, /^Selamat malam Dok, izin melaporkan follow-up pasien:/);
-  assert.match(report, /Stase: Rotasi Neurologi September/);
+  assert.match(
+    report,
+    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Neurologi\. Mohon izin melaporkan follow-up pasien:/,
+  );
+  assert.match(report, /Nama: Pasien Uji/);
+  assert.match(report, /Tanggal Masuk: 20 September 2026/);
+  assert.match(report, /Tanggal Follow-Up: 26 September 2026/);
+  assert.match(report, /S:\nSakit kepala berkurang\./);
+  assert.match(report, /O:\nKeadaan Umum: Baik\nTD: 120\/80 mmHg/);
   assert.match(report, /Pemeriksaan neurologis:/);
   assert.match(report, /- Kesadaran: Compos mentis/);
   assert.match(report, /- GCS E\/M\/V: 456/);
-  assert.match(report, /- N\. Cranialis: Dalam batas normal/);
-  assert.match(report, /- Rontgen · 26 September 2026/);
-  assert.match(report, /  Tidak tampak kelainan akut\./);
-  assert.match(report, /  Lampiran: rontgen\.png/);
+  assert.match(report, /Pemeriksaan penunjang:\n- Rontgen · 26 September 2026/);
+  assert.doesNotMatch(report, /Tidak tampak kelainan akut/);
+  assert.doesNotMatch(report, /Lampiran: rontgen\.png/);
+  assert.match(report, /A:\nCephalgia membaik\./);
   assert.match(report, /P: Lanjut observasi\./);
   assert.match(report, /I: Kontrol keluhan bila memburuk\./);
+  assert.match(
+    report,
+    /Terimakasih sebelumnya dokter, Mohon arahan dan bimbingannya dok🙏🏻$/,
+  );
+});
+
+test("chat tanpa identitas pelapor tetap aman dan tidak mengarang identitas", () => {
+  const report = buildWhatsAppReport(patient, neurologyFollowUp, "Neurologi");
+
+  assert.match(
+    report,
+    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Mohon izin melaporkan follow-up pasien:/,
+  );
+  assert.doesNotMatch(report, /Perkenalkan saya/);
+  assert.doesNotMatch(report, /Stambuk/);
 });
 
 test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
@@ -145,23 +171,19 @@ test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
     internalMedicineFollowUp,
     "Ilmu Penyakit Dalam",
     {
-      rotationName: "Interna Agustus",
-      generatedAt: new Date(2026, 8, 26, 12, 0),
+      rotationName: "Ilmu Penyakit Dalam",
+      reporter: {
+        name: "Pengguna Uji",
+        stambuk: "00000000000",
+        program: "MPPD",
+      },
     },
   );
 
-  assert.match(
-    report,
-    /^Selamat siang Dok, izin melaporkan follow-up pasien:/,
-  );
-  assert.match(report, /Stase: Interna Agustus/);
   assert.match(report, /Pemeriksaan sistemik Ilmu Penyakit Dalam:/);
 
   const generalConditionMatches = report.match(/- Keadaan Umum: Baik/g) ?? [];
   assert.equal(generalConditionMatches.length, 1);
-
-  const objectiveSection = report.split("\nPemeriksaan sistemik Ilmu Penyakit Dalam:")[0];
-  assert.equal(objectiveSection.includes("\nKeadaan Umum: Baik"), false);
   assert.match(report, /- Kesadaran: Compos mentis/);
   assert.match(report, /- Kepala & Leher: Tidak ada kelainan/);
 });
