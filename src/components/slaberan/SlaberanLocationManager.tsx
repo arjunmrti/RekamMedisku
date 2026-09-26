@@ -8,6 +8,7 @@ import {
   updateSlaberanLocation,
 } from "../../data/supabaseSlaberanLocations";
 import { loadSlaberanLocations } from "../../data/localSlaberanLocations";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import { loadPatients } from "../../data/localPatients";
 import type {
   SlaberanLocation,
@@ -81,7 +82,7 @@ export default function SlaberanLocationManager({ onBack }: Props) {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+  }, [refresh, workspaceSyncVersion]);
 
   useEffect(() => {
     if (type !== "ward") {
