@@ -69,6 +69,7 @@ function legacyTemplateToRecord(
         enabled: true,
         config: {
           fields: ["name", "age", "rm", "doctor", "bed", "diagnosis"],
+          legacyRooms: template.specialRooms,
         },
       },
       {
