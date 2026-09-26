@@ -6,6 +6,7 @@ import PatientListTable from "../../components/patients/PatientListTable";
 import PatientSummaryPanel from "../../components/patients/PatientSummaryPanel";
 import AddPatientModal from "../../components/patients/AddPatientModal";
 import { loadActiveRotation } from "../../data/localRotations";
+import { loadPatients } from "../../data/localPatients";
 import {
   deletePatientWithSupabase,
   syncPatientsWithSupabase,
