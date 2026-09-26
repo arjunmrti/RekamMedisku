@@ -3,6 +3,7 @@ import { deleteFollowUpsForPatient } from "./localFollowUps";
 import { deletePatient, loadPatients, savePatients } from "./localPatients";
 import { syncRotationsWithSupabase } from "./supabaseRotations";
 import { supabase } from "../utils/supabase";
+import { getAuthenticatedUserId } from "../utils/authenticatedUser";
 import { derivePatientFollowUpSummaryFromRemote } from "./patientFollowUpSummary";
 import { deleteAttachmentsWithSupabase } from "./supabaseAttachments";
 import {
@@ -139,17 +140,7 @@ function toPatient(
 }
 
 async function getCurrentUserId() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) throw error;
-  if (!user) {
-    throw new Error("Sesi RekamMedisku tidak ditemukan.");
-  }
-
-  return user.id;
+  return getAuthenticatedUserId();
 }
 
 function mergePatientIntoLocal(
