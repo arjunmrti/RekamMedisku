@@ -1,4 +1,3 @@
-import { mockPatients } from "./mockPatients";
 import type { PatientListItem, PatientStatus } from "../types/patient";
 
 const PATIENTS_KEY = "rekammedisku:patients";
@@ -26,9 +25,7 @@ export function loadPatients(): PatientListItem[] {
   const stored = window.localStorage.getItem(PATIENTS_KEY);
 
   if (!stored) {
-    const seeded = mockPatients.map(normalizePatient);
-    savePatients(seeded);
-    return seeded;
+    return [];
   }
 
   const parsed = readJson<unknown>(PATIENTS_KEY, null);
