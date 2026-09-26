@@ -9,6 +9,7 @@ type PatientSummaryPanelProps = {
   onOpenProfile: (patient: PatientListItem) => void;
   onEditPatient: (patient: PatientListItem) => void;
   onToggleArchive: (patient: PatientListItem) => void;
+  onDeletePatient: (patient: PatientListItem) => void | Promise<void>;
 };
 
 function getInitials(name: string) {
@@ -36,6 +37,7 @@ export default function PatientSummaryPanel({
   onOpenProfile,
   onEditPatient,
   onToggleArchive,
+  onDeletePatient,
 }: PatientSummaryPanelProps) {
   const followUp = patient ? formatLastFollowUp(patient.lastFollowUp) : null;
 
@@ -182,6 +184,14 @@ export default function PatientSummaryPanel({
                 className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50"
               >
                 Edit Pasien
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onDeletePatient(patient)}
+                className="min-h-11 w-full rounded-xl border border-rose-100 bg-rose-50/50 px-4 py-3 text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50 hover:text-rose-700"
+              >
+                Hapus Permanen
               </button>
             </div>
 
