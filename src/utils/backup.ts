@@ -26,6 +26,16 @@ import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
 import type { PatientListItem } from "../types/patient";
 import type { Rotation } from "../types/rotation";
+import type { SlaberanLocation } from "../types/slaberanLocation";
+import type { SlaberanTemplateRecord } from "../types/slaberanTemplate";
+import {
+  loadSlaberanLocations,
+  saveSlaberanLocations,
+} from "../data/localSlaberanLocations";
+import {
+  loadSlaberanTemplates,
+  saveSlaberanTemplates,
+} from "../data/localSlaberanTemplates";
 import {
   normalizePatientAdmissionLocation,
   normalizePatientLocation,
@@ -173,6 +183,8 @@ export function buildBackupPayload(
     attachments: undefined,
     rotations: loadRotations(),
     activeRotationId: loadActiveRotationId(),
+    slaberanLocations: loadSlaberanLocations(),
+    slaberanTemplates: loadSlaberanTemplates(),
   };
 }
 
@@ -341,6 +353,10 @@ function normalizePatient(value: unknown): PatientListItem | null {
   const currentLocation = normalizePatientLocation(
     isRecord(value.currentLocation)
       ? {
+          locationId:
+            typeof value.currentLocation.locationId === "string"
+              ? value.currentLocation.locationId
+              : undefined,
           type:
             value.currentLocation.type === "special"
               ? "special"
@@ -364,6 +380,10 @@ function normalizePatient(value: unknown): PatientListItem | null {
   const admissionLocation = normalizePatientAdmissionLocation(
     isRecord(value.admissionLocation)
       ? {
+          locationId:
+            typeof value.admissionLocation.locationId === "string"
+              ? value.admissionLocation.locationId
+              : undefined,
           type:
             value.admissionLocation.type === "special"
               ? "special"
@@ -406,6 +426,150 @@ function normalizePatient(value: unknown): PatientListItem | null {
         ? value.admissionComplaint
         : undefined,
     status: value.status,
+  };
+}
+
+function isSlaberanLocation(
+  value: unknown,
+): value is SlaberanLocation {
+  if (!isRecord(value)) return false;
+
+  const validType =
+    value.type === "floor" ||
+    value.type === "ward" ||
+    value.type === "special";
+
+  return (
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    validType &&
+    typeof value.name === "string" &&
+    value.name.trim().length > 0 &&
+    (value.parentId === undefined ||
+      (typeof value.parentId === "string" && value.parentId.trim().length > 0)) &&
+    typeof value.sortOrder === "number" &&
+    Number.isInteger(value.sortOrder) &&
+    typeof value.isActive === "boolean" &&
+    typeof value.createdAt === "string" &&
+    isValidIsoDateTime(value.createdAt) &&
+    typeof value.updatedAt === "string" &&
+    isValidIsoDateTime(value.updatedAt)
+  );
+}
+
+function isSlaberanTemplate(value: unknown): value is SlaberanTemplateRecord {
+  if (!isRecord(value)) return false;
+
+  const validBlockTypes = new Set([
+    "opening",
+    "header",
+    "ward-summary",
+    "patient-list",
+    "special-unit-list",
+    "summary",
+    "divider",
+    "text",
+  ]);
+
+  return (
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    typeof value.name === "string" &&
+    value.name.trim().length > 0 &&
+    typeof value.doctor === "string" &&
+    typeof value.specialty === "string" &&
+    typeof value.hospital === "string" &&
+    typeof value.opening === "string" &&
+    typeof value.showEmptyRooms === "boolean" &&
+    Array.isArray(value.blocks) &&
+    value.blocks.every(
+      (block) =>
+        isRecord(block) &&
+        typeof block.id === "string" &&
+        validBlockTypes.has(block.type) &&
+        typeof block.label === "string" &&
+        typeof block.enabled === "boolean" &&
+        isRecord(block.config),
+    ) &&
+    isRecord(value.settings) &&
+    typeof value.schemaVersion === "number" &&
+    Number.isInteger(value.schemaVersion) &&
+    value.schemaVersion > 0 &&
+    typeof value.isDefault === "boolean" &&
+    typeof value.createdAt === "string" &&
+    isValidIsoDateTime(value.createdAt) &&
+    typeof value.updatedAt === "string" &&
+    isValidIsoDateTime(value.updatedAt)
+  );
+}
+
+function validateSlaberanWorkspace(
+  locations: unknown,
+  templates: unknown,
+): {
+  locations: SlaberanLocation[] | undefined;
+  templates: SlaberanTemplateRecord[] | undefined;
+  ok: true;
+} | { ok: false } {
+  const normalizedLocations =
+    locations === undefined
+      ? undefined
+      : Array.isArray(locations) && locations.every(isSlaberanLocation)
+        ? locations
+        : null;
+
+  const normalizedTemplates =
+    templates === undefined
+      ? undefined
+      : Array.isArray(templates) && templates.every(isSlaberanTemplate)
+        ? templates
+        : null;
+
+  if (!normalizedLocations || !normalizedTemplates) {
+    return { ok: false };
+  }
+
+  if (normalizedLocations) {
+    const locationIds = new Set(normalizedLocations.map((location) => location.id));
+    if (locationIds.size !== normalizedLocations.length) {
+      return { ok: false };
+    }
+
+    for (const location of normalizedLocations) {
+      if (location.parentId && !locationIds.has(location.parentId)) {
+        return { ok: false };
+      }
+    }
+  }
+
+  if (normalizedTemplates) {
+    const templateIds = new Set(normalizedTemplates.map((template) => template.id));
+    if (templateIds.size !== normalizedTemplates.length) {
+      return { ok: false };
+    }
+
+    const templateNames = new Set<string>();
+    let defaultCount = 0;
+
+    for (const template of normalizedTemplates) {
+      const name = template.name.trim().toLowerCase();
+      if (templateNames.has(name)) {
+        return { ok: false };
+      }
+
+      templateNames.add(name);
+      if (template.isDefault) defaultCount += 1;
+    }
+
+    if (defaultCount > 1) {
+      return { ok: false };
+    }
+  }
+
+  return {
+    ok: true,
+    locations: normalizedLocations,
+    templates: normalizedTemplates,
   };
 }
 
@@ -656,6 +820,18 @@ export function parseBackupText(
       return { ok: false, error: "Struktur data follow-up tidak valid." };
     }
 
+    const slaberanWorkspace = validateSlaberanWorkspace(
+      parsed.slaberanLocations,
+      parsed.slaberanTemplates,
+    );
+
+    if (!slaberanWorkspace.ok) {
+      return {
+        ok: false,
+        error: "Struktur workspace Slaberan tidak valid.",
+      };
+    }
+
     if (!validateDraftMap(parsed.followUpDrafts, patients)) {
       return {
         ok: false,
@@ -754,6 +930,8 @@ export function parseBackupText(
           typeof parsed.activeRotationId === "string"
             ? parsed.activeRotationId
             : undefined,
+        slaberanLocations: slaberanWorkspace.locations,
+        slaberanTemplates: slaberanWorkspace.templates,
       },
     };
   } catch {
@@ -775,6 +953,10 @@ export type RestoreBackupLocalState = {
   clearAllFollowUpDrafts: typeof clearAllFollowUpDrafts;
   loadAllAttachments: typeof loadAllAttachments;
   replaceAllAttachments: typeof replaceAllAttachments;
+  loadSlaberanLocations: typeof loadSlaberanLocations;
+  saveSlaberanLocations: typeof saveSlaberanLocations;
+  loadSlaberanTemplates: typeof loadSlaberanTemplates;
+  saveSlaberanTemplates: typeof saveSlaberanTemplates;
 };
 
 const defaultRestoreLocalState: RestoreBackupLocalState = {
@@ -791,6 +973,10 @@ const defaultRestoreLocalState: RestoreBackupLocalState = {
   clearAllFollowUpDrafts,
   loadAllAttachments,
   replaceAllAttachments,
+  loadSlaberanLocations,
+  saveSlaberanLocations,
+  loadSlaberanTemplates,
+  saveSlaberanTemplates,
 };
 
 export type RestoreBackupOptions = {
@@ -822,6 +1008,8 @@ export async function restoreBackupPayload(
   const previousFollowUps = local.loadSavedFollowUps();
   const previousRotations = local.loadRotations();
   const previousActiveRotationId = local.loadActiveRotationId();
+  const previousSlaberanLocations = local.loadSlaberanLocations();
+  const previousSlaberanTemplates = local.loadSlaberanTemplates();
   const previousDrafts: Record<string, FollowUpFormValues> = {};
   const shouldReplaceAttachments = payload.attachments !== undefined;
   const previousAttachments = shouldReplaceAttachments
@@ -871,6 +1059,14 @@ export async function restoreBackupPayload(
     local.replaceSavedFollowUps(payload.followUpsByPatient);
     local.saveRotations(payload.rotations);
     local.setActiveRotationId(payload.activeRotationId ?? "");
+
+    if (payload.slaberanLocations !== undefined) {
+      local.saveSlaberanLocations(payload.slaberanLocations);
+    }
+
+    if (payload.slaberanTemplates !== undefined) {
+      local.saveSlaberanTemplates(payload.slaberanTemplates);
+    }
 
     local.clearAllFollowUpDrafts();
 
@@ -930,6 +1126,8 @@ export async function restoreBackupPayload(
       local.replaceSavedFollowUps(previousFollowUps);
       local.saveRotations(previousRotations);
       local.setActiveRotationId(previousActiveRotationId);
+      local.saveSlaberanLocations(previousSlaberanLocations);
+      local.saveSlaberanTemplates(previousSlaberanTemplates);
       local.clearAllFollowUpDrafts();
 
       for (const [patientId, draft] of Object.entries(previousDrafts)) {
