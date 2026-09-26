@@ -5,6 +5,7 @@ type TopHeaderProps = {
   searchValue: string;
   onSearchChange: (value: string) => void;
   searchEnabled: boolean;
+  activeItem: string;
   onMenuClick: () => void;
 };
 
@@ -12,6 +13,7 @@ export default function TopHeader({
   searchValue,
   onSearchChange,
   searchEnabled,
+  activeItem,
   onMenuClick,
 }: TopHeaderProps) {
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -52,11 +54,11 @@ export default function TopHeader({
             />
           </label>
         ) : (
-          <div className="hidden min-w-0 sm:block xl:hidden">
-            <p className="text-xs font-semibold text-slate-500">
-              RekamMedisku
+          <div className="min-w-0 flex-1 xl:hidden">
+            <p className="truncate text-sm font-bold text-slate-800 sm:text-left">
+              {activeItem}
             </p>
-            <p className="truncate text-[11px] text-slate-400">
+            <p className="hidden truncate text-[11px] text-slate-400 sm:block">
               Workspace dokumentasi klinis pribadi
             </p>
           </div>
