@@ -87,14 +87,16 @@ export default function PatientProfileHeader({
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5 xl:shrink-0">
-            <button
-              type="button"
-              onClick={onFollowUp}
+            {patient.status === "Aktif" ? (
+              <button
+                type="button"
+                onClick={onFollowUp}
               className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/25 transition hover:bg-blue-700"
             >
               <span className="text-base leading-none">+</span>
-              Follow-Up Baru
-            </button>
+                Follow-Up Baru
+              </button>
+            ) : null}
             <button
               type="button"
               onClick={onReport}
