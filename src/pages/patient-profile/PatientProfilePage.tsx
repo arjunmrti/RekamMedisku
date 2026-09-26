@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import FollowUpTimeline from "../../components/patient-profile/FollowUpTimeline";
 import LatestFollowUp from "../../components/patient-profile/LatestFollowUp";
@@ -7,6 +7,10 @@ import PatientProfileHeader from "../../components/patient-profile/PatientProfil
 import ProfileTabs, { type ProfileTab } from "../../components/patient-profile/ProfileTabs";
 import SupportingExams from "../../components/patient-profile/SupportingExams";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
+import {
+  getSupabaseFollowUpErrorMessage,
+  syncFollowUpsForPatientWithSupabase,
+} from "../../data/supabaseFollowUps";
 import { loadRotations } from "../../data/localRotations";
 import type { PatientListItem } from "../../types/patient";
 import Icon from "../../components/ui/Icon";
@@ -28,17 +32,35 @@ export default function PatientProfilePage({
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const examsRef = useRef<HTMLDivElement | null>(null);
   const followUpRef = useRef<HTMLDivElement | null>(null);
+  const [followUps, setFollowUps] = useState(() =>
+    loadSavedFollowUps()[patient.id] ?? [],
+  );
+  const [followUpError, setFollowUpError] = useState("");
 
-  const followUps = useMemo(() => {
-    const local = loadSavedFollowUps()[patient.id] ?? [];
+  useEffect(() => {
+    let cancelled = false;
 
-    return [...local]
-      .filter((entry, index, entries) => {
-        return entries.findIndex((candidate) => candidate.id === entry.id) === index;
+    void syncFollowUpsForPatientWithSupabase(patient.id)
+      .then((entries) => {
+        if (!cancelled) {
+          setFollowUps(entries);
+          setFollowUpError("");
+        }
       })
-      .sort((a, b) =>
-        (b.isoDate + b.time).localeCompare(a.isoDate + a.time),
-      );
+      .catch((error) => {
+        if (!cancelled) {
+          setFollowUpError(
+            getSupabaseFollowUpErrorMessage(
+              error,
+              "Data follow-up online gagal dimuat. Data lokal tetap digunakan.",
+            ),
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [patient.id]);
 
   const latestFollowUp = followUps[0] ?? null;
@@ -126,6 +148,15 @@ export default function PatientProfilePage({
           />
 
           <ProfileTabs activeTab={activeTab} onChange={handleTabChange} />
+
+          {followUpError ? (
+            <div
+              role="status"
+              className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-xs font-medium text-amber-700"
+            >
+              {followUpError}
+            </div>
+          ) : null}
 
           <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-12">
             <section className="min-w-0 space-y-6 xl:col-span-8">
