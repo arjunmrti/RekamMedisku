@@ -3,7 +3,6 @@ import DashboardPage from "./pages/dashboard/DashboardPage";
 import PatientProfilePage from "./pages/patient-profile/PatientProfilePage";
 import FollowUpFormPage from "./pages/follow-up/FollowUpFormPage";
 import ReportGeneratorPage, { type ReportMode } from "./pages/reports/ReportGeneratorPage";
-import SlaberanPage from "./pages/reports/SlaberanPage";
 import PatientsPage from "./pages/patients/PatientsPage";
 import BackupDataPage from "./pages/backup/BackupDataPage";
 import RotationManagementPage from "./pages/rotations/RotationManagementPage";
