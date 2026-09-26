@@ -17,7 +17,7 @@ type RotationFormModalProps = {
     startDate: string;
     endDate: string;
     status: RotationStatus;
-  }) => void;
+  }) => void | Promise<void>;
 };
 
 const specialties: RotationSpecialty[] = [
@@ -50,11 +50,14 @@ export default function RotationFormModal({
     () => rotation?.status ?? "Mendatang",
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const isActiveRotation = rotation?.status === "Aktif";
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (submitting) return;
 
     if (!name.trim() || !startDate || !endDate) {
       setErrorMessage("Nama stase, tanggal mulai, dan tanggal selesai wajib diisi.");
@@ -67,17 +70,24 @@ export default function RotationFormModal({
     }
 
     setErrorMessage("");
+    setSubmitting(true);
 
-    onSubmit({
-      id: rotation?.id,
-      name,
-      specialty,
-      startDate,
-      endDate,
-      status,
-    });
+    try {
+      await onSubmit({
+        id: rotation?.id,
+        name,
+        specialty,
+        startDate,
+        endDate,
+        status,
+      });
 
-    onClose();
+      onClose();
+    } catch {
+      setErrorMessage("Stase belum tersimpan. Periksa koneksi lalu coba lagi.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!open) return null;
@@ -219,10 +229,11 @@ export default function RotationFormModal({
             </button>
             <button
               type="submit"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700"
+              disabled={submitting}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Icon name="check" className="h-4 w-4" />
-              Simpan Stase
+              {submitting ? "Menyimpan..." : "Simpan Stase"}
             </button>
           </div>
         </form>
