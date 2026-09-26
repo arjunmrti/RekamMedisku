@@ -6,7 +6,7 @@ import {
   serializeBackup,
   type RestoreBackupLocalState,
 } from "../src/utils/backup";
-import type { BackupPayload } from "../src/types/backup";
+import { BACKUP_SCHEMA_VERSION, type BackupPayload } from "../src/types/backup";
 import type { FollowUpFormValues } from "../src/types/followUpForm";
 import type { Rotation } from "../src/types/rotation";
 import type { StoredAttachment } from "../src/data/localAttachments";
@@ -31,7 +31,7 @@ const patient = {
 };
 
 const basePayload: BackupPayload = {
-  schemaVersion: 1,
+  schemaVersion: BACKUP_SCHEMA_VERSION,
   product: "RekamMedisku",
   exportedAt: "2026-09-26T00:00:00.000Z",
   patients: [patient],
@@ -267,6 +267,17 @@ function withDraft(): BackupPayload {
     },
   };
 }
+
+test("backup menolak schema version yang tidak didukung", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    schemaVersion: BACKUP_SCHEMA_VERSION + 1,
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
 
 test("backup lama tanpa field attachments tetap valid", () => {
   const result = parseBackupText(serializeBackup(basePayload));
@@ -623,7 +634,7 @@ test("restore mempertahankan konfigurasi Slaberan lama ketika backup legacy tida
       showEmptyRooms: true,
       blocks: [],
       settings: {},
-      schemaVersion: 1,
+      schemaVersion: BACKUP_SCHEMA_VERSION,
       isDefault: true,
       createdAt: "2026-09-01T00:00:00.000Z",
       updatedAt: "2026-09-01T00:00:00.000Z",
