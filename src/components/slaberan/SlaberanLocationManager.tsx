@@ -45,6 +45,7 @@ export default function SlaberanLocationManager({ onBack }: Props) {
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const patients = useMemo(() => loadPatients(), []);
 
   const floors = useMemo(
