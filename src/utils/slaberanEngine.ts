@@ -12,6 +12,7 @@ import {
   getDiagnosisSummary,
   normalizeSlaberanDoctorName,
 } from "./slaberanFacts";
+import { normalizePatientLocationType } from "./patientLocation";
 
 type EngineOptions = {
   template: SlaberanTemplateRecord;
@@ -37,6 +38,18 @@ function normalize(value: string) {
 
 function patientMatchesDoctor(patient: PatientListItem, doctor: string) {
   return normalizeSlaberanDoctorName(patient.doctor) === doctor;
+}
+
+function getPatientLocationType(patient: PatientListItem) {
+  const current = patient.currentLocation;
+  return normalizePatientLocationType(
+    current?.type,
+    current?.name ?? patient.room,
+  );
+}
+
+function isSpecialUnitPatient(patient: PatientListItem) {
+  return getPatientLocationType(patient) === "special";
 }
 
 function patientLine(
@@ -86,7 +99,7 @@ function findPatientsForLocation(
     return (
       location.type !== "floor" &&
       normalize(current?.name ?? patient.room) === normalize(location.name) &&
-      (current?.type ?? "ward") ===
+      getPatientLocationType(patient) ===
         (location.type === "special" ? "special" : "ward")
     );
   });
@@ -193,7 +206,7 @@ function appendPatientList(
     config.includeSpecialUnitPatients === true
       ? patientContexts
       : patientContexts.filter(
-          (context) => context.patient.currentLocation?.type !== "special",
+          (context) => !isSpecialUnitPatient(context.patient),
         );
   const fields =
     config.fields ?? ["name", "age", "rm", "doctor", "bed", "diagnosis"];
