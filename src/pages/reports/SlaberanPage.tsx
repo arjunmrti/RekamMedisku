@@ -89,6 +89,10 @@ export default function SlaberanPage({
   const [copied, setCopied] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [syncNotice, setSyncNotice] = useState("");
+  const [templates, setTemplates] = useState<SlaberanTemplateRecord[]>(
+    getReportTemplates(),
+  );
+  const [locations: activeLocations, setLocations] = useState(loadSlaberanLocations());
 
   const allPatients = useMemo(
     () =>
@@ -105,14 +109,9 @@ export default function SlaberanPage({
     [workspaceSyncVersion],
   );
 
-  const locations = useMemo(
-    () => loadSlaberanLocations().filter((location) => location.isActive),
-    [workspaceSyncVersion],
-  );
-
-  const templates = useMemo(
-    getReportTemplates,
-    [workspaceSyncVersion],
+  const activeLocations = useMemo(
+    () => locations.filter((location) => location.isActive),
+    [locations],
   );
 
   const selectedTemplate = useMemo(() => {
@@ -146,18 +145,38 @@ export default function SlaberanPage({
   );
 
   useEffect(() => {
+    let disposed = false;
+
     void Promise.all([
       syncSlaberanLocationsWithSupabase(),
       syncSlaberanTemplatesWithSupabase(),
     ])
-      .then(() => setSyncNotice(""))
+      .then(([nextLocations, nextTemplates]) => {
+        if (disposed) return;
+
+        setLocations(nextLocations);
+        setTemplates(
+          nextTemplates.length > 0
+            ? nextTemplates
+            : [createStarterSlaberanTemplate()],
+        );
+        setSyncNotice("");
+      })
       .catch((error: unknown) => {
+        if (disposed) return;
+
+        setLocations(loadSlaberanLocations());
+        setTemplates(getReportTemplates());
         setSyncNotice(
           error instanceof Error
             ? "Data Slaberan menggunakan cache lokal. " + error.message
             : "Data Slaberan menggunakan cache lokal.",
         );
       });
+
+    return () => {
+      disposed = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -205,7 +224,7 @@ export default function SlaberanPage({
         date,
         patients: allPatients,
         followUpsByPatient,
-        locations,
+        locations: activeLocations,
       }),
     );
     setEditing(false);
@@ -476,7 +495,7 @@ export default function SlaberanPage({
                         : " · Template umum"}
                     </p>
                     <p className="mt-1 text-[10px] text-slate-400">
-                      {locations.length} lokasi aktif tersedia untuk generator.
+                      {activeLocations.length} lokasi aktif tersedia untuk generator.
                     </p>
                   </div>
                   <button
@@ -579,7 +598,7 @@ export default function SlaberanPage({
                   <div className="flex items-start justify-between gap-4">
                     <span className="text-slate-400">Lokasi aktif</span>
                     <span className="text-right font-semibold text-slate-700">
-                      {locations.length}
+                      {activeLocations.length}
                     </span>
                   </div>
                   <div className="flex items-start justify-between gap-4">
