@@ -1,5 +1,6 @@
 import type { BackupPayload } from "../types/backup";
 import { supabase } from "../utils/supabase";
+import { uploadBackupAttachmentsWithSupabase } from "./supabaseAttachments";
 
 const ROTATION_ID_MAP_KEY = "rekammedisku:supabase-rotation-ids";
 const PATIENT_ID_MAP_KEY = "rekammedisku:supabase-patient-ids";
@@ -111,6 +112,10 @@ export async function restoreWorkspaceBackupWithSupabase(
     rotations: payload.rotations,
     activeRotationId: payload.activeRotationId ?? "",
   };
+
+  // Upload binary attachments before replacing the cloud database snapshot.
+  // The RPC only stores attachment metadata, so Storage must be populated first.
+  await uploadBackupAttachmentsWithSupabase(payload.attachments);
 
   const { data, error } = await supabase.rpc("restore_workspace_backup", {
     p_backup: cloudPayload,
