@@ -211,6 +211,15 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
   const rows = (remoteRows ?? []) as PatientRow[];
   const remoteIds = new Set(rows.map((row) => row.id));
 
+  // Drop stale remote mappings before resolving local IDs. Without this,
+  // a patient recreated in Supabase could bypass the matching local patient
+  // and receive a new local ID, detaching its local follow-up history.
+  for (const [localId, remoteId] of Object.entries(patientMap)) {
+    if (!remoteIds.has(remoteId)) {
+      delete patientMap[localId];
+    }
+  }
+
   // Supabase is the source of truth for synced patient data. Rebuild the
   // local cache from remote rows so stale browser entries cannot resurrect.
   let nextLocal: PatientListItem[] = [];
@@ -246,13 +255,6 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
       ...toPatient(row, localId),
       rotationId: localRotationId,
     });
-  }
-
-  // Remove mappings for patients that no longer exist in the cloud.
-  for (const [localId, remoteId] of Object.entries(patientMap)) {
-    if (!remoteIds.has(remoteId)) {
-      delete patientMap[localId];
-    }
   }
 
   saveMap(PATIENT_ID_MAP_KEY, patientMap);
