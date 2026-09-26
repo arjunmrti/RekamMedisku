@@ -6,7 +6,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY INVOKER
 SET search_path = public
-AS $$
+AS $slaberan$
 DECLARE
   ancestor_id uuid;
 BEGIN
@@ -58,7 +58,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$;
+$slaberan$;
 
 DROP TRIGGER IF EXISTS trg_validate_slaberan_location_parent
   ON public.slaberan_locations;
@@ -85,7 +85,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY INVOKER
 SET search_path = public
-AS $$
+AS $slaberan$
 BEGIN
   IF NEW.is_default THEN
     UPDATE public.slaberan_templates
@@ -98,7 +98,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$;
+$slaberan$;
 
 DROP TRIGGER IF EXISTS trg_enforce_slaberan_single_default_template
   ON public.slaberan_templates;
@@ -114,3 +114,153 @@ GRANT EXECUTE
     public.validate_slaberan_location_parent(),
     public.enforce_slaberan_single_default_template()
   TO authenticated;
+
+-- Harden pre-existing public trigger functions and avoid exposing the
+-- SECURITY DEFINER event-trigger helper through the Data API.
+ALTER FUNCTION public.set_updated_at()
+  SET search_path = pg_catalog;
+
+REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated;
+
+-- Cover the existing supporting-exams ownership foreign key.
+CREATE INDEX IF NOT EXISTS supporting_exams_user_id_idx
+  ON public.supporting_exams (user_id);
+
+-- Evaluate auth.uid() once per statement rather than once per row.
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+CREATE POLICY "Users can view own profile"
+  ON public.profiles
+  FOR SELECT
+  TO authenticated
+  USING ((select auth.uid()) = id);
+
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = id);
+
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile"
+  ON public.profiles
+  FOR UPDATE
+  TO authenticated
+  USING ((select auth.uid()) = id)
+  WITH CHECK ((select auth.uid()) = id);
+
+DROP POLICY IF EXISTS "Users can view own rotations" ON public.rotations;
+CREATE POLICY "Users can view own rotations"
+  ON public.rotations
+  FOR SELECT
+  TO authenticated
+  USING ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own rotations" ON public.rotations;
+CREATE POLICY "Users can insert own rotations"
+  ON public.rotations
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can update own rotations" ON public.rotations;
+CREATE POLICY "Users can update own rotations"
+  ON public.rotations
+  FOR UPDATE
+  TO authenticated
+  USING ((select auth.uid()) = user_id)
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own rotations" ON public.rotations;
+CREATE POLICY "Users can delete own rotations"
+  ON public.rotations
+  FOR DELETE
+  TO authenticated
+  USING ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can view own patients" ON public.patients;
+CREATE POLICY "Users can view own patients"
+  ON public.patients
+  FOR SELECT
+  TO authenticated
+  USING ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own patients" ON public.patients;
+CREATE POLICY "Users can insert own patients"
+  ON public.patients
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can update own patients" ON public.patients;
+CREATE POLICY "Users can update own patients"
+  ON public.patients
+  FOR UPDATE
+  TO authenticated
+  USING ((select auth.uid()) = user_id)
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own patients" ON public.patients;
+CREATE POLICY "Users can delete own patients"
+  ON public.patients
+  FOR DELETE
+  TO authenticated
+  USING ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can view own follow ups" ON public.follow_ups;
+CREATE POLICY "Users can view own follow ups"
+  ON public.follow_ups
+  FOR SELECT
+  TO authenticated
+  USING ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own follow ups" ON public.follow_ups;
+CREATE POLICY "Users can insert own follow ups"
+  ON public.follow_ups
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can update own follow ups" ON public.follow_ups;
+CREATE POLICY "Users can update own follow ups"
+  ON public.follow_ups
+  FOR UPDATE
+  TO authenticated
+  USING ((select auth.uid()) = user_id)
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own follow ups" ON public.follow_ups;
+CREATE POLICY "Users can delete own follow ups"
+  ON public.follow_ups
+  FOR DELETE
+  TO authenticated
+  USING ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can view own supporting exams" ON public.supporting_exams;
+CREATE POLICY "Users can view own supporting exams"
+  ON public.supporting_exams
+  FOR SELECT
+  TO authenticated
+  USING ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can insert own supporting exams" ON public.supporting_exams;
+CREATE POLICY "Users can insert own supporting exams"
+  ON public.supporting_exams
+  FOR INSERT
+  TO authenticated
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can update own supporting exams" ON public.supporting_exams;
+CREATE POLICY "Users can update own supporting exams"
+  ON public.supporting_exams
+  FOR UPDATE
+  TO authenticated
+  USING ((select auth.uid()) = user_id)
+  WITH CHECK ((select auth.uid()) = user_id);
+
+DROP POLICY IF EXISTS "Users can delete own supporting exams" ON public.supporting_exams;
+CREATE POLICY "Users can delete own supporting exams"
+  ON public.supporting_exams
+  FOR DELETE
+  TO authenticated
+  USING ((select auth.uid()) = user_id);
