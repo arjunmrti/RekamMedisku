@@ -4,6 +4,8 @@ import type { FollowUpEntry } from "../src/types/followUp";
 import type { PatientListItem } from "../src/types/patient";
 import type { SlaberanLocation } from "../src/types/slaberanLocation";
 import type { SlaberanTemplateRecord } from "../src/types/slaberanTemplate";
+import { buildSlaberanReport } from "../src/utils/slaberanGenerator";
+import { createStarterSlaberanTemplate } from "../src/utils/slaberanTemplate";
 import { renderSlaberanTemplate } from "../src/utils/slaberanEngine";
 
 const patient = (
@@ -266,10 +268,7 @@ test("pasien Unit Khusus tidak duplikat di Patient List secara default", () => {
   assert.match(report, /Bima/);
 });
 
-test("starter template tetap dapat menghasilkan bangsal legacy tanpa registry lokasi", async () => {
-  const { createStarterSlaberanTemplate } = await import("../src/utils/slaberanTemplate");
-  const { buildSlaberanReport } = await import("../src/utils/slaberanGenerator");
-
+test("starter template tetap dapat menghasilkan bangsal legacy tanpa registry lokasi", () => {
   const report = buildSlaberanReport(createStarterSlaberanTemplate(), {
     doctor: "dr. Supardi",
     date: "2026-09-27",
