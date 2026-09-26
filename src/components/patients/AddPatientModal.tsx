@@ -54,7 +54,6 @@ export default function AddPatientModal({
     if (!open) return;
 
     setAdmissionDate(patient?.admissionDate ?? toLocalIsoDate());
-    setAdmissionComplaint(patient?.admissionComplaint ?? "");
   }, [open, patient?.id]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

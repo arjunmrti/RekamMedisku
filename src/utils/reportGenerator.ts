@@ -159,8 +159,7 @@ export function buildWhatsAppReport(
     followUp.subjective.trim(),
   ]
     .filter(Boolean)
-    .join("
-");
+    .join("\n");
 
   const supportingBlock =
     exams.length > 0
