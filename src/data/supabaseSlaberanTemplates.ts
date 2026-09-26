@@ -167,7 +167,9 @@ export async function createSlaberanTemplate(
 
   if (error) throw new Error(getErrorMessage(error));
 
-  return toTemplate(data);
+  const createdTemplate = toTemplate(data);
+  await syncSlaberanTemplatesWithSupabase();
+  return createdTemplate;
 }
 
 export async function updateSlaberanTemplate(
@@ -210,7 +212,9 @@ export async function updateSlaberanTemplate(
 
   if (error) throw new Error(getErrorMessage(error));
 
-  return toTemplate(data);
+  const updatedTemplate = toTemplate(data);
+  await syncSlaberanTemplatesWithSupabase();
+  return updatedTemplate;
 }
 
 export async function deleteSlaberanTemplate(
