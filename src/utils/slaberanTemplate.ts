@@ -62,6 +62,7 @@ export function createStarterSlaberanTemplate(): SlaberanTemplateRecord {
         patientSeparator: "/",
         showPatientIndex: true,
         emptyText: "Belum ada pasien.",
+        includeSpecialUnitPatients: false,
       }),
       block("special", "special-unit-list", "Unit Khusus", {
         showEmptyRooms: true,
