@@ -26,6 +26,7 @@ export function formatLocalDateForFile(date = new Date()) {
 
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const TIME_INPUT_PATTERN = /^(\d{2}):(\d{2})$/;
+const DISPLAY_TIME_PATTERN = /^(\d{2})\.(\d{2})$/;
 const ISO_DATETIME_PATTERN =
   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{3})?Z?$/;
 
@@ -50,6 +51,16 @@ export function isValidIsoDate(value: string) {
 
 export function isValidTimeInput(value: string) {
   const match = TIME_INPUT_PATTERN.exec(value);
+  if (!match) return false;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59;
+}
+
+export function isValidDisplayTime(value: string) {
+  const match = DISPLAY_TIME_PATTERN.exec(value);
   if (!match) return false;
 
   const hours = Number(match[1]);
