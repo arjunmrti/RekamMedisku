@@ -12,39 +12,20 @@ export function formatReportDate(date: string) {
   return date || "Tanggal belum tersedia";
 }
 
-const REPORT_MONTH_PATTERN =
-  "(?:Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|" +
-  "Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)";
+const REPORT_MONTH_SUFFIX =
+  /\s*[([\\{]?\s*(?:\d{4}\s+)?(?:Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)(?:\s+\d{4})?\s*[])}]?\s*$/i;
 
 export function formatReportRotationName(
   rotationName: string | undefined,
   fallback: string,
 ) {
   const source = rotationName?.trim() || fallback;
-  const compact = source.replace(/\\s+/g, " ").trim();
+  const compact = source.replace(/\s+/g, " ").trim();
 
-  const withoutMonthSuffix = compact
-    .replace(
-      new RegExp(
-        `\\s*[([\\{]?\\s*(?:\\d{4}\\s+)?${REPORT_MONTH_PATTERN}(?:\\s+\\d{4})?\\s*[])}]?\\s*import type { FollowUpEntry } from "../types/followUp";
-import type { PatientListItem } from "../types/patient";
-import type { ReportTemplateType } from "../types/report";
-import type { RotationSpecialty } from "../types/rotation";
-
-function cleanBlock(value: string) {
-  const text = value.trim();
-  return text || "Belum ada catatan.";
-}
-
-,
-        "i",
-      ),
-      "",
-    )
-    .trim();
+  const withoutMonthSuffix = compact.replace(REPORT_MONTH_SUFFIX, "").trim();
 
   const withoutRolePrefix = withoutMonthSuffix
-    .replace(/^(?:Rotasi|Stase)\\s+/i, "")
+    .replace(/^(?:Rotasi|Stase)\s+/i, "")
     .trim();
 
   return withoutRolePrefix || fallback;
