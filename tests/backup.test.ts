@@ -167,6 +167,15 @@ test("backup baru membawa attachment IndexedDB yang direferensikan follow-up", (
   assert.equal(result.data.attachments?.[0]?.id, "att-test");
 });
 
+test("backup lama tanpa attachment tetap ditolak jika masih mereferensikan attachment", () => {
+  const payload = withAttachment("att-missing-legacy");
+  payload.attachments = undefined;
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
 test("backup ditolak jika attachment yang direferensikan tidak ikut dibawa", () => {
   const payload = withAttachment("att-missing");
   payload.attachments = [];
@@ -215,6 +224,17 @@ test("backup menolak tanggal draf yang tidak valid", () => {
 test("backup menolak jam draf yang tidak valid", () => {
   const payload = withDraft();
   payload.followUpDrafts[patient.id].followUpTime = "12:60";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak pasien tanpa rotationId", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    patients: [{ ...patient, rotationId: "" }],
+  };
 
   const result = parseBackupText(serializeBackup(payload));
 
