@@ -218,7 +218,7 @@ test("alur browser utama: login → stase → pasien → follow-up → backup", 
     page.getByRole("heading", { name: "Stase Saya" }),
   ).toBeVisible();
 
-  await page.getByRole("button", { name: "Tambah Stase" }).click();
+  await page.getByRole("button", { name: "Tambah Stase" }).first().click();
   await page.getByLabel("Nama stase").fill("E2E Neurologi");
   await page.getByLabel("Specialty").selectOption({ label: "Neurologi" });
   await page.getByLabel("Start date").fill("2026-09-27");
