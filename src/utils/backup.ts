@@ -401,6 +401,10 @@ function normalizePatient(value: unknown): PatientListItem | null {
       typeof value.createdAt === "string" ? value.createdAt : undefined,
     admissionDate:
       typeof value.admissionDate === "string" ? value.admissionDate : undefined,
+    admissionComplaint:
+      typeof value.admissionComplaint === "string"
+        ? value.admissionComplaint
+        : undefined,
     status: value.status,
   };
 }
