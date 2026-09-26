@@ -128,6 +128,28 @@ test("attachment pada form yang sedang aktif dapat dipertahankan sebagai referen
   );
 });
 
+test("attachment yang masih pending di form tetap dianggap ter-referensi", () => {
+  storage.clear();
+
+  assert.ok(
+    getReferencedAttachmentIds(
+      undefined,
+      undefined,
+      ["att-pending"],
+    ).has("att-pending"),
+  );
+
+  assert.deepEqual(
+    getUnreferencedAttachmentIds(
+      ["att-pending", "att-orphan"],
+      undefined,
+      undefined,
+      ["att-pending"],
+    ),
+    ["att-orphan"],
+  );
+});
+
 test("hanya attachment yang tidak direferensikan yang masuk kandidat cleanup", () => {
   storage.clear();
   storage.setItem(
