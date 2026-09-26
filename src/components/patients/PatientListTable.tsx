@@ -8,6 +8,7 @@ type PatientListTableProps = {
   onSelectPatient: (patient: PatientListItem) => void;
   onEditPatient: (patient: PatientListItem) => void;
   onToggleArchive: (patient: PatientListItem) => void;
+  onDeletePatient: (patient: PatientListItem) => void | Promise<void>;
 };
 
 function getInitials(name: string) {
@@ -53,6 +54,7 @@ export default function PatientListTable({
   onSelectPatient,
   onEditPatient,
   onToggleArchive,
+  onDeletePatient,
 }: PatientListTableProps) {
   if (patients.length === 0) {
     return (
@@ -89,7 +91,7 @@ export default function PatientListTable({
       </div>
 
       <div className="hidden overflow-x-auto xl:block">
-        <table className="w-full min-w-[900px] border-collapse text-left">
+        <table className="w-full min-w-[980px] border-collapse text-left">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
               <th className="min-w-[220px] px-5 py-3.5 font-bold xl:px-6">Nama Pasien</th>
@@ -98,7 +100,7 @@ export default function PatientListTable({
               <th className="min-w-[150px] px-3 py-3.5 font-bold">DPJP</th>
               <th className="min-w-[170px] px-3 py-3.5 font-bold">Follow-Up Terakhir</th>
               <th className="w-[100px] px-3 py-3.5 font-bold">Status</th>
-              <th className="w-[82px] px-3 py-3.5 text-right font-bold">
+              <th className="w-[150px] px-3 py-3.5 text-right font-bold">
                 <span className="sr-only">Aksi</span>
               </th>
             </tr>
@@ -162,7 +164,7 @@ export default function PatientListTable({
                   </td>
 
                   <td className="px-3 py-3.5">
-                    <div className="flex items-center justify-end">
+                    <div className="flex items-center justify-end gap-1">
                       <button
                         type="button"
                         onClick={(event) => {
@@ -187,6 +189,16 @@ export default function PatientListTable({
                         }
                       >
                         {patient.status === "Aktif" ? "Arsip" : "Pulihkan"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          void onDeletePatient(patient);
+                        }}
+                        className="rounded-lg px-2 py-2 text-[10px] font-semibold text-rose-600 transition-colors hover:bg-rose-50 hover:text-rose-700"
+                      >
+                        Hapus
                       </button>
                     </div>
                   </td>
@@ -248,11 +260,11 @@ export default function PatientListTable({
               </div>
             </button>
 
-            <div className="mt-2 flex gap-2 border-t border-slate-100 pt-3">
+            <div className="mt-2 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3">
               <button
                 type="button"
                 onClick={() => onEditPatient(patient)}
-                className="min-h-10 flex-1 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                className="min-h-10 rounded-lg border border-slate-200 px-3 text-xs font-semibold text-slate-700 hover:bg-slate-50"
               >
                 Edit
               </button>
@@ -260,13 +272,20 @@ export default function PatientListTable({
                 type="button"
                 onClick={() => onToggleArchive(patient)}
                 className={
-                  "min-h-10 flex-1 rounded-lg border px-3 text-xs font-semibold hover:bg-slate-50 " +
+                  "min-h-10 rounded-lg border px-3 text-xs font-semibold hover:bg-slate-50 " +
                   (patient.status === "Aktif"
                     ? "border-rose-100 text-rose-600"
                     : "border-emerald-100 text-emerald-600")
                 }
               >
                 {patient.status === "Aktif" ? "Arsipkan" : "Pulihkan"}
+              </button>
+              <button
+                type="button"
+                onClick={() => void onDeletePatient(patient)}
+                className="min-h-10 rounded-lg border border-rose-100 px-3 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+              >
+                Hapus
               </button>
             </div>
           </div>
