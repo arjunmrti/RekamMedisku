@@ -53,8 +53,6 @@ export default function RotationFormModal({
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  const isActiveRotation = rotation?.status === "Aktif";
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -198,11 +196,10 @@ export default function RotationFormModal({
             </span>
             <select
               value={status}
-              disabled={isActiveRotation}
               onChange={(event) =>
                 setStatus(event.target.value as RotationStatus)
               }
-              className="field-control disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+              className="field-control"
             >
               {statuses.map((item) => (
                 <option key={item}>{item}</option>
@@ -210,11 +207,6 @@ export default function RotationFormModal({
             </select>
           </label>
 
-          {isActiveRotation ? (
-            <p className="rounded-xl border border-blue-100 bg-blue-50/60 px-3 py-2 text-[11px] leading-relaxed text-slate-500">
-              Stase aktif harus tetap berstatus Aktif. Pilih stase lain dari halaman Stase Saya untuk berpindah konteks.
-            </p>
-          ) : null}
 
           {errorMessage ? (
             <p
