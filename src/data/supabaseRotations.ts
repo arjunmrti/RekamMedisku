@@ -212,19 +212,9 @@ export async function syncRotationsWithSupabase(): Promise<Rotation[]> {
     );
   }
 
-  // A completely new workspace still needs a usable default rotation.
-  if (rows.length === 0 && localRotations.length > 0) {
-    const seed = localRotations[0];
-
-    const insertedRow = await insertLocalRotation(
-      seed,
-      userId,
-      idMap,
-    );
-
-    nextLocal = [toRotation(insertedRow as RotationRow, seed.id)];
-  }
-
+  // An empty cloud workspace stays empty.
+  // Rotations are created explicitly from Stase Saya; stale local data is
+  // never promoted back to Supabase automatically.
   for (const [localId, remoteId] of Object.entries(idMap)) {
     if (!remoteIds.has(remoteId)) {
       delete idMap[localId];
