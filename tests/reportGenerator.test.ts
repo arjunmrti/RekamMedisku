@@ -126,7 +126,10 @@ test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", ()
     },
   );
 
-  assert.match(report, /^Selamat malam Dok, izin melaporkan follow-up pasien:/);
+  assert.match(
+    report,
+    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Rotasi Neurologi September\. Mohon izin melaporkan follow-up pasien:/,
+  );
   assert.match(report, /Stase: Rotasi Neurologi September/);
   assert.match(report, /Pemeriksaan neurologis:/);
   assert.match(report, /- Kesadaran: Compos mentis/);
@@ -152,7 +155,7 @@ test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
 
   assert.match(
     report,
-    /^Selamat siang Dok, izin melaporkan follow-up pasien:/,
+    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Interna Agustus\. Mohon izin melaporkan follow-up pasien:/,
   );
   assert.match(report, /Stase: Interna Agustus/);
   assert.match(report, /Pemeriksaan sistemik Ilmu Penyakit Dalam:/);
