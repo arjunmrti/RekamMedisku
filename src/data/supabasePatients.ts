@@ -14,9 +14,6 @@ type PatientRow = {
   room: string;
   bed: string;
   doctor: string;
-  last_follow_up: string;
-  follow_up_number: number;
-  last_follow_up_at: string | null;
   created_at: string;
   admission_date: string | null;
   status: string;
@@ -61,7 +58,11 @@ function normalizeGender(value: string): PatientListItem["gender"] {
   return value === "Perempuan" ? "Perempuan" : "Laki-laki";
 }
 
-function toPatient(row: PatientRow, localId: string): PatientListItem {
+function toPatient(
+  row: PatientRow,
+  localId: string,
+  existingPatient?: PatientListItem,
+): PatientListItem {
   return {
     id: localId,
     rotationId: row.rotation_id,
@@ -72,9 +73,10 @@ function toPatient(row: PatientRow, localId: string): PatientListItem {
     room: row.room,
     bed: row.bed,
     doctor: row.doctor,
-    lastFollowUp: row.last_follow_up,
-    followUpNumber: row.follow_up_number,
-    lastFollowUpAt: row.last_follow_up_at ?? undefined,
+    lastFollowUp:
+      existingPatient?.lastFollowUp ?? "Belum ada follow-up",
+    followUpNumber: existingPatient?.followUpNumber ?? 0,
+    lastFollowUpAt: existingPatient?.lastFollowUpAt,
     createdAt: row.created_at,
     admissionDate: row.admission_date ?? undefined,
     status: normalizeStatus(row.status),
@@ -120,9 +122,6 @@ function patientPayload(patient: PatientListItem, remoteRotationId: string) {
     room: patient.room,
     bed: patient.bed,
     doctor: patient.doctor,
-    last_follow_up: patient.lastFollowUp,
-    follow_up_number: patient.followUpNumber,
-    last_follow_up_at: patient.lastFollowUpAt ?? null,
     created_at: patient.createdAt ?? new Date().toISOString(),
     admission_date: patient.admissionDate ?? null,
     status: patient.status,
@@ -181,7 +180,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
   const { data: remoteRows, error } = await supabase
     .from("patients")
     .select(
-      "id,user_id,rotation_id,name,age,gender,rm,room,bed,doctor,last_follow_up,follow_up_number,last_follow_up_at,created_at,admission_date,status",
+      "id,user_id,rotation_id,name,age,gender,rm,room,bed,doctor,created_at,admission_date,status",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -218,8 +217,12 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
         ([, remoteId]) => remoteId === row.rotation_id,
       )?.[0] ?? row.rotation_id;
 
+    const existingPatient = nextLocal.find(
+      (patient) => patient.id === localId,
+    );
+
     nextLocal = mergePatientIntoLocal(nextLocal, {
-      ...toPatient(row, localId),
+      ...toPatient(row, localId, existingPatient),
       rotationId: localRotationId,
     });
   }
@@ -253,7 +256,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
     patientMap[localPatient.id] = data.id;
     nextLocal = mergePatientIntoLocal(
       nextLocal,
-      toPatient(data, localPatient.id),
+      toPatient(data, localPatient.id, localPatient),
     );
   }
 
