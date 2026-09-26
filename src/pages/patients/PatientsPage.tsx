@@ -220,7 +220,7 @@ export default function PatientsPage({
         onSearchChange={() => undefined}
         searchEnabled={false}
       >
-        <main className="flex-1 overflow-y-auto px-3 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-5 sm:py-5 md:px-6 lg:px-8 lg:py-7 lg:pb-8">
+        <main className="flex-1 overflow-y-auto px-3 py-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 sm:px-5 sm:py-5 md:px-6 lg:px-8 lg:py-7 lg:pb-8">
           <div className="mx-auto w-full max-w-[1400px]">
             <div className="space-y-4 sm:space-y-5">
               <section className="min-w-0 space-y-4 sm:space-y-5">

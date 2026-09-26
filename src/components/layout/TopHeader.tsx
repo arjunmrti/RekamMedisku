@@ -26,19 +26,19 @@ export default function TopHeader({
   }).format(new Date());
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-[#E5EAF1] bg-white px-4 lg:h-[72px] lg:px-8">
+    <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-2 border-b border-[#E5EAF1] bg-white px-3 sm:gap-3 sm:px-4 xl:h-[72px] xl:gap-6 xl:px-8">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           type="button"
           onClick={onMenuClick}
           aria-label="Buka menu navigasi"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 lg:hidden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 xl:hidden"
         >
           <Icon name="menu" className="h-5 w-5" />
         </button>
 
         {searchEnabled ? (
-          <label className="relative block w-full max-w-md">
+          <label className="relative block min-w-0 w-full max-w-md">
             <span className="sr-only">Cari pasien</span>
             <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
               <Icon name="search" className="h-4 w-4" />
@@ -52,7 +52,7 @@ export default function TopHeader({
             />
           </label>
         ) : (
-          <div className="hidden min-w-0 sm:block">
+          <div className="hidden min-w-0 sm:block xl:hidden">
             <p className="text-xs font-semibold text-slate-500">
               RekamMedisku
             </p>
@@ -63,7 +63,7 @@ export default function TopHeader({
         )}
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4 lg:gap-6">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-3 lg:gap-4 xl:gap-6">
         <div className="hidden items-center gap-2 text-xs font-medium text-slate-600 xl:flex">
           <Icon name="calendar" className="h-4 w-4 text-slate-400" />
           <span>{today}</span>
@@ -71,13 +71,13 @@ export default function TopHeader({
 
         <span
           aria-hidden="true"
-          className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-300"
+          className="hidden h-10 w-10 items-center justify-center rounded-xl text-slate-300 sm:flex"
         >
           <Icon name="bell" className="h-5 w-5" />
         </span>
 
-        <div className="flex items-center gap-2 border-l border-slate-200 pl-3 sm:gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#60708A] text-xs font-semibold text-white sm:h-10 sm:w-10">
+        <div className="flex items-center gap-2 border-l border-slate-200 pl-2 sm:gap-3 sm:pl-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#60708A] text-[11px] font-semibold text-white sm:h-10 sm:w-10">
             MF
           </div>
           <div className="hidden min-w-0 sm:block">
