@@ -21,6 +21,7 @@ const patient: PatientListItem = {
   doctor: "dr. Penguji",
   lastFollowUp: "26 September 2026 · 10.00",
   followUpNumber: 2,
+  admissionDate: "2026-09-01",
   status: "Aktif",
 };
 
@@ -131,6 +132,8 @@ test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", ()
     /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Rotasi Neurologi September\. Mohon izin melaporkan follow-up pasien:/,
   );
   assert.match(report, /Stase: Rotasi Neurologi September/);
+  assert.match(report, /Tanggal Masuk: 01 September 2026/);
+  assert.match(report, /Tanggal Follow-Up: 26 September 2026/);
   assert.match(report, /Pemeriksaan neurologis:/);
   assert.match(report, /- Kesadaran: Compos mentis/);
   assert.match(report, /- GCS E\/M\/V: 456/);
@@ -158,6 +161,8 @@ test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
     /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Interna Agustus\. Mohon izin melaporkan follow-up pasien:/,
   );
   assert.match(report, /Stase: Interna Agustus/);
+  assert.match(report, /Tanggal Masuk: 01 September 2026/);
+  assert.match(report, /Tanggal Follow-Up: 26 September 2026/);
   assert.match(report, /Pemeriksaan sistemik Ilmu Penyakit Dalam:/);
 
   const generalConditionMatches = report.match(/- Keadaan Umum: Baik/g) ?? [];
