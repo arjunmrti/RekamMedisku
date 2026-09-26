@@ -38,7 +38,6 @@ export function startWorkspaceSync(userId: string): () => void {
 
     void syncWorkspaceWithSupabase().catch((error) => {
       console.error("Supabase workspace sync failed:", error);
-      startPolling();
     });
   };
 
@@ -107,7 +106,6 @@ export function startWorkspaceSync(userId: string): () => void {
     )
     .subscribe((status) => {
       if (status === "SUBSCRIBED") {
-        stopPolling();
         return;
       }
 

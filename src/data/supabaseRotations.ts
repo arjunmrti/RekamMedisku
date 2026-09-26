@@ -268,6 +268,7 @@ export async function upsertRotationWithSupabase(input: {
   const previousRotations = loadRotations();
   const previousActiveId = loadActiveRotationId();
   const localId = input.id ?? "rotation-" + Date.now();
+  let remoteCommitted = false;
 
   try {
     const localResult = saveLocalRotation({
@@ -321,7 +322,7 @@ export async function upsertRotationWithSupabase(input: {
 
       if (!data) {
         throw new Error(
-          "Data stase sudah berubah di browser lain. Muat ulang data terbaru sebelum menyimpan perubahan.",
+          "Data stase sudah berubah di browser lain. Muat ulang stase terbaru sebelum menyimpan perubahan.",
         );
       }
 
@@ -334,21 +335,70 @@ export async function upsertRotationWithSupabase(input: {
       )) as RotationRow;
     }
 
+    remoteCommitted = true;
+
+    // The direct remote mutation is already committed. Reflect its authoritative
+    // fields/timestamp locally before any separate activation call.
+    let persistedRotations = mergeRotationIntoLocal(
+      previousRotations.filter((rotation) => rotation.id !== localId),
+      toRotation(remoteRow, localId),
+    );
+    saveRotations(persistedRotations);
     idMap[localId] = remoteRow.id;
-    saveIdMap(idMap);
 
     if (nextRotation.status === "Aktif") {
-      const { error: activateError } = await supabase.rpc("activate_rotation", {
-        target_rotation_id: remoteRow.id,
-      });
+      const { data: activatedRows, error: activateError } =
+        await supabase.rpc("activate_rotation", {
+          target_rotation_id: remoteRow.id,
+        });
 
       if (activateError) throw activateError;
+
+      const rows = (activatedRows ?? []) as RotationRow[];
+
+      if (rows.length) {
+        for (const row of rows) {
+          const mappedLocalId =
+            Object.entries(idMap).find(
+              ([, mappedRemoteId]) => mappedRemoteId === row.id,
+            )?.[0] ?? row.id;
+
+          idMap[mappedLocalId] = row.id;
+          persistedRotations = mergeRotationIntoLocal(
+            persistedRotations,
+            toRotation(row, mappedLocalId),
+          );
+        }
+
+        saveRotations(persistedRotations);
+      }
+
+      setActiveRotationId(localId);
+    } else if (previousActiveId === localId) {
+      setActiveRotationId("");
     }
 
-    return await syncRotationsWithSupabase();
+    try {
+      saveIdMap(idMap);
+    } catch (mapError) {
+      console.warn(
+        "Rotation ID mapping could not be persisted; the next workspace sync will recover it.",
+        mapError,
+      );
+    }
+
+    return persistedRotations;
   } catch (error) {
-    saveRotations(previousRotations);
-    setActiveRotationId(previousActiveId);
+    if (!remoteCommitted) {
+      saveRotations(previousRotations);
+      setActiveRotationId(previousActiveId);
+    } else {
+      console.warn(
+        "Cloud rotation mutation committed, but a later local step failed. Keeping the local state instead of rolling it back.",
+        error,
+      );
+    }
+
     throw new Error(getErrorMessage(error));
   }
 }
