@@ -143,6 +143,10 @@ test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", ()
   assert.match(report, /  Lampiran: rontgen\.png/);
   assert.match(report, /P: Lanjut observasi\./);
   assert.match(report, /I: Kontrol keluhan bila memburuk\./);
+  assert.match(
+    report,
+    /Terimakasih sebelumnya dokter, Mohon arahan dan bimbingannya dok🙏🏻$/,
+  );
 });
 
 test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
