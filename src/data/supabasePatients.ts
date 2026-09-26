@@ -100,7 +100,12 @@ function toPatient(
     room: row.current_location_name?.trim() || row.room,
     currentLocation: normalizePatientLocation(
       {
-        type: row.current_location_type as "ward" | "special" | null,
+        type:
+          row.current_location_type === "special"
+            ? "special"
+            : row.current_location_type === "ward"
+              ? "ward"
+              : undefined,
         name: row.current_location_name ?? "",
         bed: row.bed,
       },
@@ -112,7 +117,10 @@ function toPatient(
     admissionLocation: normalizePatientAdmissionLocation(
       row.admission_location_name
         ? {
-            type: row.admission_location_type as "ward" | "special" | null,
+            type:
+              row.admission_location_type === "special"
+                ? "special"
+                : "ward",
             name: row.admission_location_name,
           }
         : undefined,
@@ -387,7 +395,12 @@ export async function upsertPatientWithSupabase(
       room: remoteRow.current_location_name?.trim() || remoteRow.room,
       currentLocation: normalizePatientLocation(
         {
-          type: remoteRow.current_location_type as "ward" | "special" | null,
+          type:
+            remoteRow.current_location_type === "special"
+              ? "special"
+              : remoteRow.current_location_type === "ward"
+                ? "ward"
+                : undefined,
           name: remoteRow.current_location_name ?? "",
           bed: remoteRow.bed,
         },
@@ -399,7 +412,10 @@ export async function upsertPatientWithSupabase(
       admissionLocation: normalizePatientAdmissionLocation(
         remoteRow.admission_location_name
           ? {
-              type: remoteRow.admission_location_type as "ward" | "special" | null,
+              type:
+                remoteRow.admission_location_type === "special"
+                  ? "special"
+                  : "ward",
               name: remoteRow.admission_location_name,
             }
           : undefined,
