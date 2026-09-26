@@ -24,11 +24,11 @@ export default function AuthGate({ children }: AuthGateProps) {
 
     let cancelled = false;
 
+    let stopWorkspaceSync: (() => void) | null = null;
+
     async function hydrateWorkspace() {
       setWorkspaceLoading(true);
       setWorkspaceError("");
-
-      let stopWorkspaceSync: (() => void) | null = null;
 
       try {
         // Hydrate the cloud workspace before rendering the app so a fresh
@@ -56,17 +56,13 @@ export default function AuthGate({ children }: AuthGateProps) {
           setWorkspaceLoading(false);
         }
       }
-
-      return () => {
-        stopWorkspaceSync?.();
-      };
     }
 
-    const cleanup = hydrateWorkspace();
+    void hydrateWorkspace();
 
     return () => {
       cancelled = true;
-      void cleanup;
+      stopWorkspaceSync?.();
     };
   }, [session]);
 
