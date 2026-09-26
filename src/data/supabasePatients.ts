@@ -129,12 +129,45 @@ function patientPayload(patient: PatientListItem, remoteRotationId: string) {
   };
 }
 
-function getErrorMessage(error: unknown) {
+export function getSupabasePatientErrorMessage(
+  error: unknown,
+  fallback = "Gagal memuat data pasien dari Supabase.",
+) {
   if (error instanceof Error && error.message) {
     return error.message;
   }
 
-  return "Gagal menyimpan perubahan pasien ke Supabase.";
+  if (typeof error === "object" && error !== null) {
+    const candidate = error as {
+      message?: unknown;
+      code?: unknown;
+      details?: unknown;
+      hint?: unknown;
+    };
+
+    if (typeof candidate.message === "string" && candidate.message) {
+      const parts = [candidate.message];
+
+      if (typeof candidate.code === "string" && candidate.code) {
+        parts.push("Kode: " + candidate.code);
+      }
+
+      if (typeof candidate.hint === "string" && candidate.hint) {
+        parts.push("Petunjuk: " + candidate.hint);
+      }
+
+      return parts.join(" · ");
+    }
+  }
+
+  return fallback;
+}
+
+function getErrorMessage(error: unknown) {
+  return getSupabasePatientErrorMessage(
+    error,
+    "Gagal menyimpan perubahan pasien ke Supabase.",
+  );
 }
 
 export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
