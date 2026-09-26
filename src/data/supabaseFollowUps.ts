@@ -4,6 +4,12 @@ import { updatePatient } from "./localPatients";
 import { syncPatientsWithSupabase } from "./supabasePatients";
 import { supabase } from "../utils/supabase";
 import { derivePatientFollowUpSummary } from "./patientFollowUpSummary";
+import { deleteAttachments } from "./localAttachments";
+import {
+  getDraftFollowUpAttachmentIds,
+  getSavedFollowUpAttachmentIds,
+  getAttachmentIdsFromFollowUps,
+} from "./attachmentReferences";
 
 type FollowUpRow = {
   id: string;
@@ -613,6 +619,19 @@ async function syncFollowUpsWithSupabaseInternal(): Promise<
   // including clearing stale summaries when the patient's last follow-up is gone.
   for (const patientId of Object.keys(patientMap)) {
     refreshPatientFollowUpSummary(patientId, nextLocal[patientId] ?? []);
+  }
+
+  const previousSavedAttachmentIds = getSavedFollowUpAttachmentIds();
+  const nextSavedAttachmentIds = getAttachmentIdsFromFollowUps(
+    Object.values(nextLocal).flat(),
+  );
+  const draftAttachmentIds = getDraftFollowUpAttachmentIds();
+  const staleSavedAttachmentIds = [...previousSavedAttachmentIds].filter(
+    (id) => !nextSavedAttachmentIds.has(id) && !draftAttachmentIds.has(id),
+  );
+
+  if (staleSavedAttachmentIds.length) {
+    await deleteAttachments(staleSavedAttachmentIds);
   }
 
   saveMap(FOLLOW_UP_ID_MAP_KEY, followUpMap);
