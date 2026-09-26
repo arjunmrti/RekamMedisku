@@ -77,6 +77,10 @@ export type SlaberanTemplateBlockConfig = {
   showSpecialty?: boolean;
   showDoctor?: boolean;
   showDate?: boolean;
+  patientSeparator?: string;
+  patientPrefix?: string;
+  showPatientIndex?: boolean;
+  emptyText?: string;
   legacyGroups?: Array<{ label: string; rooms: string[] }>;
   legacyRooms?: string[];
 };
