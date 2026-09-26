@@ -681,7 +681,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
                     onChange={(event) =>
                       updateBlockConfig(block.id, {
                         [key]: event.target.checked,
-                      })
+                      } as Partial<SlaberanTemplateBlockConfig>)
                     }
                     className="rounded border-slate-300"
                   />
