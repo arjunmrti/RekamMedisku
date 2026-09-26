@@ -173,7 +173,12 @@ export default function AddPatientModal({
       admissionComplaint: admissionComplaint.trim() || undefined,
       currentLocation: {
         ...(currentLocationId ? { locationId: currentLocationId } : {}),
-        type: selectedCurrentLocation?.type ?? currentLocationType,
+        type:
+          selectedCurrentLocation?.type === "special"
+            ? "special"
+            : selectedCurrentLocation?.type === "ward"
+              ? "ward"
+              : currentLocationType,
         name: selectedCurrentLocation?.name ?? currentLocationName.trim(),
         bed: bed.trim(),
       },
@@ -183,7 +188,12 @@ export default function AddPatientModal({
         admissionLocationType && admissionLocationName.trim()
           ? {
               ...(admissionLocationId ? { locationId: admissionLocationId } : {}),
-              type: selectedAdmissionLocation?.type ?? admissionLocationType,
+              type:
+                selectedAdmissionLocation?.type === "special"
+                  ? "special"
+                  : selectedAdmissionLocation?.type === "ward"
+                    ? "ward"
+                    : admissionLocationType,
               name:
                 selectedAdmissionLocation?.name ??
                 admissionLocationName.trim(),
@@ -210,7 +220,7 @@ export default function AddPatientModal({
   };
 
   const currentLocationOptions = useMemo(
-    () => locations.filter((location) => location.type === currentLocationType && location.type !== "floor"),
+    () => locations.filter((location) => location.type === currentLocationType),
     [currentLocationType, locations],
   );
 
@@ -481,7 +491,9 @@ export default function AddPatientModal({
                         (item) => item.id === event.target.value,
                       );
                       setAdmissionLocationId(event.target.value);
-                      setAdmissionLocationType(location?.type ?? "ward");
+                      setAdmissionLocationType(
+                        location?.type === "special" ? "special" : "ward",
+                      );
                       setAdmissionLocationName(location?.name ?? "");
                     }}
                     disabled={!admissionLocationType}
