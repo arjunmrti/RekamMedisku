@@ -7,12 +7,16 @@ import PlanSection from "../../components/follow-up/PlanSection";
 import SubjectiveSection from "../../components/follow-up/SubjectiveSection";
 import SupportingExamSection from "../../components/follow-up/SupportingExamSection";
 import {
-  appendSavedFollowUp,
   clearFollowUpDraft,
   loadFollowUpDraft,
   loadSavedFollowUps,
   saveFollowUpDraft,
 } from "../../data/localFollowUps";
+import {
+  getSupabaseFollowUpErrorMessage,
+  persistFollowUpWithSupabase,
+  syncFollowUpsForPatientWithSupabase,
+} from "../../data/supabaseFollowUps";
 import { loadActiveRotation } from "../../data/localRotations";
 import { updatePatient } from "../../data/localPatients";
 import { toLocalIsoDate, toLocalTimeInput } from "../../utils/date";
@@ -258,6 +262,7 @@ function buildFollowUpEntry(
       name: exam.examType,
       examType: exam.examType,
       date: formatDate(exam.date),
+      isoDate: exam.date,
       result: exam.result,
       attachmentName: exam.attachmentName,
       attachmentId: exam.attachmentId,
@@ -335,16 +340,34 @@ export default function FollowUpFormPage({
       plan: true,
     });
 
-  const previousFollowUps = useMemo(() => {
-    const local = loadSavedFollowUps()[patient.id] ?? [];
+  const [previousFollowUps, setPreviousFollowUps] = useState<FollowUpEntry[]>(
+    () => loadSavedFollowUps()[patient.id] ?? [],
+  );
 
-    return [...local]
-      .filter((entry, index, entries) => {
-        return entries.findIndex((candidate) => candidate.id === entry.id) === index;
+  useEffect(() => {
+    let cancelled = false;
+
+    void syncFollowUpsForPatientWithSupabase(patient.id)
+      .then((entries) => {
+        if (!cancelled) {
+          setPreviousFollowUps(entries);
+          setErrorMessage("");
+        }
       })
-      .sort((a, b) =>
-        (b.isoDate + b.time).localeCompare(a.isoDate + a.time),
-      );
+      .catch((error) => {
+        if (!cancelled) {
+          setErrorMessage(
+            getSupabaseFollowUpErrorMessage(
+              error,
+              "Data follow-up online gagal dimuat. Data lokal tetap digunakan.",
+            ),
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [patient.id]);
 
   const latestFollowUp = previousFollowUps[0] ?? null;
@@ -495,7 +518,7 @@ export default function FollowUpFormPage({
     setErrorMessage("");
   };
 
-  const handleSaveFollowUp = () => {
+  const handleSaveFollowUp = async () => {
     if (saveInProgressRef.current) return;
 
     if (!values.subjective.keluhan.trim()) {
@@ -514,25 +537,43 @@ export default function FollowUpFormPage({
     saveInProgressRef.current = true;
     setIsSaving(true);
 
+    const previousSaved = loadSavedFollowUps();
     const nextNumber =
       Math.max(0, ...previousFollowUps.map((entry) => entry.number)) + 1;
     const entry = buildFollowUpEntry(values, nextNumber, templateType);
 
-    appendSavedFollowUp(patient.id, entry);
-    updatePatient(patient.id, {
-      lastFollowUp: entry.date + " · " + entry.time,
-      followUpNumber: entry.number,
-      lastFollowUpAt:
-        entry.isoDate + "T" + entry.time.replace(".", ":") + ":00",
-    });
-    clearFollowUpDraft(patient.id);
-    setDirty(false);
-    setErrorMessage("");
-    setSaveMessage("✓ Follow-up berhasil disimpan.");
+    try {
+      const nextEntries = [entry, ...previousFollowUps];
+      replaceSavedFollowUps({
+        ...previousSaved,
+        [patient.id]: nextEntries,
+      });
 
-    window.setTimeout(() => {
-      onNavigate("Profil Pasien");
-    }, 600);
+      await persistFollowUpWithSupabase(patient.id, entry);
+
+      updatePatient(patient.id, {
+        lastFollowUp: entry.date + " · " + entry.time,
+        followUpNumber: entry.number,
+        lastFollowUpAt:
+          entry.isoDate + "T" + entry.time.replace(".", ":") + ":00",
+      });
+      setPreviousFollowUps(nextEntries);
+      clearFollowUpDraft(patient.id);
+      setDirty(false);
+      setErrorMessage("");
+      setSaveMessage("✓ Follow-up berhasil disimpan.");
+
+      window.setTimeout(() => {
+        onNavigate("Profil Pasien");
+      }, 600);
+    } catch (error) {
+      replaceSavedFollowUps(previousSaved);
+      setErrorMessage(getSupabaseFollowUpErrorMessage(error));
+      setSaveMessage("Follow-up belum tersimpan.");
+    } finally {
+      setIsSaving(false);
+      saveInProgressRef.current = false;
+    }
   };
 
   if (!patientMatchesRotation) {
