@@ -319,9 +319,27 @@ export default function ObjectiveSection({
                   {neurology.gcsEye &&
                   neurology.gcsMotor &&
                   neurology.gcsVerbal
-                    ? neurology.gcsEye +
-                      neurology.gcsMotor +
-                      neurology.gcsVerbal
+                    ? (() => {
+                        const values = [
+                          neurology.gcsEye,
+                          neurology.gcsMotor,
+                          neurology.gcsVerbal,
+                        ];
+                        const numericValues = values.map(Number);
+                        const total = numericValues.every(Number.isFinite)
+                          ? numericValues.reduce((sum, value) => sum + value, 0)
+                          : null;
+
+                        return (
+                          "E" +
+                          neurology.gcsEye +
+                          "/M" +
+                          neurology.gcsMotor +
+                          "/V" +
+                          neurology.gcsVerbal +
+                          (total !== null ? " = " + total : "")
+                        );
+                      })()
                     : "E / M / V belum lengkap"}
                 </span>
               </div>
