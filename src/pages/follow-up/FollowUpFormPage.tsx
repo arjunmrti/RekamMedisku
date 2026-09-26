@@ -20,6 +20,7 @@ import {
 import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import { loadActiveRotation } from "../../data/localRotations";
 import { updatePatient } from "../../data/localPatients";
+import { cleanupUnreferencedAttachments } from "../../data/attachmentReferences";
 import { toLocalIsoDate, toLocalTimeInput } from "../../utils/date";
 import { buildBasicObjectiveLines } from "../../utils/objectiveFormatter";
 import type { FollowUpEntry, SupportingExam } from "../../types/followUp";
@@ -426,6 +427,28 @@ export default function FollowUpFormPage({
 
     const timer = window.setTimeout(() => {
       saveFollowUpDraft(patient.id, values);
+      void cleanupUnreferencedAttachments(
+        values.supportingExams.map((exam) => ({
+          id: exam.id,
+          name: exam.examType,
+          examType: exam.examType,
+          date: formatDate(exam.date),
+          isoDate: exam.date,
+          result: exam.result,
+          attachmentName: exam.attachmentName,
+          attachmentId: exam.attachmentId,
+          attachmentType: exam.attachmentType,
+          attachmentSize: exam.attachmentSize,
+          icon:
+            exam.examType === "CT Scan"
+              ? "scan"
+              : exam.examType === "Rontgen"
+                ? "image"
+                : exam.examType === "EEG"
+                  ? "eeg"
+                  : "lab",
+        })),
+      );
       setSaveMessage(
         "Draf tersimpan otomatis pukul " +
           new Intl.DateTimeFormat("id-ID", {
@@ -481,6 +504,28 @@ export default function FollowUpFormPage({
 
   const handleSaveDraft = () => {
     saveFollowUpDraft(patient.id, values);
+    void cleanupUnreferencedAttachments(
+      values.supportingExams.map((exam) => ({
+        id: exam.id,
+        name: exam.examType,
+        examType: exam.examType,
+        date: formatDate(exam.date),
+        isoDate: exam.date,
+        result: exam.result,
+        attachmentName: exam.attachmentName,
+        attachmentId: exam.attachmentId,
+        attachmentType: exam.attachmentType,
+        attachmentSize: exam.attachmentSize,
+        icon:
+          exam.examType === "CT Scan"
+            ? "scan"
+            : exam.examType === "Rontgen"
+              ? "image"
+              : exam.examType === "EEG"
+                ? "eeg"
+                : "lab",
+      })),
+    );
     setDirty(false);
     setSaveMessage(
       "Draf tersimpan pukul " +
@@ -540,6 +585,9 @@ export default function FollowUpFormPage({
       });
       setPreviousFollowUps(nextEntries);
       clearFollowUpDraft(patient.id);
+      void cleanupUnreferencedAttachments(
+        entry.supportingExams,
+      );
       setDirty(false);
       setErrorMessage("");
       setSaveMessage("✓ Follow-up berhasil disimpan.");
