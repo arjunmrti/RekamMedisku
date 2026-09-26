@@ -66,6 +66,7 @@ export default function AppShell({
             searchValue={searchValue}
             onSearchChange={onSearchChange}
             searchEnabled={searchEnabled}
+            activeItem={activeItem}
             onMenuClick={() => setMobileMenuOpen(true)}
           />
           {children}
