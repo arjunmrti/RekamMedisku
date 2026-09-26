@@ -542,9 +542,8 @@ export default function FollowUpFormPage({
     let previousSaved: ReturnType<typeof loadSavedFollowUps> | null = null;
 
     try {
-      const syncedEntries = await syncFollowUpsForPatientWithSupabase(
-        patient.id,
-      );
+      await syncWorkspaceWithSupabase();
+      const syncedEntries = loadSavedFollowUps()[patient.id] ?? [];
       setPreviousFollowUps(syncedEntries);
 
       previousSaved = loadSavedFollowUps();
