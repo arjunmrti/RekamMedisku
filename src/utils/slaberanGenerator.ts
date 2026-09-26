@@ -69,7 +69,9 @@ function legacyTemplateToRecord(
         enabled: true,
         config: {
           fields: ["name", "age", "rm", "doctor", "bed", "diagnosis"],
-          legacyRooms: template.specialRooms,
+          patientSeparator: "/",
+          showPatientIndex: true,
+          emptyText: "Belum ada pasien.",
         },
       },
       {
@@ -81,6 +83,9 @@ function legacyTemplateToRecord(
           showEmptyRooms: template.showEmptyRooms,
           highlightOccupied: true,
           fields: ["name", "age", "rm", "doctor", "bed", "diagnosis"],
+          patientSeparator: "/",
+          showPatientIndex: true,
+          legacyRooms: template.specialRooms,
         },
       },
       {
