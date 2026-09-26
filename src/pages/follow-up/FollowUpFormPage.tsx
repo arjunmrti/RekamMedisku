@@ -538,13 +538,18 @@ export default function FollowUpFormPage({
     saveInProgressRef.current = true;
     setIsSaving(true);
 
-    const previousSaved = loadSavedFollowUps();
-    const nextNumber =
-      Math.max(0, ...previousFollowUps.map((entry) => entry.number)) + 1;
-    const entry = buildFollowUpEntry(values, nextNumber, templateType);
-
     try {
-      const nextEntries = [entry, ...previousFollowUps];
+      const syncedEntries = await syncFollowUpsForPatientWithSupabase(
+        patient.id,
+      );
+      setPreviousFollowUps(syncedEntries);
+
+      const previousSaved = loadSavedFollowUps();
+      const nextNumber =
+        Math.max(0, ...syncedEntries.map((entry) => entry.number)) + 1;
+      const entry = buildFollowUpEntry(values, nextNumber, templateType);
+      const nextEntries = [entry, ...syncedEntries];
+
       replaceSavedFollowUps({
         ...previousSaved,
         [patient.id]: nextEntries,
