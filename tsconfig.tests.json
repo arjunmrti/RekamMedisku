@@ -23,6 +23,7 @@
     "src/types/report.ts",
     "src/types/rotation.ts",
     "src/utils/backup.ts",
-    "src/types/backup.ts"
+    "src/types/backup.ts",
+    "src/utils/objectiveFormatter.ts"
   ]
 }
