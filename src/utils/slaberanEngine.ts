@@ -189,15 +189,21 @@ function appendPatientList(
   patientContexts: PatientContext[],
 ) {
   const config = asConfig(block);
+  const sourcePatients =
+    config.includeSpecialUnitPatients === true
+      ? patientContexts
+      : patientContexts.filter(
+          (context) => context.patient.currentLocation?.type !== "special",
+        );
   const fields =
     config.fields ?? ["name", "age", "rm", "doctor", "bed", "diagnosis"];
 
-  if (patientContexts.length === 0) {
+  if (sourcePatients.length === 0) {
     lines.push(config.emptyText ?? "Belum ada pasien.");
     return;
   }
 
-  patientContexts.forEach((context, index) => {
+  sourcePatients.forEach((context, index) => {
     lines.push(patientLine(context, index + 1, fields, config));
   });
 }
