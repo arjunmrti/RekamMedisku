@@ -10,6 +10,49 @@ type AuthGateProps = {
   children: ReactNode;
 };
 
+function getWorkspaceSyncErrorMessage(error: unknown) {
+  if (typeof error === "object" && error !== null) {
+    const candidate = error as {
+      message?: unknown;
+      code?: unknown;
+      details?: unknown;
+      hint?: unknown;
+    };
+
+    if (
+      candidate.code === "PGRST204" &&
+      typeof candidate.message === "string" &&
+      /admission_complaint/i.test(candidate.message)
+    ) {
+      return "Kolom admission_complaint belum tersedia di Supabase. Jalankan migration Package 7 pada database Supabase lalu muat ulang halaman.";
+    }
+
+    if (typeof candidate.message === "string" && candidate.message) {
+      const parts = [candidate.message];
+
+      if (typeof candidate.code === "string" && candidate.code) {
+        parts.push("Kode: " + candidate.code);
+      }
+
+      if (typeof candidate.details === "string" && candidate.details) {
+        parts.push("Detail: " + candidate.details);
+      }
+
+      if (typeof candidate.hint === "string" && candidate.hint) {
+        parts.push("Petunjuk: " + candidate.hint);
+      }
+
+      return parts.join(" · ");
+    }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return "Gagal memuat data cloud RekamMedisku.";
+}
+
 export default function AuthGate({ children }: AuthGateProps) {
   const { session, loading } = useAuth();
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
@@ -46,11 +89,7 @@ export default function AuthGate({ children }: AuthGateProps) {
         console.error("Supabase workspace hydration failed:", error);
 
         if (!cancelled) {
-          setWorkspaceError(
-            error instanceof Error
-              ? error.message
-              : "Gagal memuat data cloud RekamMedisku.",
-          );
+          setWorkspaceError(getWorkspaceSyncErrorMessage(error));
         }
       } finally {
         if (!cancelled) {
