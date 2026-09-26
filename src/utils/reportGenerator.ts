@@ -162,8 +162,8 @@ export function buildWhatsAppReport(
   const planning =
     followUp.planning?.trim() ||
     followUp.plan?.trim() ||
-    "Belum ada planning.";
-  const instruction = followUp.instruction?.trim();
+    "Belum ada catatan.";
+  const instruction = followUp.instruction?.trim() || "Belum ada catatan.";
 
   const templateObjective = getTemplateObjective(
     followUp.objective,
@@ -221,7 +221,7 @@ export function buildWhatsAppReport(
     cleanBlock(followUp.assessment),
     "",
     "P: " + planning,
-    instruction ? "I: " + instruction : "",
+    "I: " + instruction,
     "",
     "Terimakasih sebelumnya dokter, Mohon arahan dan bimbingannya dok🙏🏻",
   ]
