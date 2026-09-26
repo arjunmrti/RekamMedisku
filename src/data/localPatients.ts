@@ -1,3 +1,8 @@
+import { deleteAttachment } from "./localAttachments";
+import {
+  deleteFollowUpsForPatient,
+  getPatientFollowUpAttachmentIds,
+} from "./localFollowUps";
 import type { PatientListItem, PatientStatus } from "../types/patient";
 
 const PATIENTS_KEY = "rekammedisku:patients";
@@ -70,6 +75,25 @@ export function savePatients(patients: PatientListItem[]) {
 
 export function replacePatients(patients: PatientListItem[]) {
   savePatients(patients);
+}
+
+export async function deletePatient(patientId: string): Promise<boolean> {
+  const patients = loadPatients();
+  const patientExists = patients.some((patient) => patient.id === patientId);
+
+  if (!patientExists) return false;
+
+  const attachmentIds = getPatientFollowUpAttachmentIds(patientId);
+
+  await Promise.all(
+    attachmentIds.map((attachmentId) => deleteAttachment(attachmentId)),
+  );
+
+  const remainingPatients = patients.filter((patient) => patient.id !== patientId);
+  savePatients(remainingPatients);
+  deleteFollowUpsForPatient(patientId);
+
+  return true;
 }
 
 export function updatePatient(
