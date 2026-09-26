@@ -49,8 +49,9 @@ function getCurrentTime() {
   return toLocalTimeInput(now);
 }
 
-function emptyForm(): FollowUpFormValues {
+function emptyForm(rotationId?: string): FollowUpFormValues {
   return {
+    rotationId,
     followUpDate: getTodayIsoDate(),
     followUpTime: getCurrentTime(),
     subjective: {
@@ -113,9 +114,9 @@ function emptyForm(): FollowUpFormValues {
   };
 }
 
-function getInitialValues(patientId: string) {
+function getInitialValues(patientId: string, rotationId: string) {
   const draft = loadFollowUpDraft(patientId);
-  const fallback = emptyForm();
+  const fallback = emptyForm(rotationId);
 
   if (
     !draft ||
@@ -127,9 +128,14 @@ function getInitialValues(patientId: string) {
     return fallback;
   }
 
+  if (draft.rotationId && draft.rotationId !== rotationId) {
+    return fallback;
+  }
+
   return {
     ...fallback,
     ...draft,
+    rotationId,
     subjective: {
       ...fallback.subjective,
       ...draft.subjective,
@@ -343,14 +349,20 @@ export default function FollowUpFormPage({
       ? "Ilmu Penyakit Dalam"
       : "Neurologi";
 
+  const existingDraft = loadFollowUpDraft(patient.id);
+  const draftBelongsToRotation =
+    !existingDraft?.rotationId || existingDraft.rotationId === activeRotation.id;
+
   const [values, setValues] = useState<FollowUpFormValues>(() =>
-    getInitialValues(patient.id),
+    getInitialValues(patient.id, activeRotation.id),
   );
   const [dirty, setDirty] = useState(false);
   const [saveMessage, setSaveMessage] = useState(
-    loadFollowUpDraft(patient.id)
+    existingDraft && draftBelongsToRotation
       ? "Draf sebelumnya tersedia."
-      : "Belum ada perubahan tersimpan.",
+      : existingDraft
+        ? "Draf dari stase lain tidak dimuat."
+        : "Belum ada perubahan tersimpan.",
   );
   const [errorMessage, setErrorMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
