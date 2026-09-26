@@ -25,6 +25,8 @@ export type FollowUpEntry = {
   isoDate: string;
   time: string;
   status: FollowUpStatus;
+  /** Remote updated_at used for optimistic concurrency control. */
+  updatedAt?: string;
   templateType?: "Neurologi" | "Ilmu Penyakit Dalam";
   assessmentCodes?: string[];
   planning?: string;
