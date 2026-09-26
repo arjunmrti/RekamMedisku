@@ -19,7 +19,6 @@ type View =
   | "Profil Pasien"
   | "Follow-Up Baru"
   | "Semua Laporan"
-  | "Slaberan"
   | "Cadangan & Data"
   | "Stase Saya";
 
@@ -95,7 +94,14 @@ function App() {
       label === "Cadangan & Data" ||
       label === "Stase Saya"
     ) {
+      if (label === "Slaberan") {
+        setReportMode("slaberan");
+        setActiveItem("Semua Laporan");
+        return;
+      }
+
       if (label === "Semua Laporan") {
+        setReportMode("follow-up");
         const activeRotation = loadActiveRotation();
         const patients = loadPatients();
         const currentPatient =
