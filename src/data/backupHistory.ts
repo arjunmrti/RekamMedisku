@@ -16,6 +16,33 @@ function readJson<T>(key: string, fallback: T): T {
   }
 }
 
+export function isValidBackupHistoryEntry(
+  entry: unknown,
+): entry is BackupHistoryEntry {
+  if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+    return false;
+  }
+
+  const candidate = entry as Record<string, unknown>;
+
+  return (
+    typeof candidate.id === "string" &&
+    candidate.id.trim().length > 0 &&
+    typeof candidate.timestamp === "string" &&
+    !Number.isNaN(Date.parse(candidate.timestamp)) &&
+    (candidate.type === "Export" || candidate.type === "Restore") &&
+    (candidate.status === "Berhasil" ||
+      candidate.status === "Sebagian" ||
+      candidate.status === "Gagal") &&
+    typeof candidate.fileName === "string" &&
+    candidate.fileName.trim().length > 0 &&
+    typeof candidate.fileSizeBytes === "number" &&
+    Number.isSafeInteger(candidate.fileSizeBytes) &&
+    candidate.fileSizeBytes >= 0 &&
+    typeof candidate.note === "string"
+  );
+}
+
 export function loadBackupHistory(): BackupHistoryEntry[] {
   const parsed = readJson<unknown>(HISTORY_KEY, null);
 
@@ -23,10 +50,10 @@ export function loadBackupHistory(): BackupHistoryEntry[] {
     return [];
   }
 
-  return parsed.filter(
-    (entry): entry is BackupHistoryEntry =>
-      typeof entry === "object" && entry !== null,
-  ); 
+  return parsed
+    .filter(isValidBackupHistoryEntry)
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+    .slice(0, 30);
 }
 
 export function appendBackupHistory(entry: BackupHistoryEntry) {
