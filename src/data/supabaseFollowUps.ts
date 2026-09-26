@@ -298,13 +298,15 @@ function refreshPatientFollowUpSummary(
   entries: FollowUpEntry[],
 ) {
   const latest = sortEntries(entries)[0];
-  if (!latest) return;
 
   updatePatient(patientId, {
-    lastFollowUp: latest.date + " · " + latest.time,
-    followUpNumber: latest.number,
-    lastFollowUpAt:
-      latest.isoDate + "T" + latest.time.replace(".", ":") + ":00",
+    lastFollowUp: latest
+      ? latest.date + " · " + latest.time
+      : "Belum ada follow-up",
+    followUpNumber: latest?.number ?? 0,
+    lastFollowUpAt: latest
+      ? latest.isoDate + "T" + latest.time.replace(".", ":") + ":00"
+      : undefined,
   });
 }
 
@@ -555,7 +557,9 @@ async function syncFollowUpsWithSupabaseInternal(): Promise<
 
   if (followUpError) throw followUpError;
 
-  const remoteIds = (remoteFollowUps ?? []).map((row) => row.id);
+  const remoteFollowUpRows = (remoteFollowUps ?? []) as FollowUpRow[];
+  const remoteIds = remoteFollowUpRows.map((row) => row.id);
+  const remoteIdSet = new Set(remoteIds);
   let remoteExams: SupportingExamRow[] = [];
 
   if (remoteIds.length) {
@@ -571,6 +575,7 @@ async function syncFollowUpsWithSupabaseInternal(): Promise<
     remoteExams = (data ?? []) as SupportingExamRow[];
   }
 
+  const remoteExamIds = new Set(remoteExams.map((row) => row.id));
   const examsByFollowUp = new Map<string, SupportingExam[]>();
 
   for (const row of remoteExams) {
@@ -580,66 +585,53 @@ async function syncFollowUpsWithSupabaseInternal(): Promise<
 
     if (!localExamId) {
       localExamId = row.id;
-      examMap[localExamId] = row.id;
     }
+
+    examMap[localExamId] = row.id;
 
     const list = examsByFollowUp.get(row.follow_up_id) ?? [];
     list.push(toSupportingExam(row, localExamId));
     examsByFollowUp.set(row.follow_up_id, list);
   }
 
-  let nextLocal = { ...localFollowUps };
+  // Supabase is authoritative for saved follow-ups. Rebuild the local cache
+  // only from remote rows, preventing deleted/stale browser entries from
+  // being resurrected during sync.
+  const nextLocal: Record<string, FollowUpEntry[]> = {};
 
-  for (const row of (remoteFollowUps ?? []) as FollowUpRow[]) {
+  for (const row of remoteFollowUpRows) {
     const localPatientId = remoteToLocalPatientId.get(row.patient_id);
 
     if (!localPatientId) continue;
 
     let localId =
       Object.entries(followUpMap).find(([, remoteId]) => remoteId === row.id)?.[0] ??
-      null;
+      row.id;
 
-    const existingEntries = nextLocal[localPatientId] ?? [];
-
-    if (!localId) {
-      const matchingLocal = existingEntries.find(
-        (entry) =>
-          entry.number === row.number &&
-          toIsoDate(entry.isoDate) === row.iso_date &&
-          toDbTime(entry.time) === row.time,
-      );
-
-      localId = matchingLocal?.id ?? row.id;
-      followUpMap[localId] = row.id;
-    }
+    followUpMap[localId] = row.id;
 
     nextLocal[localPatientId] = mergeEntry(
-      existingEntries,
+      nextLocal[localPatientId] ?? [],
       toFollowUpEntry(row, localId, examsByFollowUp.get(row.id) ?? []),
     );
   }
 
-  for (const [patientId, entries] of Object.entries(localFollowUps)) {
-    const remotePatientId = patientMap[patientId];
-
-    if (!remotePatientId) {
-      // Keep orphaned local follow-ups untouched. They can belong to legacy
-      // patients that were removed locally; they must not block sync for
-      // patients that are already mapped to Supabase.
-      continue;
-    }
-
-    for (const entry of entries) {
-      if (followUpMap[entry.id]) continue;
-      await persistFollowUpWithSupabaseInternal(patientId, entry);
-      followUpMap[entry.id] = readMap(FOLLOW_UP_ID_MAP_KEY)[entry.id];
+  for (const [localId, remoteId] of Object.entries(followUpMap)) {
+    if (!remoteIdSet.has(remoteId)) {
+      delete followUpMap[localId];
     }
   }
 
-  for (const [patientId, entries] of Object.entries(nextLocal)) {
-    if (!entries.length) continue;
-    nextLocal[patientId] = sortEntries(entries);
-    refreshPatientFollowUpSummary(patientId, nextLocal[patientId]);
+  for (const [localId, remoteId] of Object.entries(examMap)) {
+    if (!remoteExamIds.has(remoteId)) {
+      delete examMap[localId];
+    }
+  }
+
+  // Keep patient summary fields derived from the authoritative follow-up cache,
+  // including clearing stale summaries when the patient's last follow-up is gone.
+  for (const patientId of Object.keys(patientMap)) {
+    refreshPatientFollowUpSummary(patientId, nextLocal[patientId] ?? []);
   }
 
   saveMap(FOLLOW_UP_ID_MAP_KEY, followUpMap);
