@@ -9,7 +9,6 @@ import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients } from "../../data/localPatients";
 import {
   deletePatientWithSupabase,
-  getSupabasePatientErrorMessage,
   setPatientStatusWithSupabase,
   upsertPatientWithSupabase,
 } from "../../data/supabasePatients";
