@@ -525,7 +525,7 @@ function validateSlaberanWorkspace(
         ? templates
         : null;
 
-  if (!normalizedLocations || !normalizedTemplates) {
+  if (normalizedLocations === null || normalizedTemplates === null) {
     return { ok: false };
   }
 
@@ -537,6 +537,17 @@ function validateSlaberanWorkspace(
 
     for (const location of normalizedLocations) {
       if (location.parentId && !locationIds.has(location.parentId)) {
+        return { ok: false };
+      }
+
+      if (
+        (location.type === "floor" || location.type === "special") &&
+        location.parentId
+      ) {
+        return { ok: false };
+      }
+
+      if (location.type === "ward" && !location.parentId) {
         return { ok: false };
       }
     }
