@@ -156,7 +156,9 @@ export function buildWhatsAppReport(
     patient.admissionComplaint?.trim()
       ? "Keluhan Masuk: " + patient.admissionComplaint.trim()
       : "",
-    followUp.subjective.trim(),
+    followUp.subjective.trim()
+      ? "Keluhan / Perkembangan Hari Ini: " + followUp.subjective.trim()
+      : "",
   ]
     .filter(Boolean)
     .join("\n");
