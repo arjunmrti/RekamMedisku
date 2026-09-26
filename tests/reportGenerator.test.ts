@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   buildWhatsAppReport,
   formatReportDate,
+  formatReportRotationName,
   getReportGreeting,
   getReportTemplateForSpecialty,
 } from "../src/utils/reportGenerator";
@@ -95,6 +96,26 @@ test("template hanya tersedia untuk stase MVP yang didukung", () => {
   assert.equal(getReportTemplateForSpecialty("Bedah"), null);
   assert.equal(getReportTemplateForSpecialty("Pediatri"), null);
   assert.equal(getReportTemplateForSpecialty(undefined), null);
+});
+
+test("nama stase laporan selalu tanpa embel-embel bulan", () => {
+  const cases = [
+    ["Neurologi September", "Neurologi"],
+    ["Rotasi Neurologi September 2026", "Neurologi"],
+    ["Ilmu Penyakit Dalam Agustus", "Ilmu Penyakit Dalam"],
+    ["Bedah Oktober 2026", "Bedah"],
+    ["Pediatri November", "Pediatri"],
+    ["Obgyn Desember 2026", "Obgyn"],
+    ["Stase Mata Januari", "Mata"],
+    ["Neurologi", "Neurologi"],
+  ] as const;
+
+  for (const [input, expected] of cases) {
+    assert.equal(formatReportRotationName(input, "Neurologi"), expected);
+  }
+
+  assert.equal(formatReportRotationName(undefined, "Neurologi"), "Neurologi");
+  assert.equal(formatReportRotationName("", "Neurologi"), "Neurologi");
 });
 
 test("sapaan laporan mengikuti waktu lokal pengguna", () => {
