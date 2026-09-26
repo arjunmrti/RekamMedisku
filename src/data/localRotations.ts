@@ -65,11 +65,7 @@ export function loadActiveRotationId(): string {
     return storedRotation.id;
   }
 
-  return (
-    rotations.find((rotation) => rotation.status === "Aktif")?.id ??
-    rotations[0]?.id ??
-    ""
-  );
+  return rotations.find((rotation) => rotation.status === "Aktif")?.id ?? "";
 }
 
 export function loadActiveRotation(): Rotation {
@@ -78,7 +74,6 @@ export function loadActiveRotation(): Rotation {
 
   return (
     rotations.find((rotation) => rotation.id === activeId) ??
-    rotations[0] ??
     {
       id: "",
       name: "Belum ada stase",
