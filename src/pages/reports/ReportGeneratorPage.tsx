@@ -127,7 +127,10 @@ export default function ReportGeneratorPage({
     if (!selectedFollowUp) return;
     setReportText(
       buildWhatsAppReport(patient, selectedFollowUp, nextTemplate, {
-        rotationName: patientRotation?.name,
+        rotationName:
+          patientRotation?.specialty !== "Lainnya"
+            ? patientRotation?.specialty
+            : patientRotation?.name,
       }),
     );
     setTemplateType(nextTemplate);
