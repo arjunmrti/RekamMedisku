@@ -129,6 +129,8 @@ function appendWardSummary(
   ) as Array<{ label?: unknown; rooms?: unknown }>;
 
   if (floors.length === 0 && wards.length === 0 && legacyGroups.length > 0) {
+    const assignedLegacyPatients = new Set<string>();
+
     for (const group of legacyGroups) {
       const label = typeof group.label === "string" ? group.label : "";
       const rooms = Array.isArray(group.rooms)
@@ -141,10 +143,19 @@ function appendWardSummary(
       lines.push("*" + label + "*");
 
       for (const room of rooms) {
-        const roomPatients = patientContexts.filter(
-          (context) =>
-            normalize(context.patient.currentLocation?.name ?? context.patient.room) ===
-            normalize(room),
+        const roomPatients = patientContexts.filter((context) => {
+          if (assignedLegacyPatients.has(context.patient.id)) return false;
+
+          return (
+            normalize(
+              context.patient.currentLocation?.name ?? context.patient.room,
+            ) === normalize(room) &&
+            !isSpecialUnitPatient(context.patient)
+          );
+        });
+
+        roomPatients.forEach((context) =>
+          assignedLegacyPatients.add(context.patient.id),
         );
 
         if (!showEmptyRooms && roomPatients.length === 0) continue;
