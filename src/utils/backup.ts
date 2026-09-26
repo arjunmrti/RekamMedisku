@@ -713,33 +713,75 @@ export function parseBackupText(
   }
 }
 
+export type RestoreBackupLocalState = {
+  loadPatients: typeof loadPatients;
+  replacePatients: typeof replacePatients;
+  loadSavedFollowUps: typeof loadSavedFollowUps;
+  replaceSavedFollowUps: typeof replaceSavedFollowUps;
+  loadRotations: typeof loadRotations;
+  saveRotations: typeof saveRotations;
+  loadActiveRotationId: typeof loadActiveRotationId;
+  setActiveRotationId: typeof setActiveRotationId;
+  loadFollowUpDraft: typeof loadFollowUpDraft;
+  saveFollowUpDraft: typeof saveFollowUpDraft;
+  clearAllFollowUpDrafts: typeof clearAllFollowUpDrafts;
+  loadAllAttachments: typeof loadAllAttachments;
+  replaceAllAttachments: typeof replaceAllAttachments;
+};
+
+const defaultRestoreLocalState: RestoreBackupLocalState = {
+  loadPatients,
+  replacePatients,
+  loadSavedFollowUps,
+  replaceSavedFollowUps,
+  loadRotations,
+  saveRotations,
+  loadActiveRotationId,
+  setActiveRotationId,
+  loadFollowUpDraft,
+  saveFollowUpDraft,
+  clearAllFollowUpDrafts,
+  loadAllAttachments,
+  replaceAllAttachments,
+};
+
 export type RestoreBackupOptions = {
   persistRemote: (payload: BackupPayload) => Promise<unknown>;
   syncRemote: () => Promise<unknown>;
+  localState?: RestoreBackupLocalState;
+};
+
+export type RestoreBackupResult = {
+  patientCount: number;
+  followUpCount: number;
+  draftCount: number;
+  attachmentCount: number;
+  syncStatus: "synced" | "partial";
 };
 
 export async function restoreBackupPayload(
   payload: BackupPayload,
   options: RestoreBackupOptions,
-) {
+): Promise<RestoreBackupResult> {
   if (!payload.rotations) {
     throw new Error(
       "Backup tanpa data stase tidak dapat dipulihkan ke workspace cloud. Buat backup baru terlebih dahulu.",
     );
   }
 
-  const previousPatients = loadPatients();
-  const previousFollowUps = loadSavedFollowUps();
-  const previousRotations = loadRotations();
-  const previousActiveRotationId = loadActiveRotationId();
+  const local = options.localState ?? defaultRestoreLocalState;
+  const previousPatients = local.loadPatients();
+  const previousFollowUps = local.loadSavedFollowUps();
+  const previousRotations = local.loadRotations();
+  const previousActiveRotationId = local.loadActiveRotationId();
   const previousDrafts: Record<string, FollowUpFormValues> = {};
   const shouldReplaceAttachments = payload.attachments !== undefined;
   const previousAttachments = shouldReplaceAttachments
-    ? await loadAllAttachments()
+    ? await local.loadAllAttachments()
     : [];
 
   for (const patient of previousPatients) {
-    const draft = loadFollowUpDraft(patient.id);
+    const draft = local.loadFollowUpDraft(patient.id);
     if (draft) {
       previousDrafts[patient.id] = draft;
     }
@@ -774,64 +816,76 @@ export async function restoreBackupPayload(
     // a browser storage failure recoverable without leaving cloud data pointing
     // at attachments that were never restored locally.
     if (shouldReplaceAttachments) {
-      await replaceAllAttachments(restoredAttachments);
+      await local.replaceAllAttachments(restoredAttachments);
     }
 
-    replacePatients(payload.patients);
-    replaceSavedFollowUps(payload.followUpsByPatient);
-    saveRotations(payload.rotations);
-    setActiveRotationId(payload.activeRotationId ?? "");
+    local.replacePatients(payload.patients);
+    local.replaceSavedFollowUps(payload.followUpsByPatient);
+    local.saveRotations(payload.rotations);
+    local.setActiveRotationId(payload.activeRotationId ?? "");
 
-    clearAllFollowUpDrafts();
+    local.clearAllFollowUpDrafts();
 
     for (const [patientId, draft] of Object.entries(payload.followUpDrafts)) {
-      saveFollowUpDraft(patientId, draft);
+      local.saveFollowUpDraft(patientId, draft);
     }
 
-    // Now replace the synced cloud snapshot atomically.
+    // Replace the synced cloud snapshot only after the local snapshot is ready.
     await options.persistRemote(payload);
     remoteRestored = true;
 
-    // Reconcile local derived fields and notify the rest of the app from the
-    // authoritative cloud snapshot before returning success.
+    // Reconcile from the authoritative cloud snapshot. A failure here means
+    // the cloud restore already committed, so the restored local snapshot must
+    // stay in place instead of rolling back to pre-restore data.
     await options.syncRemote();
+
+    return {
+      patientCount: payload.patients.length,
+      followUpCount: Object.values(payload.followUpsByPatient).reduce(
+        (total, entries) => total + entries.length,
+        0,
+      ),
+      draftCount: Object.keys(payload.followUpDrafts).length,
+      attachmentCount: payload.attachments?.length ?? 0,
+      syncStatus: "synced",
+    };
   } catch (error) {
+    if (remoteRestored) {
+      // Cloud is already authoritative. Keep the restored local snapshot and
+      // surface this as a partial success so the UI does not claim nothing
+      // changed. The next explicit/realtime/polling sync can reconcile again.
+      return {
+        patientCount: payload.patients.length,
+        followUpCount: Object.values(payload.followUpsByPatient).reduce(
+          (total, entries) => total + entries.length,
+          0,
+        ),
+        draftCount: Object.keys(payload.followUpDrafts).length,
+        attachmentCount: payload.attachments?.length ?? 0,
+        syncStatus: "partial",
+      };
+    }
+
     try {
       if (shouldReplaceAttachments) {
-        await replaceAllAttachments(previousAttachments);
+        await local.replaceAllAttachments(previousAttachments);
       }
 
-      replacePatients(previousPatients);
-      replaceSavedFollowUps(previousFollowUps);
-      saveRotations(previousRotations);
-      setActiveRotationId(previousActiveRotationId);
-      clearAllFollowUpDrafts();
+      local.replacePatients(previousPatients);
+      local.replaceSavedFollowUps(previousFollowUps);
+      local.saveRotations(previousRotations);
+      local.setActiveRotationId(previousActiveRotationId);
+      local.clearAllFollowUpDrafts();
 
       for (const [patientId, draft] of Object.entries(previousDrafts)) {
-        saveFollowUpDraft(patientId, draft);
-      }
-
-      // Supabase remains the source of truth when its atomic restore succeeded.
-      // A sync here repairs local state if a browser-local write or refresh failed.
-      if (remoteRestored) {
-        await options.syncRemote();
+        local.saveFollowUpDraft(patientId, draft);
       }
     } catch {
-      // Preserve the original restore error when local rollback/reconciliation fails.
+      // Preserve the original restore error when local rollback fails.
     }
 
     throw error;
   }
-
-  return {
-    patientCount: payload.patients.length,
-    followUpCount: Object.values(payload.followUpsByPatient).reduce(
-      (total, entries) => total + entries.length,
-      0,
-    ),
-    draftCount: Object.keys(payload.followUpDrafts).length,
-    attachmentCount: payload.attachments?.length ?? 0,
-  };
 }
 
 export function triggerJsonDownload(
