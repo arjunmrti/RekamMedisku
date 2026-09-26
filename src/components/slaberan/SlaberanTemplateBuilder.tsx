@@ -178,10 +178,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
   }, [refresh]);
 
   useEffect(() => {
-    if (!selectedId) {
-      setDraft(null);
-      return;
-    }
+    if (!selectedId) return;
 
     const selected = templates.find((template) => template.id === selectedId);
     if (selected) setDraft(cloneDraft(selected));
@@ -375,6 +372,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
     setErrorMessage("");
     try {
       await deleteSlaberanTemplate(draft.id);
+      setDraft(null);
       setSelectedId("");
       await refresh();
     } catch (error) {
@@ -598,7 +596,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
                 onChange={(event) =>
                   updateBlockConfig(block.id, {
                     [key]: event.target.checked,
-                  })
+                  } as Partial<SlaberanTemplateBlockConfig>)
                 }
                 className="rounded border-slate-300"
               />
@@ -626,7 +624,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
                 onChange={(event) =>
                   updateBlockConfig(block.id, {
                     [key]: event.target.checked,
-                  })
+                  } as Partial<SlaberanTemplateBlockConfig>)
                 }
                 className="rounded border-slate-300"
               />
@@ -713,7 +711,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
                 onChange={(event) =>
                   updateBlockConfig(block.id, {
                     [key]: event.target.checked,
-                  })
+                  } as Partial<SlaberanTemplateBlockConfig>)
                 }
                 className="rounded border-slate-300"
               />
