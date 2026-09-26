@@ -25,6 +25,11 @@ type ReportGeneratorPageProps = NavigationProps & {
   onModeChange?: (mode: ReportMode) => void;
 };
 
+type FollowUpReportGeneratorPageProps = NavigationProps & {
+  patient?: PatientListItem;
+  onModeChange?: (mode: ReportMode) => void;
+};
+
 function ReportModeSwitch({
   mode,
   onModeChange,
@@ -133,60 +138,38 @@ export default function ReportGeneratorPage({
     );
   }
 
-  if (!patient) {
-    return (
-      <AppShell
-        activeItem={activeItem}
-        onNavigate={onNavigate}
-        searchValue=""
-        onSearchChange={() => undefined}
-        searchEnabled={false}
-      >
-        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
-          <div className="mx-auto mb-5 w-full max-w-xl">
-            <ReportModeSwitch mode={mode} onModeChange={onModeChange} />
-          </div>
-          <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
-              <Icon name="document" className="h-5 w-5" />
-            </div>
-            <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
-              Report Generator
-            </p>
-            <h1 className="mt-2 text-xl font-bold text-slate-900">
-              Pilih pasien terlebih dahulu
-            </h1>
-            <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-500">
-              Laporan Follow-Up dibuat dari pasien aktif pada stase yang sedang
-              digunakan.
-            </p>
-            <button
-              type="button"
-              onClick={() => onNavigate("Daftar Pasien")}
-              className="mt-6 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700"
-            >
-              Buka Daftar Pasien
-            </button>
-          </section>
-        </main>
-      </AppShell>
-    );
-  }
+  return (
+    <FollowUpReportGeneratorPage
+      activeItem={activeItem}
+      onNavigate={onNavigate}
+      patient={patient}
+      onModeChange={onModeChange}
+    />
+  );
+}
 
+function FollowUpReportGeneratorPage({
+  activeItem,
+  onNavigate,
+  patient,
+  onModeChange,
+}: FollowUpReportGeneratorPageProps) {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
   const activeRotation = loadActiveRotation();
-  const patientRotation = loadRotations().find(
-    (rotation) => rotation.id === patient.rotationId,
+  const patientRotation = patient
+    ? loadRotations().find((rotation) => rotation.id === patient.rotationId)
+    : undefined;
+  const patientMatchesRotation = Boolean(
+    patient && patient.rotationId === activeRotation.id,
   );
-  const patientMatchesRotation = patient.rotationId === activeRotation.id;
   const reportTemplate = getReportTemplateForSpecialty(
     patientRotation?.specialty,
   );
   const fallbackTemplate: ReportTemplateType = reportTemplate ?? "Neurologi";
 
   const followUps = useMemo(
-    () => getFollowUps(patient.id, fallbackTemplate),
-    [fallbackTemplate, patient.id, workspaceSyncVersion],
+    () => getFollowUps(patient?.id ?? "", fallbackTemplate),
+    [fallbackTemplate, patient?.id, workspaceSyncVersion],
   );
   const initialFollowUp = followUps[0] ?? null;
   const initialTemplate: ReportTemplateType =
@@ -219,7 +202,7 @@ export default function ReportGeneratorPage({
         : 2;
 
   const generateReport = (nextTemplate: ReportTemplateType = templateType) => {
-    if (!selectedFollowUp) return;
+    if (!patient || !selectedFollowUp) return;
     setReportText(
       buildWhatsAppReport(patient, selectedFollowUp, nextTemplate, {
         rotationName:
@@ -266,6 +249,46 @@ export default function ReportGeneratorPage({
       );
     }
   };
+
+  if (!patient) {
+    return (
+      <AppShell
+        activeItem={activeItem}
+        onNavigate={onNavigate}
+        searchValue=""
+        onSearchChange={() => undefined}
+        searchEnabled={false}
+      >
+        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
+          <div className="mx-auto mb-5 w-full max-w-xl">
+            <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
+          </div>
+          <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
+              <Icon name="document" className="h-5 w-5" />
+            </div>
+            <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
+              Report Generator
+            </p>
+            <h1 className="mt-2 text-xl font-bold text-slate-900">
+              Pilih pasien terlebih dahulu
+            </h1>
+            <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-500">
+              Laporan Follow-Up dibuat dari pasien aktif pada stase yang sedang
+              digunakan.
+            </p>
+            <button
+              type="button"
+              onClick={() => onNavigate("Daftar Pasien")}
+              className="mt-6 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700"
+            >
+              Buka Daftar Pasien
+            </button>
+          </section>
+        </main>
+      </AppShell>
+    );
+  }
 
   if (!patientMatchesRotation) {
     return (
