@@ -21,6 +21,46 @@ type PatientRow = {
 
 type PatientIdMap = Record<string, string>;
 
+type FollowUpRow = {
+  id: string;
+  user_id: string;
+  patient_id: string;
+  number: number;
+  date: string;
+  iso_date: string;
+  time: string;
+  status: string;
+  template_type: string | null;
+  assessment_codes: string[];
+  planning: string | null;
+  instruction: string | null;
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+  summary: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type SupportingExamRow = {
+  id: string;
+  user_id: string;
+  follow_up_id: string;
+  name: string;
+  exam_type: string | null;
+  exam_date: string;
+  result: string | null;
+  attachment_name: string | null;
+  attachment_id: string | null;
+  attachment_type: string | null;
+  attachment_size: number | null;
+  attachment_count: number | null;
+  icon: string;
+  created_at: string;
+  updated_at: string;
+};
+
 const PATIENT_ID_MAP_KEY = "rekammedisku:supabase-patient-ids";
 const ROTATION_ID_MAP_KEY = "rekammedisku:supabase-rotation-ids";
 
@@ -187,8 +227,9 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
 
   if (error) throw error;
 
-  let nextLocal = [...localPatients];
+  let nextLocal: PatientListItem[] = [];
   const remoteIds = new Set((remoteRows ?? []).map((row) => row.id));
+  const hasRemotePatients = remoteIds.size > 0;
 
   for (const row of (remoteRows ?? []) as PatientRow[]) {
     let localId =
@@ -201,7 +242,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
           ([, remoteId]) => remoteId === row.rotation_id,
         )?.[0] ?? null;
 
-      const matchingLocal = nextLocal.find(
+      const matchingLocal = localPatients.find(
         (patient) =>
           !patientMap[patient.id] &&
           patient.rm.trim().toLowerCase() === row.rm.trim().toLowerCase() &&
@@ -217,7 +258,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
         ([, remoteId]) => remoteId === row.rotation_id,
       )?.[0] ?? row.rotation_id;
 
-    const existingPatient = nextLocal.find(
+    const existingPatient = localPatients.find(
       (patient) => patient.id === localId,
     );
 
@@ -227,38 +268,44 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
     });
   }
 
-  for (const localPatient of localPatients) {
-    const mappedRemoteId = patientMap[localPatient.id];
+  // Once cloud data exists, Supabase is the source of truth. Do not re-upload
+  // stale local-only patients from an older browser profile during hydration.
+  // A local-first migration is still allowed when the cloud table is empty.
+  if (!hasRemotePatients) {
+    for (const localPatient of localPatients) {
+      const mappedRemoteId = patientMap[localPatient.id];
 
-    if (mappedRemoteId && remoteIds.has(mappedRemoteId)) {
-      continue;
-    }
+      if (mappedRemoteId && remoteIds.has(mappedRemoteId)) {
+        continue;
+      }
 
-    const remoteRotationId = rotationMap[localPatient.rotationId];
+      const remoteRotationId = rotationMap[localPatient.rotationId];
 
-    if (!remoteRotationId) {
-      throw new Error(
-        "Ada pasien dengan stase yang belum tersinkron ke Supabase.",
+      if (!remoteRotationId) {
+        throw new Error(
+          "Ada pasien dengan stase yang belum tersinkron ke Supabase.",
+        );
+      }
+
+      const { data, error: insertError } = await supabase
+        .from("patients")
+        .insert({
+          user_id: userId,
+          ...patientPayload(localPatient, remoteRotationId),
+        })
+        .select()
+        .single<PatientRow>();
+
+      if (insertError) throw insertError;
+
+      patientMap[localPatient.id] = data.id;
+      nextLocal = mergePatientIntoLocal(
+        nextLocal,
+        toPatient(data, localPatient.id, localPatient),
       );
     }
-
-    const { data, error: insertError } = await supabase
-      .from("patients")
-      .insert({
-        user_id: userId,
-        ...patientPayload(localPatient, remoteRotationId),
-      })
-      .select()
-      .single<PatientRow>();
-
-    if (insertError) throw insertError;
-
-    patientMap[localPatient.id] = data.id;
-    nextLocal = mergePatientIntoLocal(
-      nextLocal,
-      toPatient(data, localPatient.id, localPatient),
-    );
   }
+
 
   saveMap(PATIENT_ID_MAP_KEY, patientMap);
   savePatients(nextLocal);
