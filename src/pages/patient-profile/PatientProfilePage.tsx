@@ -15,10 +15,116 @@ import { loadRotations } from "../../data/localRotations";
 import type { PatientListItem } from "../../types/patient";
 import Icon from "../../components/ui/Icon";
 import type { SupportingExam } from "../../types/followUp";
+import { getAttachment } from "../../data/localAttachments";
 
 type PatientProfilePageProps = NavigationProps & {
   patient: PatientListItem;
 };
+
+function SupportingExamAttachment({ exam }: { exam: SupportingExam }) {
+  const [attachmentUrl, setAttachmentUrl] = useState(exam.attachmentDataUrl ?? "");
+  const [loadState, setLoadState] = useState<"idle" | "loading" | "ready" | "missing">(
+    exam.attachmentDataUrl ? "ready" : exam.attachmentId ? "loading" : "idle",
+  );
+
+  useEffect(() => {
+    if (!exam.attachmentId || exam.attachmentDataUrl) {
+      setAttachmentUrl(exam.attachmentDataUrl ?? "");
+      setLoadState(exam.attachmentDataUrl ? "ready" : "idle");
+      return;
+    }
+
+    let cancelled = false;
+    let objectUrl = "";
+
+    setAttachmentUrl("");
+    setLoadState("loading");
+
+    void getAttachment(exam.attachmentId)
+      .then((blob) => {
+        if (cancelled) return;
+
+        if (!blob) {
+          setLoadState("missing");
+          return;
+        }
+
+        objectUrl = URL.createObjectURL(blob);
+        setAttachmentUrl(objectUrl);
+        setLoadState("ready");
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadState("missing");
+        }
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [exam.attachmentDataUrl, exam.attachmentId]);
+
+  if (loadState === "idle") {
+    return (
+      <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
+        Tidak ada file lampiran yang tersimpan untuk pemeriksaan ini.
+      </div>
+    );
+  }
+
+  if (loadState === "loading") {
+    return (
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-400">
+        Menyiapkan lampiran...
+      </div>
+    );
+  }
+
+  if (loadState === "missing") {
+    return (
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800">
+        Metadata lampiran tersedia, tetapi file tidak ditemukan di penyimpanan
+        perangkat ini.
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-slate-200 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="min-w-0 truncate text-xs font-semibold text-slate-700">
+          {exam.attachmentName || "Lampiran"}
+        </p>
+        {exam.attachmentName ? (
+          <a
+            href={attachmentUrl}
+            download={exam.attachmentName}
+            className="shrink-0 text-xs font-semibold text-[#1677FF] hover:underline"
+          >
+            Unduh
+          </a>
+        ) : null}
+      </div>
+
+      {exam.attachmentType?.startsWith("image/") ? (
+        <img
+          src={attachmentUrl}
+          alt={exam.attachmentName || "Lampiran pemeriksaan"}
+          className="mt-4 max-h-[420px] w-full rounded-xl border border-slate-200 object-contain"
+        />
+      ) : (
+        <iframe
+          src={attachmentUrl}
+          title={exam.attachmentName || "Lampiran pemeriksaan"}
+          className="mt-4 h-[420px] w-full rounded-xl border border-slate-200"
+        />
+      )}
+    </div>
+  );
+}
 
 export default function PatientProfilePage({
   activeItem,
@@ -361,41 +467,7 @@ export default function PatientProfilePage({
               </p>
             </div>
 
-            {selectedExam.attachmentDataUrl ? (
-              <div className="rounded-2xl border border-slate-200 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="min-w-0 truncate text-xs font-semibold text-slate-700">
-                    {selectedExam.attachmentName || "Lampiran"}
-                  </p>
-                  {selectedExam.attachmentName ? (
-                    <a
-                      href={selectedExam.attachmentDataUrl}
-                      download={selectedExam.attachmentName}
-                      className="shrink-0 text-xs font-semibold text-[#1677FF] hover:underline"
-                    >
-                      Unduh
-                    </a>
-                  ) : null}
-                </div>
-                {selectedExam.attachmentType?.startsWith("image/") ? (
-                  <img
-                    src={selectedExam.attachmentDataUrl}
-                    alt={selectedExam.attachmentName || "Lampiran pemeriksaan"}
-                    className="mt-4 max-h-[420px] w-full rounded-xl border border-slate-200 object-contain"
-                  />
-                ) : (
-                  <iframe
-                    src={selectedExam.attachmentDataUrl}
-                    title={selectedExam.attachmentName || "Lampiran pemeriksaan"}
-                    className="mt-4 h-[420px] w-full rounded-xl border border-slate-200"
-                  />
-                )}
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
-                Tidak ada file lampiran yang tersimpan untuk pemeriksaan ini.
-              </div>
-            )}
+            <SupportingExamAttachment exam={selectedExam} />
           </div>
         </div>
       </div>
