@@ -12,6 +12,15 @@ export function formatReportDate(date: string) {
   return date || "Tanggal belum tersedia";
 }
 
+function formatAdmissionDate(date: string | undefined) {
+  if (!date) return "";
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(date + "T00:00:00"));
+}
+
 export function getReportGreeting(date = new Date()) {
   const hour = date.getHours();
 
@@ -172,12 +181,8 @@ export function buildWhatsAppReport(
     "Bed: " + patient.bed,
     "DPJP: " + patient.doctor,
     "Stase: " + rotationName,
-    "Follow-Up #" +
-      followUp.number +
-      " · " +
-      formatReportDate(followUp.date) +
-      " · " +
-      followUp.time,
+    "Tanggal Masuk: " + formatAdmissionDate(patient.admissionDate),
+    "Tanggal Follow-Up: " + formatReportDate(followUp.date),
     "",
     "S:",
     cleanBlock(followUp.subjective),
