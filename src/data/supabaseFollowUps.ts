@@ -367,12 +367,12 @@ async function persistFollowUpWithSupabaseInternal(
 
   const followUpMap = readMap(FOLLOW_UP_ID_MAP_KEY);
   const examMap = readMap(SUPPORTING_EXAM_ID_MAP_KEY);
-  let remoteFollowUpId = followUpMap[entry.id] ?? null;
+  let remoteFollowUpId: string | null = followUpMap[entry.id] ?? null;
   let insertedFollowUpId: string | null = null;
   const insertedExamIds: string[] = [];
 
   try {
-    let remoteRow: FollowUpRow;
+    let remoteRow: FollowUpRow | null = null;
 
     if (remoteFollowUpId) {
       const { data, error } = await supabase
@@ -427,7 +427,7 @@ async function persistFollowUpWithSupabaseInternal(
       }
     }
 
-    if (!insertedFollowUpId) {
+    if (insertedFollowUpId) {
       for (const exam of entry.supportingExams ?? []) {
         const { data, error } = await supabase
           .from("supporting_exams")
@@ -443,7 +443,13 @@ async function persistFollowUpWithSupabaseInternal(
         examMap[exam.id] = data.id;
         insertedExamIds.push(data.id);
       }
-    } else {
+    }
+
+    if (!remoteRow) {
+      throw new Error("Follow-up tidak berhasil ditemukan atau disimpan.");
+    }
+
+    if (!insertedFollowUpId) {
       const { data: existingExams, error: existingExamsError } = await supabase
         .from("supporting_exams")
         .select("id")
