@@ -454,7 +454,10 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
           block !== null &&
           typeof (block as { id?: unknown }).id === "string" &&
           typeof (block as { type?: unknown }).type === "string" &&
-          block.type in BLOCK_META &&
+          Object.prototype.hasOwnProperty.call(
+            BLOCK_META,
+            (block as { type: string }).type,
+          ) &&
           typeof (block as { label?: unknown }).label === "string" &&
           typeof (block as { enabled?: unknown }).enabled === "boolean" &&
           typeof (block as { config?: unknown }).config === "object" &&
