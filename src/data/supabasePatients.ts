@@ -198,12 +198,10 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
         ([, remoteId]) => remoteId === row.rotation_id,
       )?.[0] ?? row.rotation_id;
 
-    nextLocal = mergePatientIntoLocal(
-      nextLocal,
-      toPatient(row, localId).rotationId === localRotationId
-        ? toPatient(row, localId)
-        : { ...toPatient(row, localId), rotationId: localRotationId },
-    );
+    nextLocal = mergePatientIntoLocal(nextLocal, {
+      ...toPatient(row, localId),
+      rotationId: localRotationId,
+    });
   }
 
   for (const localPatient of localPatients) {
@@ -317,4 +315,93 @@ export async function setPatientStatusWithSupabase(
     ...patient,
     status,
   });
+}
+
+export async function deletePatientWithSupabase(
+  patient: PatientListItem,
+): Promise<boolean> {
+  const previousPatients = loadPatients();
+  const patientMap = readMap(PATIENT_ID_MAP_KEY);
+
+  try {
+    const userId = await getCurrentUserId();
+    let remotePatientId = patientMap[patient.id];
+
+    if (!remotePatientId) {
+      await syncPatientsWithSupabase();
+      remotePatientId = readMap(PATIENT_ID_MAP_KEY)[patient.id];
+    }
+
+    if (!remotePatientId) {
+      throw new Error("Pasien belum tersinkron ke Supabase.");
+    }
+
+    const { count, error: followUpCheckError } = await supabase
+      .from("follow_ups")
+      .select("id", { count: "exact", head: true })
+      .eq("patient_id", remotePatientId)
+      .eq("user_id", userId);
+
+    if (followUpCheckError) throw followUpCheckError;
+
+    if ((count ?? 0) > 0) {
+      throw new Error(
+        "Pasien memiliki riwayat follow-up di Supabase. Penghapusan akan tersedia setelah data follow-up tersinkron.",
+      );
+    }
+
+    const { data: deletedRows, error: deleteError } = await supabase
+      .from("patients")
+      .delete()
+      .eq("id", remotePatientId)
+      .eq("user_id", userId)
+      .select()
+      .returns<PatientRow[]>();
+
+    if (deleteError) throw deleteError;
+
+    if (deletedRows.length !== 1) {
+      throw new Error("Pasien tidak ditemukan di Supabase.");
+    }
+
+    try {
+      const localDeleted = await import("./localPatients").then(
+        ({ deletePatient: deleteLocalPatient }) =>
+          deleteLocalPatient(patient.id),
+      );
+
+      if (!localDeleted) {
+        throw new Error("Pasien tidak ditemukan pada penyimpanan lokal.");
+      }
+    } catch (localError) {
+      const { data: restored, error: restoreError } = await supabase
+        .from("patients")
+        .insert({
+          id: remotePatientId,
+          user_id: userId,
+          ...patientPayload(
+            patient,
+            readMap(ROTATION_ID_MAP_KEY)[patient.rotationId] ?? patient.rotationId,
+          ),
+        })
+        .select()
+        .single<PatientRow>();
+
+      if (restoreError || !restored) {
+        savePatients(previousPatients);
+        throw new Error(
+          "Penghapusan gagal dan pemulihan pasien di Supabase juga gagal.",
+        );
+      }
+
+      throw localError;
+    }
+
+    delete patientMap[patient.id];
+    saveMap(PATIENT_ID_MAP_KEY, patientMap);
+    return true;
+  } catch (error) {
+    savePatients(previousPatients);
+    throw new Error(getErrorMessage(error));
+  }
 }
