@@ -7,8 +7,6 @@ import PatientProfileHeader from "../../components/patient-profile/PatientProfil
 import ProfileTabs, { type ProfileTab } from "../../components/patient-profile/ProfileTabs";
 import SupportingExams from "../../components/patient-profile/SupportingExams";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
-import {
-} from "../../data/supabaseFollowUps";
 import { loadRotations } from "../../data/localRotations";
 import type { PatientListItem } from "../../types/patient";
 import Icon from "../../components/ui/Icon";
