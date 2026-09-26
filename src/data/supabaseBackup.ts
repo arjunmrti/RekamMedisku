@@ -50,7 +50,7 @@ function getSupabaseErrorMessage(error: unknown) {
     };
 
     if (candidate.code === "PGRST202") {
-      return "Fitur restore cloud belum aktif di Supabase. Jalankan migration P1 workspace safety terlebih dahulu.";
+      return "Fitur restore cloud belum aktif di Supabase. Jalankan migration P8 patient location terlebih dahulu.";
     }
 
     if (typeof candidate.message === "string" && candidate.message) {
@@ -133,7 +133,7 @@ export async function restoreWorkspaceBackupWithSupabase(
     payload.attachments,
   );
 
-  const { data, error } = await supabase.rpc("restore_workspace_backup", {
+  const { data, error } = await supabase.rpc("restore_workspace_backup_v2", {
     p_backup: cloudPayload,
   });
 
