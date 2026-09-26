@@ -60,6 +60,7 @@ function legacyTemplateToRecord(
         config: {
           showEmptyRooms: template.showEmptyRooms,
           highlightOccupied: true,
+          legacyGroups: template.locationGroups,
         },
       },
       {
