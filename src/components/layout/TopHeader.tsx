@@ -24,6 +24,7 @@ export default function TopHeader({
   const profileRef = useRef<HTMLDivElement | null>(null);
   const notificationRef = useRef<HTMLDivElement | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [signOutError, setSignOutError] = useState("");
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onSearchChange(event.target.value);
@@ -64,6 +65,7 @@ export default function TopHeader({
     if (isSigningOut) return;
 
     setIsSigningOut(true);
+    setSignOutError("");
 
     try {
       const { error } = await supabase.auth.signOut();
@@ -72,6 +74,11 @@ export default function TopHeader({
       }
     } catch (error) {
       console.error("Supabase sign out failed:", error);
+      setSignOutError(
+        error instanceof Error
+          ? error.message
+          : "Gagal keluar dari akun. Coba lagi.",
+      );
       setIsSigningOut(false);
     }
   };
@@ -273,6 +280,14 @@ export default function TopHeader({
               </div>
 
               <div className="p-2">
+                {signOutError ? (
+                  <div
+                    role="alert"
+                    className="mb-2 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2.5 text-[11px] leading-relaxed text-rose-700"
+                  >
+                    {signOutError}
+                  </div>
+                ) : null}
                 <button
                   type="button"
                   role="menuitem"
