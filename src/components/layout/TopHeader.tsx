@@ -84,9 +84,20 @@ export default function TopHeader({
           <Icon name="menu" className="h-5 w-5" />
         </button>
 
-        <div className="min-w-0 flex-1 sm:hidden">
-          <p className="truncate text-sm font-bold text-slate-800">{activeItem}</p>
-        </div>
+        {!searchEnabled ? (
+          <div className="min-w-0 flex-1 xl:hidden">
+            <p className="truncate text-sm font-bold text-slate-800 sm:text-base">
+              {activeItem}
+            </p>
+            <p className="hidden truncate text-[11px] text-slate-400 sm:block">
+              Workspace dokumentasi klinis pribadi
+            </p>
+          </div>
+        ) : (
+          <div className="min-w-0 flex-1 sm:hidden">
+            <p className="truncate text-sm font-bold text-slate-800">{activeItem}</p>
+          </div>
+        )}
 
         {searchEnabled ? (
           <label className="relative hidden min-w-0 w-full max-w-md sm:block">
