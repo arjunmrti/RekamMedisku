@@ -22,7 +22,7 @@ export type PatientListItem = {
   /** Legacy room field kept for backward compatibility with existing UI/data. */
   room: string;
   /** Current patient location used by the next Slaberan location model. */
-  currentLocation: PatientLocation;
+  currentLocation?: PatientLocation;
   /** Optional place where the patient first entered the hospital. */
   admissionLocation?: PatientAdmissionLocation;
   bed: string;
