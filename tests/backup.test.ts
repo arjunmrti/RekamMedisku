@@ -77,69 +77,12 @@ function withAttachment(
   };
 }
 
-test("backup lama tanpa field attachments tetap valid", () => {
-  const result = parseBackupText(serializeBackup(basePayload));
-
-  assert.equal(result.ok, true);
-  if (!result.ok) return;
-
-  assert.equal(result.data.attachments, undefined);
-});
-
-test("backup baru membawa attachment IndexedDB yang direferensikan follow-up", () => {
-  const result = parseBackupText(
-    serializeBackup(withAttachment("att-test")),
-  );
-
-  assert.equal(result.ok, true);
-  if (!result.ok) return;
-
-  assert.equal(result.data.attachments?.length, 1);
-  assert.equal(result.data.attachments?.[0]?.id, "att-test");
-});
-
-test("backup ditolak jika attachment yang direferensikan tidak ikut dibawa", () => {
-  const payload = withAttachment("att-missing");
-  payload.attachments = [];
-
-  const result = parseBackupText(serializeBackup(payload));
-
-  assert.equal(result.ok, false);
-});
-
-test("backup ditolak jika Base64 attachment tidak valid", () => {
-  const payload = withAttachment("att-invalid");
-  payload.attachments![0].dataBase64 = "not-base64";
-
-  const result = parseBackupText(serializeBackup(payload));
-
-  assert.equal(result.ok, false);
-});
-
-test("backup menolak tanggal kalender follow-up yang tidak valid", () => {
-  const payload = withAttachment("att-invalid-date");
-  payload.followUpsByPatient[patient.id][0].isoDate = "2026-02-30";
-
-  const result = parseBackupText(serializeBackup(payload));
-
-  assert.equal(result.ok, false);
-});
-
-test("backup menolak jam follow-up yang tidak valid", () => {
-  const payload = withAttachment("att-invalid-time");
-  payload.followUpsByPatient[patient.id][0].time = "24.61";
-
-  const result = parseBackupText(serializeBackup(payload));
-
-  assert.equal(result.ok, false);
-});
-
-test("backup menolak tanggal draf yang tidak valid", () => {
-  const payload: BackupPayload = {
+function withDraft(): BackupPayload {
+  return {
     ...basePayload,
     followUpDrafts: {
       [patient.id]: {
-        followUpDate: "2026-04-31",
+        followUpDate: "2026-09-26",
         followUpTime: "09:30",
         subjective: {
           keluhan: "",
@@ -201,6 +144,68 @@ test("backup menolak tanggal draf yang tidak valid", () => {
       },
     },
   };
+}
+
+test("backup lama tanpa field attachments tetap valid", () => {
+  const result = parseBackupText(serializeBackup(basePayload));
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.equal(result.data.attachments, undefined);
+});
+
+test("backup baru membawa attachment IndexedDB yang direferensikan follow-up", () => {
+  const result = parseBackupText(
+    serializeBackup(withAttachment("att-test")),
+  );
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.equal(result.data.attachments?.length, 1);
+  assert.equal(result.data.attachments?.[0]?.id, "att-test");
+});
+
+test("backup ditolak jika attachment yang direferensikan tidak ikut dibawa", () => {
+  const payload = withAttachment("att-missing");
+  payload.attachments = [];
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup ditolak jika Base64 attachment tidak valid", () => {
+  const payload = withAttachment("att-invalid");
+  payload.attachments![0].dataBase64 = "not-base64";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak tanggal kalender follow-up yang tidak valid", () => {
+  const payload = withAttachment("att-invalid-date");
+  payload.followUpsByPatient[patient.id][0].isoDate = "2026-02-30";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak jam follow-up yang tidak valid", () => {
+  const payload = withAttachment("att-invalid-time");
+  payload.followUpsByPatient[patient.id][0].time = "24.61";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak tanggal draf yang tidak valid", () => {
+  const payload = withDraft();
+  payload.followUpDrafts[patient.id].followUpDate = "2026-04-31";
 
   const result = parseBackupText(serializeBackup(payload));
 
@@ -208,16 +213,8 @@ test("backup menolak tanggal draf yang tidak valid", () => {
 });
 
 test("backup menolak jam draf yang tidak valid", () => {
-  const payload: BackupPayload = {
-    ...basePayload,
-    followUpDrafts: {
-      [patient.id]: {
-        ...basePayload.followUpDrafts[patient.id],
-        followUpDate: "2026-09-26",
-        followUpTime: "12:60",
-      } as never,
-    },
-  };
+  const payload = withDraft();
+  payload.followUpDrafts[patient.id].followUpTime = "12:60";
 
   const result = parseBackupText(serializeBackup(payload));
 
