@@ -47,6 +47,7 @@ export default function TopHeader({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setProfileOpen(false);
+        setNotificationOpen(false);
       }
     };
 
@@ -230,7 +231,7 @@ export default function TopHeader({
             className="flex items-center gap-2 rounded-xl p-1.5 text-left transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/20 sm:gap-3"
           >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#60708A] text-[11px] font-semibold text-white sm:h-10 sm:w-10">
-              MF
+              {initials}
             </div>
             <div className="hidden min-w-0 lg:block">
               <span className="block truncate text-sm font-bold leading-tight text-slate-800">
