@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
 import { createPatientId } from "../../data/localPatients";
+import { toLocalIsoDate } from "../../utils/date";
 import Icon from "../ui/Icon";
 
 type AddPatientModalProps = {
@@ -29,6 +30,9 @@ export default function AddPatientModal({
   const [doctor, setDoctor] = useState(() => patient?.doctor ?? "");
   const [room, setRoom] = useState(() => patient?.room ?? "");
   const [bed, setBed] = useState(() => patient?.bed ?? "");
+  const [admissionDate, setAdmissionDate] = useState(
+    () => patient?.admissionDate ?? toLocalIsoDate(),
+  );
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
@@ -42,6 +46,12 @@ export default function AddPatientModal({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    setAdmissionDate(patient?.admissionDate ?? toLocalIsoDate());
+  }, [open, patient?.id]);
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -53,6 +63,11 @@ export default function AddPatientModal({
 
     if (!room.trim() || !bed.trim()) {
       setErrorMessage("Ruangan dan nomor bed wajib diisi.");
+      return;
+    }
+
+    if (!admissionDate) {
+      setErrorMessage("Tanggal masuk pasien wajib diisi.");
       return;
     }
 
@@ -70,7 +85,7 @@ export default function AddPatientModal({
       followUpNumber: patient?.followUpNumber ?? 0,
       lastFollowUpAt: patient?.lastFollowUpAt,
       createdAt: patient?.createdAt ?? new Date().toISOString(),
-      admissionDate: patient?.admissionDate ?? new Date().toISOString().slice(0, 10),
+      admissionDate,
       status: patient?.status ?? "Aktif",
     });
 
@@ -180,6 +195,16 @@ export default function AddPatientModal({
               />
             </Field>
           </div>
+
+          <Field label="Tanggal Masuk">
+            <input
+              required
+              type="date"
+              value={admissionDate}
+              onChange={(event) => setAdmissionDate(event.target.value)}
+              className="field-control"
+            />
+          </Field>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field label="Ruangan / Bangsal">
