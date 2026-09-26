@@ -72,6 +72,7 @@ function legacyTemplateToRecord(
           patientSeparator: "/",
           showPatientIndex: true,
           emptyText: "Belum ada pasien.",
+          includeSpecialUnitPatients: false,
         },
       },
       {
