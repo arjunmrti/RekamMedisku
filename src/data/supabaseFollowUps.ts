@@ -95,14 +95,14 @@ function saveMap(key: string, map: IdMap) {
 }
 
 function toIsoDate(value: string) {
-  if /^\\d{4}-\\d{2}-\\d{2}$/.test(value) {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return value;
   }
 
   const match = value
     .trim()
     .toLowerCase()
-    .match(/^(\\d{1,2})\\s+([a-zà-ÿ]+)\\s+(\\d{4})$/);
+    .match(/^(\d{1,2})\s+([a-zà-ÿ]+)\s+(\d{4})$/);
 
   if (!match) {
     throw new Error("Tanggal follow-up tidak dikenali: " + value);
