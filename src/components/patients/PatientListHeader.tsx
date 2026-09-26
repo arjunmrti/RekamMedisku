@@ -17,7 +17,7 @@ export default function PatientListHeader({
   onAddPatient,
 }: PatientListHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
@@ -34,7 +34,7 @@ export default function PatientListHeader({
           Kelola pasien, status, dan riwayat follow-up dalam satu workspace stase.
         </p>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 grid w-full max-w-[360px] grid-cols-3 gap-2 sm:flex sm:max-w-none sm:flex-wrap">
           {[
             ["Total", totalPatients, "bg-white border-slate-200 text-slate-700"],
             ["Aktif", activePatients, "bg-emerald-50 border-emerald-100 text-emerald-700"],
@@ -42,7 +42,7 @@ export default function PatientListHeader({
           ].map(([label, value, className]) => (
             <span
               key={label as string}
-              className={"inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-[10px] font-semibold " + (className as string)}
+              className={"flex items-center justify-center gap-2 rounded-xl border px-2.5 py-2 text-[10px] font-semibold sm:inline-flex sm:justify-start sm:px-3 " + (className as string)}
             >
               <span className="text-base font-bold leading-none text-slate-900">{value as number}</span>
               <span>{label as string}</span>
@@ -54,7 +54,7 @@ export default function PatientListHeader({
       <button
         type="button"
         onClick={onAddPatient}
-        className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-200 transition-colors hover:bg-blue-700 active:bg-blue-800"
+        className="inline-flex min-h-11 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold md:w-auto text-white shadow-sm shadow-blue-200 transition-colors hover:bg-blue-700 active:bg-blue-800"
       >
         <Icon name="plus-user" className="h-4 w-4" strokeWidth={2.5} />
         <span>Tambah Pasien</span>

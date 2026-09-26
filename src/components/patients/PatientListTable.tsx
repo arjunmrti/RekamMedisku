@@ -204,7 +204,7 @@ export default function PatientListTable({
               type="button"
               onClick={() => onSelectPatient(patient)}
               className={
-                "block min-h-[44px] w-full rounded-xl p-2 text-left transition-colors " +
+                "block min-h-[44px] w-full rounded-xl p-2.5 text-left transition-colors sm:p-2 " +
                 (patient.id === selectedPatientId
                   ? "bg-blue-50/70"
                   : "hover:bg-slate-50")
@@ -215,7 +215,7 @@ export default function PatientListTable({
                 <StatusBadge status={patient.status} />
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
+              <div className="mt-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 sm:gap-4">
                 <div>
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                     No. RM
@@ -232,14 +232,14 @@ export default function PatientListTable({
                   </p>
                 </div>
 
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                     DPJP
                   </p>
                   <p className="font-medium text-slate-600">{patient.doctor}</p>
                 </div>
 
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                     Follow-Up Terakhir
                   </p>
