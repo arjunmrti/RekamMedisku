@@ -74,7 +74,7 @@ export default function PatientSummaryPanel({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 p-5 sm:p-6 lg:grid-cols-[1.25fr_0.9fr_1.2fr_0.8fr] lg:gap-0">
+        <div className="grid grid-cols-1 gap-5 p-4 sm:p-5 md:grid-cols-2 md:gap-x-6 md:gap-y-6 lg:grid-cols-[1.25fr_0.9fr_1.2fr_0.8fr] lg:gap-0 lg:p-6">
           <div className="min-w-0 lg:pr-6">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
               Identitas
@@ -86,10 +86,10 @@ export default function PatientSummaryPanel({
               </div>
 
               <div className="min-w-0">
-                <h3 className="truncate text-[18px] font-bold leading-tight tracking-tight text-slate-900">
+                <h3 className="break-words text-[17px] font-bold sm:text-[18px] leading-tight tracking-tight text-slate-900">
                   {patient.name}
                 </h3>
-                <p className="mt-1 text-[11px] font-medium text-slate-500">
+                <p className="mt-1 break-all text-[11px] font-medium text-slate-500">
                   RM {patient.rm}
                 </p>
                 <p className="mt-0.5 text-[11px] text-slate-400">
@@ -128,7 +128,7 @@ export default function PatientSummaryPanel({
               Aktivitas Klinis
             </p>
 
-            <div className="mt-4 flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-3.5">
+            <div className="mt-3 flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/60 p-3 sm:mt-4 sm:p-3.5">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#1677FF] shadow-sm">
                 <Icon name="document" className="h-4 w-4" />
               </div>
