@@ -9,11 +9,11 @@ import {
 } from "../../data/localRotations";
 import {
   activateRotationWithSupabase,
-  syncRotationsWithSupabase,
   upsertRotationWithSupabase,
 } from "../../data/supabaseRotations";
 import { loadPatients } from "../../data/localPatients";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
+import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
 import Icon from "../../components/ui/Icon";
@@ -81,7 +81,8 @@ export default function RotationManagementPage({
       setErrorMessage("");
 
       try {
-        const nextRotations = await syncRotationsWithSupabase();
+        await syncWorkspaceWithSupabase();
+        const nextRotations = loadRotations();
 
         if (cancelled) return;
 
