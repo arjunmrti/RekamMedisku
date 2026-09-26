@@ -12,6 +12,7 @@ type RotationFormModalProps = {
   onClose: () => void;
   onSubmit: (input: {
     id?: string;
+    updatedAt?: string;
     name: string;
     specialty: RotationSpecialty;
     startDate: string;
@@ -75,6 +76,7 @@ export default function RotationFormModal({
     try {
       await onSubmit({
         id: rotation?.id,
+        updatedAt: rotation?.updatedAt,
         name,
         specialty,
         startDate,
@@ -83,8 +85,12 @@ export default function RotationFormModal({
       });
 
       onClose();
-    } catch {
-      setErrorMessage("Stase belum tersimpan. Periksa koneksi lalu coba lagi.");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Stase belum tersimpan. Periksa koneksi lalu coba lagi.",
+      );
     } finally {
       setSubmitting(false);
     }
