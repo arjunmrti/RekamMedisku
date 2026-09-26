@@ -12,6 +12,7 @@ import {
   upsertRotation as saveLocalRotation,
 } from "./localRotations";
 import { supabase } from "../utils/supabase";
+import { getAuthenticatedUserId } from "../utils/authenticatedUser";
 
 type RotationRow = {
   id: string;
@@ -109,17 +110,7 @@ function isSameRotation(a: Rotation, b: RotationRow) {
 }
 
 async function getCurrentUserId() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) throw error;
-  if (!user) {
-    throw new Error("Sesi RekamMedisku tidak ditemukan.");
-  }
-
-  return user.id;
+  return getAuthenticatedUserId();
 }
 
 function mergeRotationIntoLocal(
