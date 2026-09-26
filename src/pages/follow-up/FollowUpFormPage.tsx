@@ -10,6 +10,7 @@ import {
   clearFollowUpDraft,
   loadFollowUpDraft,
   loadSavedFollowUps,
+  replaceSavedFollowUps,
   saveFollowUpDraft,
 } from "../../data/localFollowUps";
 import {
