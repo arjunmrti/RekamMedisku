@@ -67,7 +67,7 @@ export function derivePatientFollowUpSummaryFromRemote(
       number: row.number,
       isoDate: row.iso_date,
       time: row.time,
-      status: row.status as FollowUpEntry["status"] | undefined,
+      status: row.status === "Draf" ? "Draf" : "Tersimpan",
     })),
   );
 }
