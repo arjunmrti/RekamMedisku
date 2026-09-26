@@ -16,6 +16,7 @@ import {
   getCompletedFollowUps,
   hasCompletedFollowUpToday,
 } from "../../utils/dashboardFollowUp";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
 function getFollowUps(patientId: string): FollowUpEntry[] {
   return getCompletedFollowUps(loadSavedFollowUps()[patientId] ?? []);
@@ -46,6 +47,7 @@ export default function DashboardPage({
 }: NavigationProps & {
   onOpenPatientProfile: (patient: PatientListItem) => void;
 }) {
+  useWorkspaceSyncVersion();
   const [searchValue, setSearchValue] = useState("");
   const activeRotation = loadActiveRotation();
   const patients = loadPatients();

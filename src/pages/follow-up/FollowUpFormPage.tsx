@@ -16,8 +16,8 @@ import {
 import {
   getSupabaseFollowUpErrorMessage,
   persistFollowUpWithSupabase,
-  syncFollowUpsForPatientWithSupabase,
 } from "../../data/supabaseFollowUps";
+import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import { loadActiveRotation } from "../../data/localRotations";
 import { updatePatient } from "../../data/localPatients";
 import { toLocalIsoDate, toLocalTimeInput } from "../../utils/date";
@@ -348,8 +348,9 @@ export default function FollowUpFormPage({
   useEffect(() => {
     let cancelled = false;
 
-    void syncFollowUpsForPatientWithSupabase(patient.id)
-      .then((entries) => {
+    void syncWorkspaceWithSupabase()
+      .then(() => {
+        const entries = loadSavedFollowUps()[patient.id] ?? [];
         if (!cancelled) {
           setPreviousFollowUps(entries);
           setErrorMessage("");
@@ -541,9 +542,8 @@ export default function FollowUpFormPage({
     let previousSaved: ReturnType<typeof loadSavedFollowUps> | null = null;
 
     try {
-      const syncedEntries = await syncFollowUpsForPatientWithSupabase(
-        patient.id,
-      );
+      await syncWorkspaceWithSupabase();
+      const syncedEntries = loadSavedFollowUps()[patient.id] ?? [];
       setPreviousFollowUps(syncedEntries);
 
       previousSaved = loadSavedFollowUps();

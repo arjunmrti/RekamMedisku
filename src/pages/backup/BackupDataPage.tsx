@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import {
   appendBackupHistory,
@@ -22,6 +22,7 @@ import {
 } from "../../utils/backup";
 import type { PatientListItem } from "../../types/patient";
 import { toLocalIsoDate } from "../../utils/date";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import Icon from "../../components/ui/Icon";
 
 type BackupDataPageProps = NavigationProps;
@@ -46,6 +47,7 @@ export default function BackupDataPage({
   activeItem,
   onNavigate,
 }: BackupDataPageProps) {
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const [globalSearch, setGlobalSearch] = useState("");
   const [patients, setPatients] = useState<PatientListItem[]>(() => loadPatients());
   const [history, setHistory] = useState<BackupHistoryEntry[]>(() =>
@@ -159,7 +161,13 @@ export default function BackupDataPage({
 
   const refreshPageData = () => {
     setPatients(loadPatients());
+    setRotations(loadRotations());
   };
+
+  useEffect(() => {
+    if (workspaceSyncVersion === 0) return;
+    refreshPageData();
+  }, [workspaceSyncVersion]);
 
   const handleExport = async () => {
     if (isProcessing) return;

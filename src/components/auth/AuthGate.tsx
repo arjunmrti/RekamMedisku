@@ -1,7 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import LoginPage from "../../pages/auth/LoginPage";
-import { syncFollowUpsWithSupabase } from "../../data/supabaseFollowUps";
+import {
+  startWorkspaceSync,
+  syncWorkspaceWithSupabase,
+} from "../../data/supabaseSyncEngine";
 
 type AuthGateProps = {
   children: ReactNode;
@@ -21,14 +24,24 @@ export default function AuthGate({ children }: AuthGateProps) {
 
     let cancelled = false;
 
+    const authenticatedUserId = session.user.id;
+    let stopWorkspaceSync: (() => void) | null = null;
+
     async function hydrateWorkspace() {
       setWorkspaceLoading(true);
       setWorkspaceError("");
 
       try {
-        // Hydrate the authenticated user's cloud workspace before the app
-        // renders so a fresh browser does not depend on its empty local cache.
-        await syncFollowUpsWithSupabase();
+        // Hydrate the cloud workspace before rendering the app so a fresh
+        // browser starts from the authenticated Supabase state.
+        await syncWorkspaceWithSupabase();
+
+        if (cancelled) return;
+
+        // Keep the local cache fresh from other browsers/tabs. Realtime is
+        // preferred when available; focus/visibility and polling provide a
+        // fallback when Realtime replication is not enabled.
+        stopWorkspaceSync = startWorkspaceSync(authenticatedUserId);
       } catch (error) {
         console.error("Supabase workspace hydration failed:", error);
 
@@ -50,6 +63,7 @@ export default function AuthGate({ children }: AuthGateProps) {
 
     return () => {
       cancelled = true;
+      stopWorkspaceSync?.();
     };
   }, [session]);
 

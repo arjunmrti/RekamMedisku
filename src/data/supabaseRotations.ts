@@ -183,16 +183,21 @@ export async function syncRotationsWithSupabase(): Promise<Rotation[]> {
 
   if (error) throw error;
 
-  let nextLocal = [...localRotations];
-  const remoteIds = new Set((remoteRows ?? []).map((row) => row.id));
+  const rows = (remoteRows ?? []) as RotationRow[];
+  const remoteIds = new Set(rows.map((row) => row.id));
 
-  for (const row of (remoteRows ?? []) as RotationRow[]) {
+  // Supabase is the source of truth once the account has cloud data.
+  // Rebuild the browser cache from remote rows so stale rotations cannot
+  // resurrect after they were removed or changed elsewhere.
+  let nextLocal: Rotation[] = [];
+
+  for (const row of rows) {
     let localId =
       Object.entries(idMap).find(([, remoteId]) => remoteId === row.id)?.[0] ??
       null;
 
     if (!localId) {
-      const matchingLocal = nextLocal.find(
+      const matchingLocal = localRotations.find(
         (rotation) =>
           !getRemoteId(rotation.id, idMap) && isSameRotation(rotation, row),
       );
@@ -207,31 +212,46 @@ export async function syncRotationsWithSupabase(): Promise<Rotation[]> {
     );
   }
 
-  for (const localRotation of localRotations) {
-    const mappedRemoteId = getRemoteId(localRotation.id, idMap);
-
-    if (mappedRemoteId && remoteIds.has(mappedRemoteId)) {
-      continue;
-    }
+  // A completely new workspace still needs a usable default rotation.
+  if (rows.length === 0 && localRotations.length > 0) {
+    const seed = localRotations[0];
 
     const insertedRow = await insertLocalRotation(
-      localRotation,
+      seed,
       userId,
       idMap,
     );
 
-    nextLocal = mergeRotationIntoLocal(
-      nextLocal,
-      toRotation(insertedRow as RotationRow, localRotation.id),
-    );
+    nextLocal = [toRotation(insertedRow as RotationRow, seed.id)];
+  }
+
+  for (const [localId, remoteId] of Object.entries(idMap)) {
+    if (!remoteIds.has(remoteId)) {
+      delete idMap[localId];
+    }
   }
 
   saveIdMap(idMap);
   saveRotations(nextLocal);
 
-  const activeId = loadActiveRotationId();
-  if (nextLocal.some((rotation) => rotation.id === activeId)) {
-    setActiveRotationId(activeId);
+  const activeRemoteRow =
+    rows.find((row) => normalizeStatus(row.status) === "Aktif") ?? null;
+
+  if (activeRemoteRow) {
+    const activeLocalId =
+      Object.entries(idMap).find(
+        ([, remoteId]) => remoteId === activeRemoteRow.id,
+      )?.[0] ?? activeRemoteRow.id;
+
+    setActiveRotationId(activeLocalId);
+  } else if (nextLocal.length) {
+    const currentActiveId = loadActiveRotationId();
+
+    setActiveRotationId(
+      nextLocal.some((rotation) => rotation.id === currentActiveId)
+        ? currentActiveId
+        : nextLocal[0].id,
+    );
   }
 
   return nextLocal;

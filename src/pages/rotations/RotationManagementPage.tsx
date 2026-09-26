@@ -9,10 +9,11 @@ import {
 } from "../../data/localRotations";
 import {
   activateRotationWithSupabase,
-  syncRotationsWithSupabase,
   upsertRotationWithSupabase,
 } from "../../data/supabaseRotations";
 import { loadPatients } from "../../data/localPatients";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
+import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
 import Icon from "../../components/ui/Icon";
@@ -60,11 +61,12 @@ export default function RotationManagementPage({
   onNavigate,
   onRotationChange,
 }: RotationManagementPageProps) {
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const [rotations, setRotations] = useState<Rotation[]>(() => loadRotations());
   const [activeRotation, setActiveRotation] = useState<Rotation>(() =>
     loadActiveRotation(),
   );
-  const [patients] = useState<PatientListItem[]>(() => loadPatients());
+  const [patients, setPatients] = useState<PatientListItem[]>(() => loadPatients());
   const [switchTarget, setSwitchTarget] = useState<Rotation | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingRotation, setEditingRotation] = useState<Rotation | null>(null);
@@ -79,7 +81,8 @@ export default function RotationManagementPage({
       setErrorMessage("");
 
       try {
-        const nextRotations = await syncRotationsWithSupabase();
+        await syncWorkspaceWithSupabase();
+        const nextRotations = loadRotations();
 
         if (cancelled) return;
 
@@ -106,6 +109,14 @@ export default function RotationManagementPage({
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (workspaceSyncVersion === 0) return;
+
+    setRotations(loadRotations());
+    setActiveRotation(loadActiveRotation());
+    setPatients(loadPatients());
+  }, [workspaceSyncVersion]);
 
   const patientCounts = useMemo(() => {
     return rotations.reduce<Record<string, number>>((acc, rotation) => {

@@ -14,6 +14,7 @@ import {
 import type { PatientListItem } from "../../types/patient";
 import type { ReportStep, ReportTemplateType } from "../../types/report";
 import Icon from "../../components/ui/Icon";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
 type ReportGeneratorPageProps = NavigationProps & {
   patient: PatientListItem;
@@ -79,6 +80,7 @@ export default function ReportGeneratorPage({
   onNavigate,
   patient,
 }: ReportGeneratorPageProps) {
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const activeRotation = loadActiveRotation();
   const patientRotation = loadRotations().find(
     (rotation) => rotation.id === patient.rotationId,
@@ -91,7 +93,7 @@ export default function ReportGeneratorPage({
 
   const followUps = useMemo(
     () => getFollowUps(patient.id, fallbackTemplate),
-    [fallbackTemplate, patient.id],
+    [fallbackTemplate, patient.id, workspaceSyncVersion],
   );
   const initialFollowUp = followUps[0] ?? null;
   const initialTemplate: ReportTemplateType =

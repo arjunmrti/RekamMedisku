@@ -187,10 +187,14 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
 
   if (error) throw error;
 
-  let nextLocal = [...localPatients];
-  const remoteIds = new Set((remoteRows ?? []).map((row) => row.id));
+  const rows = (remoteRows ?? []) as PatientRow[];
+  const remoteIds = new Set(rows.map((row) => row.id));
 
-  for (const row of (remoteRows ?? []) as PatientRow[]) {
+  // Supabase is the source of truth for synced patient data. Rebuild the
+  // local cache from remote rows so stale browser entries cannot resurrect.
+  let nextLocal: PatientListItem[] = [];
+
+  for (const row of rows) {
     let localId =
       Object.entries(patientMap).find(([, remoteId]) => remoteId === row.id)?.[0] ??
       null;
@@ -201,7 +205,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
           ([, remoteId]) => remoteId === row.rotation_id,
         )?.[0] ?? null;
 
-      const matchingLocal = nextLocal.find(
+      const matchingLocal = localPatients.find(
         (patient) =>
           !patientMap[patient.id] &&
           patient.rm.trim().toLowerCase() === row.rm.trim().toLowerCase() &&
@@ -217,7 +221,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
         ([, remoteId]) => remoteId === row.rotation_id,
       )?.[0] ?? row.rotation_id;
 
-    const existingPatient = nextLocal.find(
+    const existingPatient = localPatients.find(
       (patient) => patient.id === localId,
     );
 
@@ -227,37 +231,11 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
     });
   }
 
-  for (const localPatient of localPatients) {
-    const mappedRemoteId = patientMap[localPatient.id];
-
-    if (mappedRemoteId && remoteIds.has(mappedRemoteId)) {
-      continue;
+  // Remove mappings for patients that no longer exist in the cloud.
+  for (const [localId, remoteId] of Object.entries(patientMap)) {
+    if (!remoteIds.has(remoteId)) {
+      delete patientMap[localId];
     }
-
-    const remoteRotationId = rotationMap[localPatient.rotationId];
-
-    if (!remoteRotationId) {
-      throw new Error(
-        "Ada pasien dengan stase yang belum tersinkron ke Supabase.",
-      );
-    }
-
-    const { data, error: insertError } = await supabase
-      .from("patients")
-      .insert({
-        user_id: userId,
-        ...patientPayload(localPatient, remoteRotationId),
-      })
-      .select()
-      .single<PatientRow>();
-
-    if (insertError) throw insertError;
-
-    patientMap[localPatient.id] = data.id;
-    nextLocal = mergePatientIntoLocal(
-      nextLocal,
-      toPatient(data, localPatient.id, localPatient),
-    );
   }
 
   saveMap(PATIENT_ID_MAP_KEY, patientMap);
