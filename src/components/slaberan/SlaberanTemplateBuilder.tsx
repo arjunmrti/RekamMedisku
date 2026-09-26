@@ -745,6 +745,22 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
             Tampilkan nomor urut pasien
           </label>
 
+          {block.type === "patient-list" ? (
+            <label className="mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[10px] font-semibold text-slate-600">
+              <input
+                type="checkbox"
+                checked={config.includeSpecialUnitPatients ?? false}
+                onChange={(event) =>
+                  updateBlockConfig(block.id, {
+                    includeSpecialUnitPatients: event.target.checked,
+                  })
+                }
+                className="rounded border-slate-300"
+              />
+              Sertakan pasien Unit Khusus di daftar global
+            </label>
+          ) : null}
+
           {block.type === "special-unit-list" ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {([
