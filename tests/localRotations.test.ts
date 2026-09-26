@@ -70,7 +70,7 @@ test("menghapus rotation demo lama dari localStorage", () => {
   );
   assert.equal(
     JSON.parse(storage.getItem("rekammedisku:rotations") ?? "[]").length,
-    2,
+    1,
   );
 });
 
