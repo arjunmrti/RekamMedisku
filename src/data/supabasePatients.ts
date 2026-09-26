@@ -132,10 +132,6 @@ export function getSupabasePatientErrorMessage(
   error: unknown,
   fallback = "Gagal memuat data pasien dari Supabase.",
 ) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
   if (typeof error === "object" && error !== null) {
     const candidate = error as {
       message?: unknown;
@@ -165,6 +161,10 @@ export function getSupabasePatientErrorMessage(
 
       return parts.join(" · ");
     }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
 
   return fallback;
