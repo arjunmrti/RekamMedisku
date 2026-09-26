@@ -427,28 +427,7 @@ export default function FollowUpFormPage({
 
     const timer = window.setTimeout(() => {
       saveFollowUpDraft(patient.id, values);
-      void cleanupUnreferencedAttachments(
-        values.supportingExams.map((exam) => ({
-          id: exam.id,
-          name: exam.examType,
-          examType: exam.examType,
-          date: formatDate(exam.date),
-          isoDate: exam.date,
-          result: exam.result,
-          attachmentName: exam.attachmentName,
-          attachmentId: exam.attachmentId,
-          attachmentType: exam.attachmentType,
-          attachmentSize: exam.attachmentSize,
-          icon:
-            exam.examType === "CT Scan"
-              ? "scan"
-              : exam.examType === "Rontgen"
-                ? "image"
-                : exam.examType === "EEG"
-                  ? "eeg"
-                  : "lab",
-        })),
-      );
+      void cleanupUnreferencedAttachments(undefined, values.supportingExams);
       setSaveMessage(
         "Draf tersimpan otomatis pukul " +
           new Intl.DateTimeFormat("id-ID", {
@@ -504,28 +483,7 @@ export default function FollowUpFormPage({
 
   const handleSaveDraft = () => {
     saveFollowUpDraft(patient.id, values);
-    void cleanupUnreferencedAttachments(
-      values.supportingExams.map((exam) => ({
-        id: exam.id,
-        name: exam.examType,
-        examType: exam.examType,
-        date: formatDate(exam.date),
-        isoDate: exam.date,
-        result: exam.result,
-        attachmentName: exam.attachmentName,
-        attachmentId: exam.attachmentId,
-        attachmentType: exam.attachmentType,
-        attachmentSize: exam.attachmentSize,
-        icon:
-          exam.examType === "CT Scan"
-            ? "scan"
-            : exam.examType === "Rontgen"
-              ? "image"
-              : exam.examType === "EEG"
-                ? "eeg"
-                : "lab",
-      })),
-    );
+    void cleanupUnreferencedAttachments(undefined, values.supportingExams);
     setDirty(false);
     setSaveMessage(
       "Draf tersimpan pukul " +
