@@ -301,7 +301,7 @@ function FollowUpReportGeneratorPage({
       >
         <main className="flex flex-1 items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <div className="mx-auto mb-5 w-full max-w-xl">
-            <ReportModeSwitch mode={mode} onModeChange={onModeChange} />
+            <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
           </div>
           <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
@@ -348,7 +348,7 @@ function FollowUpReportGeneratorPage({
       >
         <main className="flex flex-1 items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <div className="mx-auto mb-5 w-full max-w-xl">
-            <ReportModeSwitch mode={mode} onModeChange={onModeChange} />
+            <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
           </div>
           <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
@@ -387,7 +387,7 @@ function FollowUpReportGeneratorPage({
       >
         <main className="flex-1 overflow-y-auto px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:pb-8 md:pb-8 sm:px-6 lg:px-8 lg:py-7">
           <div className="mx-auto mb-5 w-full max-w-xl">
-            <ReportModeSwitch mode={mode} onModeChange={onModeChange} />
+            <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
           </div>
           <div className="mx-auto flex min-h-[70vh] w-full max-w-[900px] items-center justify-center">
             <section className="w-full rounded-3xl border border-slate-200/90 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)] sm:p-12">
@@ -439,7 +439,7 @@ function FollowUpReportGeneratorPage({
       <main className="flex-1 overflow-y-auto px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:pb-8 md:pb-8 sm:px-6 lg:px-8 lg:py-7">
         <div className="mx-auto w-full max-w-[1400px] space-y-6">
           <header className="space-y-3">
-            <ReportModeSwitch mode={mode} onModeChange={onModeChange} />
+            <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
 
             <button
               type="button"
