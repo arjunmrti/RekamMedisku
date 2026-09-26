@@ -28,6 +28,35 @@ CREATE UNIQUE INDEX IF NOT EXISTS slaberan_locations_user_parent_unique
   ON public.slaberan_locations (user_id, parent_id, lower(btrim(name)))
   WHERE parent_id IS NOT NULL;
 
+CREATE OR REPLACE FUNCTION public.validate_slaberan_location_parent()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $
+BEGIN
+  IF NEW.parent_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1
+    FROM public.slaberan_locations parent
+    WHERE parent.id = NEW.parent_id
+      AND parent.user_id = NEW.user_id
+  ) THEN
+    RAISE EXCEPTION 'Parent lokasi tidak ditemukan dalam workspace pengguna.';
+  END IF;
+
+  RETURN NEW;
+END;
+$;
+
+DROP TRIGGER IF EXISTS trg_validate_slaberan_location_parent
+  ON public.slaberan_locations;
+
+CREATE TRIGGER trg_validate_slaberan_location_parent
+  BEFORE INSERT OR UPDATE OF parent_id, user_id
+  ON public.slaberan_locations
+  FOR EACH ROW
+  EXECUTE FUNCTION public.validate_slaberan_location_parent();
+
 ALTER TABLE public.slaberan_locations ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS slaberan_locations_select_own ON public.slaberan_locations;
@@ -80,6 +109,47 @@ FROM public.patients p
 WHERE p.user_id IS NOT NULL
   AND btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room)) <> ''
 ON CONFLICT DO NOTHING;
+
+CREATE OR REPLACE FUNCTION public.validate_patient_slaberan_locations()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public
+AS $
+BEGIN
+  IF NEW.current_location_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1
+    FROM public.slaberan_locations location_row
+    WHERE location_row.id = NEW.current_location_id
+      AND location_row.user_id = NEW.user_id
+  ) THEN
+    RAISE EXCEPTION 'Lokasi aktif pasien tidak berada dalam workspace pengguna.';
+  END IF;
+
+  IF NEW.admission_location_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1
+    FROM public.slaberan_locations location_row
+    WHERE location_row.id = NEW.admission_location_id
+      AND location_row.user_id = NEW.user_id
+  ) THEN
+    RAISE EXCEPTION 'Lokasi masuk pasien tidak berada dalam workspace pengguna.';
+  END IF;
+
+  RETURN NEW;
+END;
+$;
+
+DROP TRIGGER IF EXISTS trg_validate_patient_slaberan_locations
+  ON public.patients;
+
+CREATE TRIGGER trg_validate_patient_slaberan_locations
+  BEFORE INSERT OR UPDATE OF
+    user_id,
+    current_location_id,
+    admission_location_id
+  ON public.patients
+  FOR EACH ROW
+  EXECUTE FUNCTION public.validate_patient_slaberan_locations();
 
 ALTER TABLE public.patients
   ADD COLUMN IF NOT EXISTS current_location_id uuid,
@@ -187,6 +257,12 @@ CREATE POLICY slaberan_templates_delete_own
   FOR DELETE
   TO authenticated
   USING (user_id = auth.uid());
+
+GRANT EXECUTE
+  ON FUNCTION
+    public.validate_slaberan_location_parent(),
+    public.validate_patient_slaberan_locations()
+  TO authenticated;
 
 GRANT SELECT, INSERT, UPDATE, DELETE
   ON public.slaberan_locations, public.slaberan_templates
