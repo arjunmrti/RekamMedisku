@@ -175,12 +175,7 @@ export default function PatientProfilePage({
       });
   }, [orderedFollowUps]);
 
-  const latestSupportingExams = useMemo(
-    () =>
-      orderedFollowUps.find((entry) => (entry.supportingExams?.length ?? 0) > 0)
-        ?.supportingExams ?? [],
-    [orderedFollowUps],
-  );
+  const latestSupportingExams = latestFollowUp?.supportingExams ?? [];
 
   const hydratedSelectedExam = useMemo(() => {
     if (!selectedExam) return null;
