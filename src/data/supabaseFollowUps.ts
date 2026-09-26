@@ -15,6 +15,7 @@ import {
   getAttachmentIdsFromFollowUps,
 } from "./attachmentReferences";
 import {
+  deleteAttachmentsWithSupabase,
   downloadAttachmentWithSupabase,
   uploadAttachmentWithSupabase,
 } from "./supabaseAttachments";
@@ -238,7 +239,10 @@ function followUpPayload(entry: FollowUpEntry, remotePatientId: string) {
   };
 }
 
-async function ensureRemoteAttachment(exam: SupportingExam) {
+async function ensureRemoteAttachment(
+  exam: SupportingExam,
+  onNewUpload: (attachmentId: string) => void,
+) {
   if (!exam.attachmentId) return;
 
   const blob = await getAttachment(exam.attachmentId);
@@ -251,6 +255,14 @@ async function ensureRemoteAttachment(exam: SupportingExam) {
     );
   }
 
+  // Only mark an attachment for rollback when it did not exist in cloud
+  // before this save. A replacement of an existing attachment must never
+  // delete the pre-existing object if the DB transaction later fails.
+  const existing = await downloadAttachmentWithSupabase(exam.attachmentId);
+
+  if (existing) return;
+
+  onNewUpload(exam.attachmentId);
   await uploadAttachmentWithSupabase(
     exam.attachmentId,
     blob,
@@ -463,14 +475,18 @@ async function persistFollowUpWithSupabaseInternal(
     }
 
     const supportingExams = entry.supportingExams ?? [];
+    const newlyUploadedAttachmentIds: string[] = [];
 
-    // Storage is prepared before the DB transaction. If this preparation fails,
-    // no follow-up/exam row has been committed yet.
-    for (const exam of supportingExams) {
-      await ensureRemoteAttachment(exam);
-    }
+    try {
+      // Storage is prepared before the DB transaction. If the DB RPC fails,
+      // only objects created by this save attempt are rolled back.
+      for (const exam of supportingExams) {
+        await ensureRemoteAttachment(exam, (attachmentId) => {
+          newlyUploadedAttachmentIds.push(attachmentId);
+        });
+      }
 
-    const rpcSupportingExams = supportingExams.map((exam) => ({
+      const rpcSupportingExams = supportingExams.map((exam) => ({
       id: exam.id,
       name: exam.name,
       exam_type: exam.examType ?? null,
@@ -481,19 +497,19 @@ async function persistFollowUpWithSupabaseInternal(
       attachment_type: exam.attachmentType ?? null,
       attachment_size: exam.attachmentSize ?? null,
       attachment_count: exam.attachmentCount ?? null,
-      icon: exam.icon,
-    }));
+        icon: exam.icon,
+      }));
 
-    const { data, error } = await supabase.rpc("save_follow_up_with_exams", {
+      const { data, error } = await supabase.rpc("save_follow_up_with_exams", {
       p_follow_up_id: remoteFollowUpId,
       p_expected_updated_at: entry.updatedAt ?? null,
       p_follow_up: followUpPayload(entry, remotePatientId),
       p_supporting_exams: rpcSupportingExams,
     });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    // save_follow_up_with_exams commits the follow-up and all supporting exams
+      // save_follow_up_with_exams commits the follow-up and all supporting exams
     // in one PostgreSQL transaction. No local/cloud rollback is needed after
     // this point: the caller already has the same optimistic local entry.
     try {
@@ -524,10 +540,24 @@ async function persistFollowUpWithSupabaseInternal(
       // DB commit already succeeded. A local mapping problem must never make
       // the caller restore the pre-save UI state; the next workspace sync can
       // reconstruct the mappings from Supabase.
-      console.warn(
-        "Follow-up cloud save committed, but local ID mapping could not be refreshed.",
-        postCommitError,
-      );
+        console.warn(
+          "Follow-up cloud save committed, but local ID mapping could not be refreshed.",
+          postCommitError,
+        );
+      }
+    } catch (error) {
+      if (newlyUploadedAttachmentIds.length) {
+        try {
+          await deleteAttachmentsWithSupabase(newlyUploadedAttachmentIds);
+        } catch (cleanupError) {
+          console.warn(
+            "Gagal membersihkan lampiran follow-up yang ter-upload setelah penyimpanan cloud gagal.",
+            cleanupError,
+          );
+        }
+      }
+
+      throw error;
     }
   } catch (error) {
     throw new Error(getErrorMessage(error));
