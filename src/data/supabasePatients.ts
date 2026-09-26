@@ -164,17 +164,23 @@ function mergePatientIntoLocal(
 }
 
 function patientPayload(patient: PatientListItem, remoteRotationId: string) {
+  const currentLocation = normalizePatientLocation(
+    patient.currentLocation,
+    patient.room,
+    patient.bed,
+  );
+
   return {
     rotation_id: remoteRotationId,
     name: patient.name,
     age: patient.age,
     gender: patient.gender,
     rm: patient.rm,
-    room: patient.room,
-    bed: patient.bed,
+    room: currentLocation.name,
+    bed: currentLocation.bed,
     doctor: patient.doctor,
-    current_location_type: patient.currentLocation.type,
-    current_location_name: patient.currentLocation.name,
+    current_location_type: currentLocation.type,
+    current_location_name: currentLocation.name,
     created_at: patient.createdAt ?? new Date().toISOString(),
     admission_date: patient.admissionDate ?? null,
     admission_complaint: patient.admissionComplaint?.trim() || null,
