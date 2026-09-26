@@ -201,6 +201,55 @@ export async function replaceAllAttachments(
   });
 }
 
+export async function deleteAttachments(ids: string[]): Promise<void> {
+  const uniqueIds = [...new Set(ids)];
+
+  if (uniqueIds.length === 0) return;
+
+  const database = await openDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(STORE_NAME, "readwrite");
+
+    try {
+      const store = transaction.objectStore(STORE_NAME);
+      for (const id of uniqueIds) {
+        store.delete(id);
+      }
+    } catch (error) {
+      transaction.abort();
+      database.close();
+      reject(
+        error instanceof Error
+          ? error
+          : new Error("Lampiran gagal disiapkan untuk penghapusan."),
+      );
+      return;
+    }
+
+    transaction.oncomplete = () => {
+      database.close();
+      resolve();
+    };
+
+    transaction.onerror = () => {
+      database.close();
+      reject(
+        transaction.error ??
+          new Error("Lampiran gagal dihapus dari penyimpanan browser."),
+      );
+    };
+
+    transaction.onabort = () => {
+      database.close();
+      reject(
+        transaction.error ??
+          new Error("Penghapusan lampiran dibatalkan oleh browser."),
+      );
+    };
+  });
+}
+
 export async function deleteAttachment(id: string): Promise<void> {
   const database = await openDatabase();
 
