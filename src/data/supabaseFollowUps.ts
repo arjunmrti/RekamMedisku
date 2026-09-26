@@ -248,16 +248,20 @@ function getErrorMessage(
   error: unknown,
   fallback = "Gagal menyimpan follow-up ke Supabase.",
 ) {
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
-
   if (typeof error === "object" && error !== null) {
     const candidate = error as {
       message?: unknown;
       code?: unknown;
       hint?: unknown;
     };
+
+    if (
+      candidate.code === "23505" &&
+      typeof candidate.message === "string" &&
+      candidate.message.includes("follow_ups_patient_number_unique")
+    ) {
+      return "Nomor follow-up tersebut sudah digunakan. Muat ulang data terbaru sebelum menyimpan.";
+    }
 
     if (typeof candidate.message === "string" && candidate.message) {
       const parts = [candidate.message];
@@ -272,6 +276,10 @@ function getErrorMessage(
 
       return parts.join(" · ");
     }
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
   }
 
   return fallback;
