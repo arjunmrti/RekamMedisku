@@ -4,12 +4,16 @@ import {
   deleteAttachments,
   loadAllAttachments,
 } from "./localAttachments";
-import type { FollowUpEntry, SupportingExam } from "../types/followUp";
+import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
+
+type AttachmentReferenceExam = {
+  attachmentId?: string;
+};
 
 function addExamAttachmentIds(
   ids: Set<string>,
-  exams: SupportingExam[] | undefined,
+  exams: AttachmentReferenceExam[] | undefined,
 ) {
   for (const exam of exams ?? []) {
     if (exam.attachmentId) ids.add(exam.attachmentId);
@@ -57,7 +61,7 @@ export function getDraftFollowUpAttachmentIds(): Set<string> {
 }
 
 export function getReferencedAttachmentIds(
-  additionalExams: SupportingExam[] | undefined = undefined,
+  additionalExams: AttachmentReferenceExam[] | undefined = undefined,
   additionalFormExams: FollowUpFormValues["supportingExams"] | undefined = undefined,
 ): Set<string> {
   const ids = getSavedFollowUpAttachmentIds();
@@ -74,7 +78,7 @@ export function getReferencedAttachmentIds(
 
 export function getUnreferencedAttachmentIds(
   attachmentIds: Iterable<string>,
-  additionalExams: SupportingExam[] | undefined = undefined,
+  additionalExams: AttachmentReferenceExam[] | undefined = undefined,
   additionalFormExams: FollowUpFormValues["supportingExams"] | undefined = undefined,
 ): string[] {
   const referenced = getReferencedAttachmentIds(
@@ -87,7 +91,7 @@ export function getUnreferencedAttachmentIds(
 
 export async function deleteAttachmentIfUnreferenced(
   attachmentId: string,
-  additionalExams: SupportingExam[] | undefined = undefined,
+  additionalExams: AttachmentReferenceExam[] | undefined = undefined,
   additionalFormExams: FollowUpFormValues["supportingExams"] | undefined = undefined,
 ): Promise<boolean> {
   if (
@@ -103,7 +107,7 @@ export async function deleteAttachmentIfUnreferenced(
 }
 
 export async function cleanupUnreferencedAttachments(
-  additionalExams: SupportingExam[] | undefined = undefined,
+  additionalExams: AttachmentReferenceExam[] | undefined = undefined,
   additionalFormExams: FollowUpFormValues["supportingExams"] | undefined = undefined,
 ): Promise<string[]> {
   const attachments = await loadAllAttachments();
