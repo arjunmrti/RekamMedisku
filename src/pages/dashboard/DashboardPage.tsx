@@ -169,28 +169,30 @@ export default function DashboardPage({
             onChangeRotation={() => onNavigate("Stase Saya")}
           />
 
-          <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
-            <section className="min-w-0 space-y-6 lg:col-span-12 xl:col-span-8">
-              <KpiGrid cards={kpis} />
+          <div className="space-y-6">
+            <KpiGrid cards={kpis} />
 
-              <PatientTable
-                patients={filteredPatients}
-                onOpenPatient={onOpenPatientProfile}
-                onViewAll={() => onNavigate("Daftar Pasien")}
-              />
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
+              <section className="min-w-0 space-y-6 lg:col-span-8">
+                <PatientTable
+                  patients={filteredPatients}
+                  onOpenPatient={onOpenPatientProfile}
+                  onViewAll={() => onNavigate("Daftar Pasien")}
+                />
 
-              <RotationHistory />
-            </section>
+                <RotationHistory />
+              </section>
 
-            <aside className="min-w-0 space-y-6 lg:col-span-12 xl:col-span-4">
-              <QuickActions onNavigate={onNavigate} />
-              <DashboardStatusPanel
-                activePatients={activePatients.length}
-                followUpsToday={followUpsToday}
-                pendingFollowUps={pendingFollowUps}
-                archivedPatients={archivedPatientCount}
-              />
-            </aside>
+              <aside className="min-w-0 space-y-6 lg:col-span-4">
+                <QuickActions onNavigate={onNavigate} />
+                <DashboardStatusPanel
+                  activePatients={activePatients.length}
+                  followUpsToday={followUpsToday}
+                  pendingFollowUps={pendingFollowUps}
+                  archivedPatients={archivedPatientCount}
+                />
+              </aside>
+            </div>
           </div>
         </div>
       </main>
