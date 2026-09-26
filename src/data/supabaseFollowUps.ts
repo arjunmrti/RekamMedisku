@@ -198,6 +198,7 @@ function toFollowUpEntry(
     assessment: row.assessment,
     plan: row.plan,
     summary: row.summary,
+    updatedAt: row.updated_at,
     supportingExams,
   };
 }
@@ -365,11 +366,22 @@ async function persistFollowUpWithSupabaseInternal(
     let remoteRow: FollowUpRow | null = null;
 
     if (remoteFollowUpId) {
+      if (!entry.updatedAt) {
+        throw new Error(
+          "Versi data follow-up tidak tersedia. Muat ulang catatan sebelum menyimpan perubahan.",
+        );
+      }
+
+      const nextUpdatedAt = new Date().toISOString();
       const { data, error } = await supabase
         .from("follow_ups")
-        .update(followUpPayload(entry, remotePatientId))
+        .update({
+          ...followUpPayload(entry, remotePatientId),
+          updated_at: nextUpdatedAt,
+        })
         .eq("id", remoteFollowUpId)
         .eq("user_id", userId)
+        .eq("updated_at", entry.updatedAt)
         .select()
         .maybeSingle<FollowUpRow>();
 
@@ -397,6 +409,12 @@ async function persistFollowUpWithSupabaseInternal(
       if (existingRowError) throw existingRowError;
 
       if (existingRow) {
+        if (!entry.updatedAt) {
+          throw new Error(
+            "Follow-up dengan nomor yang sama sudah dibuat di browser lain. Muat ulang data terbaru sebelum menyimpan.",
+          );
+        }
+
         remoteRow = existingRow;
         remoteFollowUpId = existingRow.id;
         followUpMap[entry.id] = existingRow.id;
