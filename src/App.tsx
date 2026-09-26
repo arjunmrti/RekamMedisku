@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import PatientProfilePage from "./pages/patient-profile/PatientProfilePage";
 import FollowUpFormPage from "./pages/follow-up/FollowUpFormPage";
-import ReportGeneratorPage from "./pages/reports/ReportGeneratorPage";
+import ReportGeneratorPage, { type ReportMode } from "./pages/reports/ReportGeneratorPage";
+import SlaberanPage from "./pages/reports/SlaberanPage";
 import PatientsPage from "./pages/patients/PatientsPage";
 import BackupDataPage from "./pages/backup/BackupDataPage";
 import RotationManagementPage from "./pages/rotations/RotationManagementPage";
@@ -19,6 +20,7 @@ type View =
   | "Profil Pasien"
   | "Follow-Up Baru"
   | "Semua Laporan"
+  | "Slaberan"
   | "Cadangan & Data"
   | "Stase Saya";
 
@@ -40,6 +42,7 @@ function App() {
   );
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(() => getInitialPatient());
+  const [reportMode, setReportMode] = useState<ReportMode>("follow-up");
 
   useEffect(() => {
     if (workspaceSyncVersion === 0) return;
@@ -89,6 +92,7 @@ function App() {
       label === "Beranda" ||
       label === "Daftar Pasien" ||
       label === "Semua Laporan" ||
+      label === "Slaberan" ||
       label === "Cadangan & Data" ||
       label === "Stase Saya"
     ) {
@@ -234,12 +238,14 @@ function App() {
     );
   }
 
-  if (activeItem === "Semua Laporan" && selectedPatient) {
+  if (activeItem === "Semua Laporan") {
     return (
       <ReportGeneratorPage
-        key={selectedPatient.id}
+        key={selectedPatient?.id ?? reportMode}
         {...navigationProps}
         patient={selectedPatient}
+        mode={reportMode}
+        onModeChange={setReportMode}
       />
     );
   }
