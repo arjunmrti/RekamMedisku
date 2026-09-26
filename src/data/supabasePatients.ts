@@ -86,6 +86,7 @@ function toPatient(
     ...followUpSummary,
     createdAt: row.created_at,
     admissionDate: row.admission_date ?? undefined,
+    updatedAt: row.updated_at,
     status: normalizeStatus(row.status),
   };
 }
@@ -289,15 +290,33 @@ export async function upsertPatientWithSupabase(
     let remoteRow: PatientRow;
 
     if (remotePatientId) {
+      if (!patient.updatedAt) {
+        throw new Error(
+          "Versi data pasien tidak tersedia. Muat ulang data pasien sebelum menyimpan perubahan.",
+        );
+      }
+
+      const nextUpdatedAt = new Date().toISOString();
       const { data, error } = await supabase
         .from("patients")
-        .update(patientPayload(patient, remoteRotationId))
+        .update({
+          ...patientPayload(patient, remoteRotationId),
+          updated_at: nextUpdatedAt,
+        })
         .eq("id", remotePatientId)
         .eq("user_id", userId)
+        .eq("updated_at", patient.updatedAt)
         .select()
-        .single<PatientRow>();
+        .maybeSingle<PatientRow>();
 
       if (error) throw error;
+
+      if (!data) {
+        throw new Error(
+          "Data pasien sudah berubah di browser lain. Muat ulang data terbaru sebelum menyimpan perubahan.",
+        );
+      }
+
       remoteRow = data;
     } else {
       const { data, error } = await supabase
