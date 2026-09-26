@@ -222,8 +222,8 @@ export default function PatientsPage({
       >
         <main className="flex-1 overflow-y-auto px-4 py-5 pb-24 sm:px-6 lg:px-8 lg:py-7 lg:pb-8">
           <div className="mx-auto w-full max-w-[1400px]">
-            <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-              <section className="min-w-0 space-y-5 xl:col-span-9">
+            <div className="space-y-5">
+              <section className="min-w-0 space-y-5">
                 <PatientListHeader
                   rotation={activeRotation}
                   totalPatients={activeRotationPatients.length}
@@ -275,6 +275,14 @@ export default function PatientsPage({
                   </button>
                 </div>
 
+                <PatientSummaryPanel
+                  patient={visibleSelectedPatient}
+                  rotation={activeRotation}
+                  onOpenProfile={onOpenPatientProfile}
+                  onEditPatient={openEditPatient}
+                  onToggleArchive={handleToggleArchive}
+                />
+
                 <PatientListTable
                   patients={filteredPatients}
                   selectedPatientId={visibleSelectedPatient?.id ?? null}
@@ -283,16 +291,6 @@ export default function PatientsPage({
                   onToggleArchive={handleToggleArchive}
                 />
               </section>
-
-              <aside className="xl:sticky xl:top-5 xl:col-span-3 xl:self-start">
-                <PatientSummaryPanel
-                  patient={visibleSelectedPatient}
-                  rotation={activeRotation}
-                  onOpenProfile={onOpenPatientProfile}
-                  onEditPatient={openEditPatient}
-                  onToggleArchive={handleToggleArchive}
-                />
-              </aside>
             </div>
           </div>
         </main>
