@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import PatientProfilePage from "./pages/patient-profile/PatientProfilePage";
 import FollowUpFormPage from "./pages/follow-up/FollowUpFormPage";
@@ -10,6 +10,12 @@ import { loadActiveRotation } from "./data/localRotations";
 import { loadPatients } from "./data/localPatients";
 import type { Rotation } from "./types/rotation";
 import type { PatientListItem } from "./types/patient";
+import { supabase } from "./utils/supabase";
+
+type Todo = {
+  id: string;
+  name: string;
+};
 
 type View =
   | "Beranda"
@@ -35,6 +41,30 @@ function App() {
   const [activeItem, setActiveItem] = useState<View>("Beranda");
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(() => getInitialPatient());
+  const [todos, setTodos] = useState<Todo[]>([]);
+
+  useEffect(() => {
+    async function getTodos() {
+      const { data, error } = await supabase.from("todos").select();
+
+      if (error) {
+        console.error("Supabase todos query failed:", error);
+        return;
+      }
+
+      if (data) {
+        setTodos(data as Todo[]);
+      }
+    }
+
+    void getTodos();
+  }, []);
+
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      console.debug("Supabase todos:", todos);
+    }
+  }, [todos]);
 
   const handleNavigate = (label: string) => {
     if (label === "Pasien") {
