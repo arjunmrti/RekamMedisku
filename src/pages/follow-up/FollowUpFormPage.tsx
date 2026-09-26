@@ -20,6 +20,7 @@ import {
 import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import { loadActiveRotation } from "../../data/localRotations";
 import { updatePatient } from "../../data/localPatients";
+import { derivePatientFollowUpSummary } from "../../data/patientFollowUpSummary";
 import { cleanupUnreferencedAttachments } from "../../data/attachmentReferences";
 import { toLocalIsoDate, toLocalTimeInput } from "../../utils/date";
 import { buildBasicObjectiveLines } from "../../utils/objectiveFormatter";
@@ -185,6 +186,17 @@ function formatTime(value: string) {
   return value ? value.replace(":", ".") : "—";
 }
 
+function sortFollowUps(entries: FollowUpEntry[]) {
+  return [...entries].sort((a, b) => {
+    const dateTimeA = a.isoDate + "T" + a.time.replace(".", ":");
+    const dateTimeB = b.isoDate + "T" + b.time.replace(".", ":");
+    const dateTimeCompare = dateTimeB.localeCompare(dateTimeA);
+
+    if (dateTimeCompare !== 0) return dateTimeCompare;
+    return b.number - a.number;
+  });
+}
+
 function countFilled(values: Record<string, unknown>) {
   return Object.values(values).filter((value) =>
     typeof value === "string" ? value.trim().length > 0 : Boolean(value),
@@ -346,7 +358,7 @@ export default function FollowUpFormPage({
     () => loadSavedFollowUps()[patient.id] ?? [],
   );
 
-  const latestFollowUp = previousFollowUps[0] ?? null;
+  const latestFollowUp = sortFollowUps(previousFollowUps)[0] ?? null;
 
   const sectionStats = useMemo(() => {
     const subjectiveFilled = countFilled(values.subjective);
@@ -520,13 +532,14 @@ export default function FollowUpFormPage({
     try {
       await syncWorkspaceWithSupabase();
       const syncedEntries = loadSavedFollowUps()[patient.id] ?? [];
-      setPreviousFollowUps(syncedEntries);
+      const sortedSyncedEntries = sortFollowUps(syncedEntries);
+      setPreviousFollowUps(sortedSyncedEntries);
 
       previousSaved = loadSavedFollowUps();
       const nextNumber =
-        Math.max(0, ...syncedEntries.map((entry) => entry.number)) + 1;
+        Math.max(0, ...sortedSyncedEntries.map((entry) => entry.number)) + 1;
       const entry = buildFollowUpEntry(values, nextNumber, templateType);
-      const nextEntries = [entry, ...syncedEntries];
+      const nextEntries = sortFollowUps([entry, ...sortedSyncedEntries]);
 
       replaceSavedFollowUps({
         ...previousSaved,
@@ -535,12 +548,9 @@ export default function FollowUpFormPage({
 
       await persistFollowUpWithSupabase(patient.id, entry);
 
-      updatePatient(patient.id, {
-        lastFollowUp: entry.date + " · " + entry.time,
-        followUpNumber: entry.number,
-        lastFollowUpAt:
-          entry.isoDate + "T" + entry.time.replace(".", ":") + ":00",
-      });
+      const summary = derivePatientFollowUpSummary(nextEntries);
+
+      updatePatient(patient.id, summary);
       setPreviousFollowUps(nextEntries);
       clearFollowUpDraft(patient.id);
       void cleanupUnreferencedAttachments(
