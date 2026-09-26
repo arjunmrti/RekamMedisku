@@ -31,7 +31,7 @@ function GenderMarker({ gender }: { gender: PatientListItem["gender"] }) {
 function PatientIdentity({ patient }: { patient: PatientListItem }) {
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[11px] font-bold text-blue-600">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-[11px] font-bold text-blue-600">
         {getInitials(patient.name)}
       </div>
       <div className="min-w-0">
@@ -40,7 +40,7 @@ function PatientIdentity({ patient }: { patient: PatientListItem }) {
         </p>
         <p className="mt-0.5 flex items-center gap-1 text-[10px] text-slate-400">
           <GenderMarker gender={patient.gender} />
-          {patient.gender}
+          {patient.gender} · {patient.age} tahun
         </p>
       </div>
     </div>
@@ -56,7 +56,7 @@ export default function PatientListTable({
 }: PatientListTableProps) {
   if (patients.length === 0) {
     return (
-      <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
         <div className="px-6 py-14 text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-300">
             <Icon name="users" className="h-6 w-6" />
@@ -73,30 +73,38 @@ export default function PatientListTable({
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
+    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
       <div className="border-b border-slate-100 px-5 py-3.5 sm:px-6">
-        <span className="text-xs font-semibold text-slate-500">
-          Daftar pasien dalam stase aktif
-        </span>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold text-slate-700">Pasien dalam stase aktif</p>
+            <p className="mt-0.5 text-[10px] text-slate-400">
+              Klik baris untuk melihat ringkasan pasien.
+            </p>
+          </div>
+          <span className="hidden rounded-full bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-500 sm:inline-flex">
+            {patients.length} pasien
+          </span>
+        </div>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[880px] border-collapse text-left">
+        <table className="w-full min-w-[900px] border-collapse text-left">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
               <th className="min-w-[220px] px-5 py-3.5 font-bold xl:px-6">Nama Pasien</th>
-              <th className="w-[105px] px-3 py-3.5 font-bold">RM</th>
-              <th className="w-[125px] px-3 py-3.5 font-bold">Lokasi</th>
-              <th className="min-w-[145px] px-3 py-3.5 font-bold">DPJP</th>
+              <th className="w-[110px] px-3 py-3.5 font-bold">No. RM</th>
+              <th className="w-[135px] px-3 py-3.5 font-bold">Lokasi</th>
+              <th className="min-w-[150px] px-3 py-3.5 font-bold">DPJP</th>
               <th className="min-w-[170px] px-3 py-3.5 font-bold">Follow-Up Terakhir</th>
               <th className="w-[100px] px-3 py-3.5 font-bold">Status</th>
-              <th className="w-[96px] px-3 py-3.5 text-right font-bold">
+              <th className="w-[82px] px-3 py-3.5 text-right font-bold">
                 <span className="sr-only">Aksi</span>
               </th>
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-slate-100 text-xs">
+          <tbody className="divide-y divide-slate-100">
             {patients.map((patient) => {
               const selected = patient.id === selectedPatientId;
 
@@ -106,7 +114,7 @@ export default function PatientListTable({
                   onClick={() => onSelectPatient(patient)}
                   aria-selected={selected}
                   className={
-                    "cursor-pointer font-medium transition-colors " +
+                    "cursor-pointer transition-colors " +
                     (selected
                       ? "bg-blue-50/70 hover:bg-blue-50"
                       : "hover:bg-slate-50/80")
@@ -118,19 +126,26 @@ export default function PatientListTable({
                     ) : null}
                     <PatientIdentity patient={patient} />
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3.5 font-medium text-slate-500">
+
+                  <td className="whitespace-nowrap px-3 py-3.5 text-xs font-medium text-slate-500">
                     {patient.rm}
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3.5 text-slate-600">
-                    <p className="font-medium text-slate-700">
-                      {patient.room} · Bed {patient.bed}
+
+                  <td className="whitespace-nowrap px-3 py-3.5">
+                    <p className="text-xs font-semibold text-slate-700">
+                      {patient.room || "—"}
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-slate-400">
+                      Bed {patient.bed || "—"}
                     </p>
                   </td>
-                  <td className="px-3 py-3.5 text-slate-700">
-                    <span className="block max-w-[170px] truncate">
-                      {patient.doctor}
+
+                  <td className="px-3 py-3.5 text-xs text-slate-700">
+                    <span className="block max-w-[180px] truncate">
+                      {patient.doctor || "—"}
                     </span>
                   </td>
+
                   <td className="whitespace-nowrap px-3 py-3.5">
                     <p className="text-[11px] font-semibold text-slate-800">
                       {patient.lastFollowUp}
@@ -141,39 +156,43 @@ export default function PatientListTable({
                         : "Belum ada follow-up"}
                     </p>
                   </td>
+
                   <td className="px-3 py-3.5">
                     <StatusBadge status={patient.status} />
                   </td>
+
                   <td className="px-3 py-3.5">
                     <div className="flex items-center justify-end">
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onEditPatient(patient);
-                      }}
-                      className="rounded-lg px-2.5 py-2 text-[10px] font-semibold text-slate-600 transition hover:bg-white hover:text-[#1677FF]"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onToggleArchive(patient);
-                      }}
-                      className={
-                        "rounded-lg px-2.5 py-2 text-[10px] font-semibold transition hover:bg-white " +
-                        (patient.status === "Aktif"
-                          ? "text-rose-500 hover:text-rose-600"
-                          : "text-emerald-600 hover:text-emerald-700")
-                      }
-                    >
-                      {patient.status === "Aktif" ? "Arsip" : "Pulihkan"}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEditPatient(patient);
+                        }}
+                        className="rounded-lg px-2.5 py-2 text-[10px] font-semibold text-slate-500 transition-colors hover:bg-white hover:text-[#1677FF]"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onToggleArchive(patient);
+                        }}
+                        className={
+                          "rounded-lg px-2 py-2 text-[10px] font-semibold transition-colors hover:bg-white " +
+                          (patient.status === "Aktif"
+                            ? "text-rose-500 hover:text-rose-600"
+                            : "text-emerald-600 hover:text-emerald-700")
+                        }
+                      >
+                        {patient.status === "Aktif" ? "Arsip" : "Pulihkan"}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -184,40 +203,52 @@ export default function PatientListTable({
             <button
               type="button"
               onClick={() => onSelectPatient(patient)}
-              className="block min-h-[44px] w-full text-left"
+              className={
+                "block min-h-[44px] w-full rounded-xl p-2 text-left transition-colors " +
+                (patient.id === selectedPatientId
+                  ? "bg-blue-50/70"
+                  : "hover:bg-slate-50")
+              }
             >
               <div className="flex items-start justify-between gap-3">
                 <PatientIdentity patient={patient} />
                 <StatusBadge status={patient.status} />
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
+              <div className="mt-4 grid grid-cols-2 gap-4 text-xs">
                 <div>
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    Ruangan / Bed
+                    No. RM
+                  </p>
+                  <p className="font-semibold text-slate-700">{patient.rm}</p>
+                </div>
+
+                <div>
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Lokasi
                   </p>
                   <p className="font-semibold text-slate-700">
-                    {patient.room} / {patient.bed}
+                    {patient.room} · Bed {patient.bed}
                   </p>
                 </div>
-                <div>
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                    Follow-Up
-                  </p>
-                  <p className="font-medium text-slate-600">
-                    {patient.lastFollowUp}
-                  </p>
-                </div>
+
                 <div className="col-span-2">
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                     DPJP
                   </p>
                   <p className="font-medium text-slate-600">{patient.doctor}</p>
                 </div>
+
+                <div className="col-span-2">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                    Follow-Up Terakhir
+                  </p>
+                  <p className="font-medium text-slate-600">{patient.lastFollowUp}</p>
+                </div>
               </div>
             </button>
 
-            <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3">
+            <div className="mt-2 flex gap-2 border-t border-slate-100 pt-3">
               <button
                 type="button"
                 onClick={() => onEditPatient(patient)}
