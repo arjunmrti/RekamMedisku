@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import PatientListHeader from "../../components/patients/PatientListHeader";
 import PatientListToolbar from "../../components/patients/PatientListToolbar";
@@ -86,6 +86,7 @@ export default function PatientsPage({
     );
   const [modalOpen, setModalOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<PatientListItem | null>(null);
+  const deletingPatientRef = useRef(false);
 
   const activeRotationPatients = useMemo(
     () => patients.filter((patient) => patient.rotationId === activeRotation.id),
@@ -216,6 +217,8 @@ export default function PatientsPage({
   };
 
   const handleDeletePatient = async (patient: PatientListItem) => {
+    if (deletingPatientRef.current) return;
+
     const confirmed = window.confirm(
       "Hapus permanen pasien " +
         patient.name +
@@ -223,6 +226,8 @@ export default function PatientsPage({
     );
 
     if (!confirmed) return;
+
+    deletingPatientRef.current = true;
 
     try {
       const deleted = await deletePatient(patient.id);
@@ -240,8 +245,10 @@ export default function PatientsPage({
       );
     } catch {
       window.alert(
-        "Pasien belum dihapus karena data lampiran gagal dibersihkan. Silakan coba lagi.",
+        "Pasien belum dihapus karena proses penghapusan data gagal. Silakan coba lagi.",
       );
+    } finally {
+      deletingPatientRef.current = false;
     }
   };
 
