@@ -14,11 +14,15 @@ export function formatReportDate(date: string) {
 
 function formatAdmissionDate(date: string | undefined) {
   if (!date) return "";
+
+  const parsed = new Date(date + "T00:00:00");
+  if (Number.isNaN(parsed.getTime())) return "";
+
   return new Intl.DateTimeFormat("id-ID", {
     day: "2-digit",
     month: "long",
     year: "numeric",
-  }).format(new Date(date + "T00:00:00"));
+  }).format(parsed);
 }
 
 export function getReportGreeting(date = new Date()) {
