@@ -1,14 +1,17 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import RotationCard from "../../components/rotations/RotationCard";
 import RotationFormModal from "../../components/rotations/RotationFormModal";
 import RotationSwitchDialog from "../../components/rotations/RotationSwitchDialog";
 import {
-  activateRotation,
   loadActiveRotation,
   loadRotations,
-  upsertRotation,
 } from "../../data/localRotations";
+import {
+  activateRotationWithSupabase,
+  syncRotationsWithSupabase,
+  upsertRotationWithSupabase,
+} from "../../data/supabaseRotations";
 import { loadPatients } from "../../data/localPatients";
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
@@ -65,6 +68,44 @@ export default function RotationManagementPage({
   const [switchTarget, setSwitchTarget] = useState<Rotation | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editingRotation, setEditingRotation] = useState<Rotation | null>(null);
+  const [syncing, setSyncing] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncWorkspace() {
+      setSyncing(true);
+      setErrorMessage("");
+
+      try {
+        const nextRotations = await syncRotationsWithSupabase();
+
+        if (cancelled) return;
+
+        setRotations(nextRotations);
+        setActiveRotation(loadActiveRotation());
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "Gagal memuat data stase dari Supabase.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setSyncing(false);
+        }
+      }
+    }
+
+    void syncWorkspace();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const patientCounts = useMemo(() => {
     return rotations.reduce<Record<string, number>>((acc, rotation) => {
@@ -113,27 +154,52 @@ export default function RotationManagementPage({
     setSwitchTarget(rotation);
   };
 
-  const confirmSwitch = () => {
+  const confirmSwitch = async () => {
     if (!switchTarget) return;
 
-    const next = activateRotation(switchTarget.id);
-    const selected =
-      next.find((rotation) => rotation.id === switchTarget.id) ??
-      switchTarget;
+    setErrorMessage("");
 
-    setRotations(next);
-    setActiveRotation(selected);
-    setSwitchTarget(null);
-    onRotationChange?.(selected);
+    try {
+      const next = await activateRotationWithSupabase(switchTarget.id);
+      const selected =
+        next.find((rotation) => rotation.id === switchTarget.id) ??
+        switchTarget;
+
+      setRotations(next);
+      setActiveRotation(selected);
+      setSwitchTarget(null);
+      onRotationChange?.(selected);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Gagal mengganti stase.",
+      );
+    }
   };
 
-  const handleSaveRotation = (input: Parameters<typeof upsertRotation>[0]) => {
-    const updated = upsertRotation(input);
-    setRotations(updated);
-    const nextActive = loadActiveRotation();
-    setActiveRotation(nextActive);
-    if (nextActive.id === input.id || input.status === "Aktif") {
-      onRotationChange?.(nextActive);
+  const handleSaveRotation = async (
+    input: Parameters<typeof upsertRotationWithSupabase>[0],
+  ) => {
+    setErrorMessage("");
+
+    try {
+      const updated = await upsertRotationWithSupabase(input);
+      setRotations(updated);
+
+      const nextActive = loadActiveRotation();
+      setActiveRotation(nextActive);
+
+      if (nextActive.id === input.id || input.status === "Aktif") {
+        onRotationChange?.(nextActive);
+      }
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Gagal menyimpan stase.",
+      );
+      throw error;
     }
   };
 
@@ -179,6 +245,21 @@ export default function RotationManagementPage({
                 Tambah Stase
               </button>
             </header>
+
+            {syncing ? (
+              <div className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-2.5 text-[11px] font-medium text-slate-500">
+                Menyinkronkan data stase...
+              </div>
+            ) : null}
+
+            {errorMessage ? (
+              <div
+                role="alert"
+                className="rounded-xl border border-rose-100 bg-rose-50 px-4 py-3 text-[11px] leading-relaxed text-rose-700"
+              >
+                {errorMessage}
+              </div>
+            ) : null}
 
             <section className="overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50/80 via-white to-white shadow-[0_10px_34px_-18px_rgba(22,119,255,0.35)]">
               <div className="grid grid-cols-1 lg:grid-cols-[1.35fr_0.65fr]">
