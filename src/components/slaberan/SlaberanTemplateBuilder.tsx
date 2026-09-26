@@ -142,9 +142,9 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-  const [variable, setVariable] = useState<
-    (typeof SLABERAN_VARIABLES)[number]["key"]
-  >(SLABERAN_VARIABLES[0]?.key ?? "{{report.specialty}}");
+  const [variable, setVariable] = useState<string>(
+    SLABERAN_VARIABLES[0]?.key ?? "{{report.specialty}}",
+  );
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const refresh = useCallback(async () => {
