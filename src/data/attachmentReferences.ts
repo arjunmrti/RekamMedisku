@@ -63,6 +63,7 @@ export function getDraftFollowUpAttachmentIds(): Set<string> {
 export function getReferencedAttachmentIds(
   additionalExams: AttachmentReferenceExam[] | undefined = undefined,
   additionalFormExams: FollowUpFormValues["supportingExams"] | undefined = undefined,
+  additionalAttachmentIds: Iterable<string> | undefined = undefined,
 ): Set<string> {
   const ids = getSavedFollowUpAttachmentIds();
 
@@ -73,6 +74,10 @@ export function getReferencedAttachmentIds(
   addExamAttachmentIds(ids, additionalExams);
   addFormExamAttachmentIds(ids, additionalFormExams);
 
+  for (const id of additionalAttachmentIds ?? []) {
+    if (id) ids.add(id);
+  }
+
   return ids;
 }
 
@@ -80,10 +85,12 @@ export function getUnreferencedAttachmentIds(
   attachmentIds: Iterable<string>,
   additionalExams: AttachmentReferenceExam[] | undefined = undefined,
   additionalFormExams: FollowUpFormValues["supportingExams"] | undefined = undefined,
+  additionalAttachmentIds: Iterable<string> | undefined = undefined,
 ): string[] {
   const referenced = getReferencedAttachmentIds(
     additionalExams,
     additionalFormExams,
+    additionalAttachmentIds,
   );
 
   return [...new Set(attachmentIds)].filter((id) => !referenced.has(id));
@@ -93,11 +100,14 @@ export async function deleteAttachmentIfUnreferenced(
   attachmentId: string,
   additionalExams: AttachmentReferenceExam[] | undefined = undefined,
   additionalFormExams: FollowUpFormValues["supportingExams"] | undefined = undefined,
+  additionalAttachmentIds: Iterable<string> | undefined = undefined,
 ): Promise<boolean> {
   if (
-    getReferencedAttachmentIds(additionalExams, additionalFormExams).has(
-      attachmentId,
-    )
+    getReferencedAttachmentIds(
+      additionalExams,
+      additionalFormExams,
+      additionalAttachmentIds,
+    ).has(attachmentId)
   ) {
     return false;
   }
@@ -109,12 +119,14 @@ export async function deleteAttachmentIfUnreferenced(
 export async function cleanupUnreferencedAttachments(
   additionalExams: AttachmentReferenceExam[] | undefined = undefined,
   additionalFormExams: FollowUpFormValues["supportingExams"] | undefined = undefined,
+  additionalAttachmentIds: Iterable<string> | undefined = undefined,
 ): Promise<string[]> {
   const attachments = await loadAllAttachments();
   const unreferencedIds = getUnreferencedAttachmentIds(
     attachments.map((attachment) => attachment.id),
     additionalExams,
     additionalFormExams,
+    additionalAttachmentIds,
   );
 
   if (unreferencedIds.length) {
