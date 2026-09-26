@@ -38,9 +38,9 @@ export default function AuthGate({ children }: AuthGateProps) {
 
         if (cancelled) return;
 
-        // Keep the local cache fresh from other browsers/tabs. Realtime is
-        // preferred when available; focus/visibility and polling provide a
-        // fallback when Realtime replication is not enabled.
+        // Keep the local cache fresh from other browsers/tabs. Realtime
+        // triggers immediate refreshes when available; the sync watchdog
+        // provides a low-frequency safety net for silent/stuck channels.
         stopWorkspaceSync = startWorkspaceSync(authenticatedUserId);
       } catch (error) {
         console.error("Supabase workspace hydration failed:", error);
