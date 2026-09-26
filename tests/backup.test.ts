@@ -230,6 +230,16 @@ test("backup menolak jam draf yang tidak valid", () => {
   assert.equal(result.ok, false);
 });
 
+
+test("backup menolak draf yang berasal dari stase lain", () => {
+  const payload = withDraft();
+  payload.followUpDrafts[patient.id].rotationId = "rotation-ilmu-penyakit-dalam";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
 test("backup menolak pasien tanpa rotationId", () => {
   const payload: BackupPayload = {
     ...basePayload,
