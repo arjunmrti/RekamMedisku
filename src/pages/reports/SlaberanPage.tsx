@@ -16,7 +16,6 @@ import {
   syncSlaberanTemplatesWithSupabase,
 } from "../../data/supabaseSlaberanTemplates";
 import { createStarterSlaberanTemplate } from "../../utils/slaberanTemplate";
-import { getDefaultSlaberanTemplate } from "../../data/slaberanTemplates";
 import {
   buildSlaberanReport,
   getDiagnosisSummary,
@@ -147,23 +146,18 @@ export default function SlaberanPage({
   );
 
   useEffect(() => {
-    const sync = async () => {
-      try {
-        await Promise.all([
-          syncSlaberanLocationsWithSupabase(),
-          syncSlaberanTemplatesWithSupabase(),
-        ]);
-        setSyncNotice("");
-      } catch (error) {
+    void Promise.all([
+      syncSlaberanLocationsWithSupabase(),
+      syncSlaberanTemplatesWithSupabase(),
+    ])
+      .then(() => setSyncNotice(""))
+      .catch((error: unknown) => {
         setSyncNotice(
           error instanceof Error
             ? "Data Slaberan menggunakan cache lokal. " + error.message
             : "Data Slaberan menggunakan cache lokal.",
         );
-      }
-    };
-
-    void sync();
+      });
   }, []);
 
   useEffect(() => {
