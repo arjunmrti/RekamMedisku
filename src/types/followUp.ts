@@ -5,6 +5,8 @@ export type SupportingExam = {
   name: string;
   examType?: string;
   date: string;
+  /** Original ISO date kept for reliable Supabase date synchronization. */
+  isoDate?: string;
   result?: string;
   attachmentName?: string;
   attachmentId?: string;
