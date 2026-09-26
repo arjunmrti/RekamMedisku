@@ -33,7 +33,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY INVOKER
 SET search_path = public
-AS $
+AS $slaberan$
 BEGIN
   IF NEW.parent_id IS NOT NULL AND NOT EXISTS (
     SELECT 1
@@ -46,7 +46,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$slaberan$;
 
 DROP TRIGGER IF EXISTS trg_validate_slaberan_location_parent
   ON public.slaberan_locations;
@@ -115,7 +115,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY INVOKER
 SET search_path = public
-AS $
+AS $slaberan$
 BEGIN
   IF NEW.current_location_id IS NOT NULL AND NOT EXISTS (
     SELECT 1
@@ -137,7 +137,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$slaberan$;
 
 ALTER TABLE public.patients
   ADD COLUMN IF NOT EXISTS current_location_id uuid,
