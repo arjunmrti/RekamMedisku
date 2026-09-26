@@ -16,6 +16,7 @@ import {
 import { loadActiveRotation } from "../../data/localRotations";
 import { updatePatient } from "../../data/localPatients";
 import { toLocalIsoDate, toLocalTimeInput } from "../../utils/date";
+import { buildBasicObjectiveLines } from "../../utils/objectiveFormatter";
 import type { FollowUpEntry, SupportingExam } from "../../types/followUp";
 import type { FollowUpFormValues } from "../../types/followUpForm";
 import type { PatientListItem } from "../../types/patient";
@@ -243,24 +244,9 @@ function buildFollowUpEntry(
         ];
 
   const objective = [
-    "Keadaan Umum: " + values.objective.generalCondition,
-    "TD: " +
-      values.objective.systolic +
-      "/" +
-      values.objective.diastolic +
-      " mmHg",
-    "Nadi: " + values.objective.pulse + " x/menit",
-    "RR: " + values.objective.respiratoryRate + " x/menit",
-    "Suhu: " + values.objective.temperature + " °C",
-    "SpO₂: " + values.objective.spo2 + "%",
-    "Oksigen via: " + values.objective.oxygenVia,
-    "NRS: " + values.objective.painNrs,
-    "Pemeriksaan/Temuan Fisik: " + values.objective.physicalFindings,
+    ...buildBasicObjectiveLines(values.objective),
     ...templateObjective,
-    "Hasil Penunjang: " + values.objective.supportingExamText,
-  ]
-    .filter((item) => !item.endsWith(": "))
-    .join("\n");
+  ].join("\n");
 
   const assessment = values.assessments
     .filter((item) => item.trim())
