@@ -204,7 +204,6 @@ export function buildWhatsAppReport(
     "",
     planBlock,
     "",
-    "Mohon arahan lebih lanjut, Dok.",
-    "Terima kasih.",
+    "Terimakasih sebelumnya dokter, Mohon arahan dan bimbingannya dok🙏🏻",
   ].join("\n");
 }
