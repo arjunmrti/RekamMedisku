@@ -327,7 +327,28 @@ async function ensurePatientMap() {
   return readMap(PATIENT_ID_MAP_KEY);
 }
 
-export async function persistFollowUpWithSupabase(
+let followUpWriteQueue: Promise<void> = Promise.resolve();
+
+async function withFollowUpWriteLock<T>(
+  operation: () => Promise<T>,
+): Promise<T> {
+  const previous = followUpWriteQueue;
+  let release!: () => void;
+
+  followUpWriteQueue = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+
+  await previous;
+
+  try {
+    return await operation();
+  } finally {
+    release();
+  }
+}
+
+async function persistFollowUpWithSupabaseInternal(
   patientId: string,
   entry: FollowUpEntry,
 ): Promise<void> {
@@ -477,7 +498,7 @@ export async function persistFollowUpWithSupabase(
   }
 }
 
-export async function syncFollowUpsWithSupabase(): Promise<
+async function syncFollowUpsWithSupabaseInternal(): Promise<
   Record<string, FollowUpEntry[]>
 > {
   const userId = await getCurrentUserId();
@@ -578,7 +599,7 @@ export async function syncFollowUpsWithSupabase(): Promise<
 
     for (const entry of entries) {
       if (followUpMap[entry.id]) continue;
-      await persistFollowUpWithSupabase(patientId, entry);
+      await persistFollowUpWithSupabaseInternal(patientId, entry);
       followUpMap[entry.id] = readMap(FOLLOW_UP_ID_MAP_KEY)[entry.id];
     }
   }
@@ -594,6 +615,21 @@ export async function syncFollowUpsWithSupabase(): Promise<
   replaceSavedFollowUps(nextLocal);
 
   return nextLocal;
+}
+
+export async function persistFollowUpWithSupabase(
+  patientId: string,
+  entry: FollowUpEntry,
+): Promise<void> {
+  return withFollowUpWriteLock(() =>
+    persistFollowUpWithSupabaseInternal(patientId, entry),
+  );
+}
+
+export async function syncFollowUpsWithSupabase(): Promise<
+  Record<string, FollowUpEntry[]>
+> {
+  return withFollowUpWriteLock(() => syncFollowUpsWithSupabaseInternal());
 }
 
 export async function syncFollowUpsForPatientWithSupabase(
