@@ -280,6 +280,7 @@ export async function upsertRotationWithSupabase(input: {
       throw new Error("Stase gagal disiapkan untuk disimpan.");
     }
 
+    const userId = await getCurrentUserId();
     const idMap = readIdMap();
     const remoteId = getRemoteId(localId, idMap);
 
@@ -367,7 +368,6 @@ export async function activateRotationWithSupabase(
       throw new Error("Stase yang dipilih tidak ditemukan.");
     }
 
-    const userId = await getCurrentUserId();
     const idMap = readIdMap();
     let remoteId = getRemoteId(rotationId, idMap);
 
