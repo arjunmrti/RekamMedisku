@@ -107,7 +107,6 @@ export function buildWhatsAppReport(
 ) {
   const exams = followUp.supportingExams ?? [];
   const rotationName = options.rotationName?.trim() || templateType;
-  const greeting = getReportGreeting(options.generatedAt);
   const planning =
     followUp.planning?.trim() ||
     followUp.plan?.trim() ||
@@ -161,7 +160,10 @@ export function buildWhatsAppReport(
       : templateHeading + "\nBelum ada catatan.";
 
   return [
-    greeting + ", izin melaporkan follow-up pasien:",
+    "Assalamualaikum warahmatullahi wabarakatuh dok. Tabe dok, mohon izin dok. " +
+      "Perkenalkan saya Muh. Fadel dengan Stambuk 11120252020 MPPD Stase " +
+      rotationName +
+      ". Mohon izin melaporkan follow-up pasien:",
     "",
     "Nama: " + patient.name,
     "Umur: " + patient.age + " tahun",
