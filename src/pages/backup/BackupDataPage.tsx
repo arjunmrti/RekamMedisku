@@ -7,6 +7,8 @@ import {
   saveBackupSnapshot,
 } from "../../data/backupHistory";
 import { loadPatients } from "../../data/localPatients";
+import { restoreWorkspaceBackupWithSupabase } from "../../data/supabaseBackup";
+import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import { loadRotations } from "../../data/localRotations";
 import type { BackupHistoryEntry, BackupPayload } from "../../types/backup";
 import {
@@ -280,7 +282,10 @@ export default function BackupDataPage({
     setIsProcessing(true);
 
     try {
-      const counts = await restoreBackupPayload(restoreState.data);
+      const counts = await restoreBackupPayload(restoreState.data, {
+        persistRemote: restoreWorkspaceBackupWithSupabase,
+        syncRemote: syncWorkspaceWithSupabase,
+      });
       const entry = createBackupHistoryEntry(
         "Restore",
         "Berhasil",
@@ -399,8 +404,8 @@ export default function BackupDataPage({
                     Restore Data
                   </h2>
                   <p className="mt-2 text-xs leading-relaxed text-slate-500">
-                    Impor file backup JSON yang valid untuk memulihkan data
-                    workspace di perangkat ini.
+                    Impor file backup JSON yang valid untuk memulihkan seluruh
+                    workspace yang tersinkron.
                   </p>
                 </div>
                 <button
