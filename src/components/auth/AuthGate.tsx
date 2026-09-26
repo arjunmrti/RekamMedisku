@@ -10,6 +10,8 @@ type AuthGateProps = {
   children: ReactNode;
 };
 
+const WORKSPACE_HYDRATION_TIMEOUT_MS = 8_000;
+
 function getWorkspaceSyncErrorMessage(error: unknown) {
   if (typeof error === "object" && error !== null) {
     const candidate = error as {
@@ -74,25 +76,52 @@ export default function AuthGate({ children }: AuthGateProps) {
       setWorkspaceLoading(true);
       setWorkspaceError("");
 
+      const hydrationPromise = syncWorkspaceWithSupabase();
+
+      // Keep the underlying request handled even when the UI falls back to
+      // local data after the timeout.
+      void hydrationPromise
+        .then(() => {
+          if (!cancelled) {
+            setWorkspaceError("");
+          }
+        })
+        .catch((error) => {
+          console.error("Supabase workspace hydration failed:", error);
+
+          if (!cancelled) {
+            setWorkspaceError(getWorkspaceSyncErrorMessage(error));
+          }
+        });
+
+      let timeoutId: number | null = null;
+
       try {
-        // Hydrate the cloud workspace before rendering the app so a fresh
-        // browser starts from the authenticated Supabase state.
-        await syncWorkspaceWithSupabase();
-
-        if (cancelled) return;
-
-        // Keep the local cache fresh from other browsers/tabs. Realtime
-        // triggers immediate refreshes when available; the sync watchdog
-        // provides a low-frequency safety net for silent/stuck channels.
-        stopWorkspaceSync = startWorkspaceSync(authenticatedUserId);
+        await Promise.race([
+          hydrationPromise,
+          new Promise<never>((_, reject) => {
+            timeoutId = window.setTimeout(() => {
+              reject(
+                new Error(
+                  "Sinkronisasi cloud belum selesai dalam 8 detik. RekamMedisku melanjutkan dengan cache lokal dan akan mencoba sinkronisasi di latar belakang.",
+                ),
+              );
+            }, WORKSPACE_HYDRATION_TIMEOUT_MS);
+          }),
+        ]);
       } catch (error) {
-        console.error("Supabase workspace hydration failed:", error);
-
         if (!cancelled) {
           setWorkspaceError(getWorkspaceSyncErrorMessage(error));
         }
       } finally {
+        if (timeoutId !== null) {
+          window.clearTimeout(timeoutId);
+        }
+
         if (!cancelled) {
+          // The realtime/watchdog sync becomes the recovery path even when the
+          // initial hydration times out or fails.
+          stopWorkspaceSync = startWorkspaceSync(authenticatedUserId);
           setWorkspaceLoading(false);
         }
       }
@@ -131,35 +160,37 @@ export default function AuthGate({ children }: AuthGateProps) {
     return <LoginPage />;
   }
 
-  if (workspaceError) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-[#F7F9FC] px-4">
-        <div className="w-full max-w-lg rounded-3xl border border-rose-100 bg-white p-6 shadow-[0_18px_50px_-28px_rgba(16,42,86,0.28)] sm:p-8">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-rose-600">
-            Sinkronisasi Workspace Gagal
-          </p>
-          <h1 className="mt-2 text-xl font-bold tracking-tight text-slate-900">
-            Data cloud belum berhasil dimuat
-          </h1>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            RekamMedisku tidak akan menampilkan workspace sebelum data Supabase
-            berhasil dibaca. Periksa koneksi dan konfigurasi Supabase lalu muat
-            ulang halaman.
-          </p>
-          <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-xs leading-relaxed text-rose-700">
-            {workspaceError}
+  return (
+    <>
+      {workspaceError ? (
+        <div
+          role="status"
+          className="sticky top-0 z-50 border-b border-amber-200 bg-amber-50 px-4 py-3 text-amber-900"
+        >
+          <div className="mx-auto flex max-w-7xl flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-800">
+                Sinkronisasi cloud tertunda
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                Data lokal tetap tersedia. RekamMedisku akan mencoba sinkronisasi
+                ulang secara otomatis.
+              </p>
+              <p className="mt-1 text-[10px] leading-relaxed text-amber-700/80">
+                {workspaceError}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="min-h-9 shrink-0 rounded-lg border border-amber-300 bg-white px-3 py-2 text-[10px] font-semibold text-amber-800 transition hover:bg-amber-100"
+            >
+              Coba Lagi
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="mt-5 min-h-11 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-600"
-          >
-            Muat Ulang
-          </button>
         </div>
-      </main>
-    );
-  }
-
-  return <>{children}</>;
+      ) : null}
+      {children}
+    </>
+  );
 }
