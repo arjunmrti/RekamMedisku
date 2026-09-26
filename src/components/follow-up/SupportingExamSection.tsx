@@ -20,8 +20,34 @@ type AttachmentDownloadProps = {
 
 const MAX_ATTACHMENT_SIZE = 2 * 1024 * 1024;
 
+function isSupportedAttachment(file: File) {
+  const normalizedType = file.type.toLowerCase();
+  if (normalizedType.startsWith("image/") || normalizedType === "application/pdf") {
+    return true;
+  }
+
+  const normalizedName = file.name.toLowerCase();
+  return (
+    normalizedName.endsWith(".pdf") ||
+    normalizedName.endsWith(".png") ||
+    normalizedName.endsWith(".jpg") ||
+    normalizedName.endsWith(".jpeg") ||
+    normalizedName.endsWith(".webp") ||
+    normalizedName.endsWith(".gif")
+  );
+}
+
+function createExamId() {
+  const randomId =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : Date.now().toString(36) + "-" + Math.random().toString(36).slice(2);
+
+  return "exam-" + randomId;
+}
+
 const emptyExam = (): SupportingExamForm => ({
-  id: "exam-" + Date.now(),
+  id: createExamId(),
   examType: "Laboratorium",
   date: toLocalIsoDate(),
   result: "",
@@ -184,6 +210,12 @@ export default function SupportingExamSection({
 
     if (file.size > MAX_ATTACHMENT_SIZE) {
       setAttachmentError("Ukuran lampiran maksimal 2 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    if (!isSupportedAttachment(file)) {
+      setAttachmentError("Lampiran hanya boleh berupa gambar atau PDF.");
       event.target.value = "";
       return;
     }
