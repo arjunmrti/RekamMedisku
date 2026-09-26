@@ -186,6 +186,15 @@ export async function syncRotationsWithSupabase(): Promise<Rotation[]> {
   const rows = (remoteRows ?? []) as RotationRow[];
   const remoteIds = new Set(rows.map((row) => row.id));
 
+  // Discard mappings for remote rotations that no longer exist before
+  // matching current rows. This lets a recreated rotation reuse its local ID
+  // instead of being treated as a brand-new workspace.
+  for (const [localId, remoteId] of Object.entries(idMap)) {
+    if (!remoteIds.has(remoteId)) {
+      delete idMap[localId];
+    }
+  }
+
   // Supabase is the source of truth once the account has cloud data.
   // Rebuild the browser cache from remote rows so stale rotations cannot
   // resurrect after they were removed or changed elsewhere.
@@ -215,12 +224,6 @@ export async function syncRotationsWithSupabase(): Promise<Rotation[]> {
   // An empty cloud workspace stays empty.
   // Rotations are created explicitly from Stase Saya; stale local data is
   // never promoted back to Supabase automatically.
-  for (const [localId, remoteId] of Object.entries(idMap)) {
-    if (!remoteIds.has(remoteId)) {
-      delete idMap[localId];
-    }
-  }
-
   saveIdMap(idMap);
   saveRotations(nextLocal);
 
