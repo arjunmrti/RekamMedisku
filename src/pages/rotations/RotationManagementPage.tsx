@@ -30,6 +30,8 @@ function formatDate(value: string) {
 }
 
 function formatPeriod(startDate: string, endDate: string) {
+  if (!startDate || !endDate) return "Belum ada periode";
+
   const start = new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "short",
@@ -245,7 +247,7 @@ export default function RotationManagementPage({
 
                       <div className="min-w-0">
                         <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#1677FF]">
-                          STASE AKTIF
+                          {activeRotation.id ? "STASE AKTIF" : "BELUM ADA STASE AKTIF"}
                         </p>
                         <h2 className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                           {activeRotation.name}
@@ -259,8 +261,14 @@ export default function RotationManagementPage({
                       </div>
                     </div>
 
-                    <span className="w-fit rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-600">
-                      Aktif
+                    <span
+                      className={
+                        activeRotation.id
+                          ? "w-fit rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1 text-[10px] font-bold text-emerald-600"
+                          : "w-fit rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[10px] font-bold text-slate-500"
+                      }
+                    >
+                      {activeRotation.id ? "Aktif" : "Belum dipilih"}
                     </span>
                   </div>
 
@@ -306,9 +314,14 @@ export default function RotationManagementPage({
                   <button
                     type="button"
                     disabled
-                    className="mt-5 min-h-11 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-600"
+                    className={
+                      "mt-5 min-h-11 rounded-xl border px-4 py-2.5 text-xs font-semibold " +
+                      (activeRotation.id
+                        ? "border-emerald-100 bg-emerald-50 text-emerald-600"
+                        : "border-slate-200 bg-slate-50 text-slate-400")
+                    }
                   >
-                    Gunakan Stase Ini
+                    {activeRotation.id ? "Gunakan Stase Ini" : "Belum ada stase aktif"}
                   </button>
                 </div>
               </div>
