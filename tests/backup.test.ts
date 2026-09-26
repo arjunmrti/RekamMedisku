@@ -12,6 +12,8 @@ import type { Rotation } from "../src/types/rotation";
 import type { StoredAttachment } from "../src/data/localAttachments";
 import type { PatientListItem } from "../src/types/patient";
 import type { FollowUpEntry } from "../src/types/followUp";
+import type { SlaberanLocation } from "../src/types/slaberanLocation";
+import type { SlaberanTemplateRecord } from "../src/types/slaberanTemplate";
 
 const patient = {
   id: "p-test",
@@ -81,6 +83,8 @@ function createRestoreLocalState(
     activeRotationId: string;
     drafts: Record<string, FollowUpFormValues>;
     attachments: StoredAttachment[];
+    slaberanLocations: SlaberanLocation[];
+    slaberanTemplates: SlaberanTemplateRecord[];
   };
 } {
   let patients = initialPatients;
@@ -91,8 +95,8 @@ function createRestoreLocalState(
   )?.id ?? "";
   let drafts: Record<string, FollowUpFormValues> = {};
   let attachments: StoredAttachment[] = [];
-  let slaberanLocations: never[] = [];
-  let slaberanTemplates: never[] = [];
+  let slaberanLocations: SlaberanLocation[] = [];
+  let slaberanTemplates: SlaberanTemplateRecord[] = [];
 
   const state: RestoreBackupLocalState = {
     loadPatients: () => patients,
@@ -141,6 +145,8 @@ function createRestoreLocalState(
       activeRotationId,
       drafts,
       attachments,
+      slaberanLocations,
+      slaberanTemplates,
     }),
   };
 }
@@ -633,4 +639,6 @@ test("restore mempertahankan konfigurasi Slaberan lama ketika backup legacy tida
 
   const snapshot = helper.getSnapshot();
   assert.equal(snapshot.patients[0]?.name, "Pasien Uji");
+  assert.equal(snapshot.slaberanLocations[0]?.id, "floor-existing");
+  assert.equal(snapshot.slaberanTemplates[0]?.id, "template-existing");
 });
