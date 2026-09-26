@@ -101,6 +101,42 @@ function appendWardSummary(
     .filter((location) => location.type === "ward" && location.isActive)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name));
 
+  const legacyGroups = (
+    (block.config as { legacyGroups?: unknown }).legacyGroups ?? []
+  ) as Array<{ label?: unknown; rooms?: unknown }>;
+
+  if (floors.length === 0 && wards.length === 0 && legacyGroups.length > 0) {
+    for (const group of legacyGroups) {
+      const label = typeof group.label === "string" ? group.label : "";
+      const rooms = Array.isArray(group.rooms)
+        ? group.rooms.filter((room): room is string => typeof room === "string")
+        : [];
+
+      if (!label || rooms.length === 0) continue;
+
+      if (lines.length > 0) lines.push("");
+      lines.push("*" + label + "*");
+
+      for (const room of rooms) {
+        const roomPatients = patientContexts.filter(
+          (context) =>
+            normalize(context.patient.currentLocation?.name ?? context.patient.room) ===
+            normalize(room),
+        );
+
+        if (!showEmptyRooms && roomPatients.length === 0) continue;
+
+        lines.push(
+          highlightOccupied && roomPatients.length > 0
+            ? "*" + room + " (" + roomPatients.length + ")*"
+            : room + " (" + roomPatients.length + ")",
+        );
+      }
+    }
+
+    return;
+  }
+
   for (const floor of floors) {
     const floorWards = wards.filter((ward) => ward.parentId === floor.id);
 
