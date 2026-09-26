@@ -64,29 +64,29 @@ CREATE POLICY slaberan_locations_select_own
   ON public.slaberan_locations
   FOR SELECT
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_locations_insert_own ON public.slaberan_locations;
 CREATE POLICY slaberan_locations_insert_own
   ON public.slaberan_locations
   FOR INSERT
   TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_locations_update_own ON public.slaberan_locations;
 CREATE POLICY slaberan_locations_update_own
   ON public.slaberan_locations
   FOR UPDATE
   TO authenticated
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
+  USING (user_id = (select auth.uid()))
+  WITH CHECK (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_locations_delete_own ON public.slaberan_locations;
 CREATE POLICY slaberan_locations_delete_own
   ON public.slaberan_locations
   FOR DELETE
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (user_id = (select auth.uid()));
 
 -- Preserve legacy patient locations without violating the P10 hierarchy.
 -- Legacy wards have no historical floor in the old patient model, so they are
@@ -99,7 +99,7 @@ INSERT INTO public.slaberan_locations (
 )
 SELECT DISTINCT
   p.user_id,
-  NULL,
+  NULL::uuid,
   'floor',
   'Lantai Belum Diatur'
 FROM public.patients p
@@ -137,7 +137,7 @@ INSERT INTO public.slaberan_locations (
 )
 SELECT DISTINCT
   p.user_id,
-  NULL,
+  NULL::uuid,
   'special',
   btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room))
 FROM public.patients p
@@ -270,29 +270,29 @@ CREATE POLICY slaberan_templates_select_own
   ON public.slaberan_templates
   FOR SELECT
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_templates_insert_own ON public.slaberan_templates;
 CREATE POLICY slaberan_templates_insert_own
   ON public.slaberan_templates
   FOR INSERT
   TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_templates_update_own ON public.slaberan_templates;
 CREATE POLICY slaberan_templates_update_own
   ON public.slaberan_templates
   FOR UPDATE
   TO authenticated
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
+  USING (user_id = (select auth.uid()))
+  WITH CHECK (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_templates_delete_own ON public.slaberan_templates;
 CREATE POLICY slaberan_templates_delete_own
   ON public.slaberan_templates
   FOR DELETE
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (user_id = (select auth.uid()));
 
 GRANT EXECUTE
   ON FUNCTION
