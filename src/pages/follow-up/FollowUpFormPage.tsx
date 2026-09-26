@@ -274,7 +274,7 @@ function buildFollowUpEntry(
       date: formatDate(exam.date),
       result: exam.result,
       attachmentName: exam.attachmentName,
-      attachmentDataUrl: exam.attachmentDataUrl,
+      attachmentId: exam.attachmentId,
       attachmentType: exam.attachmentType,
       attachmentSize: exam.attachmentSize,
       icon:

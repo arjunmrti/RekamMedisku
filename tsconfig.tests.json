@@ -7,7 +7,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "ignoreDeprecations": "6.0",
-    "types": ["node"],
+    "types": [
+      "node"
+    ],
     "rootDir": ".",
     "outDir": ".test-dist",
     "noEmitOnError": true
@@ -19,6 +21,8 @@
     "src/types/followUp.ts",
     "src/types/patient.ts",
     "src/types/report.ts",
-    "src/types/rotation.ts"
+    "src/types/rotation.ts",
+    "src/utils/backup.ts",
+    "src/types/backup.ts"
   ]
 }

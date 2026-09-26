@@ -11,6 +11,7 @@ import { loadRotations } from "../../data/localRotations";
 import type { BackupHistoryEntry, BackupPayload } from "../../types/backup";
 import {
   buildBackupPayload,
+  buildBackupPayloadWithAttachments,
   formatBackupDate,
   formatBytes,
   getPatientRotation,
@@ -60,6 +61,7 @@ export default function BackupDataPage({
 
   const [historySearch, setHistorySearch] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [restoreOpen, setRestoreOpen] = useState(false);
   const [restoreState, setRestoreState] = useState<RestoreState>({
     status: "idle",
@@ -159,10 +161,14 @@ export default function BackupDataPage({
     setPatients(loadPatients());
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
+    if (isProcessing) return;
+
+    setIsProcessing(true);
+
     try {
       const currentPatients = loadPatients();
-      const payload = buildBackupPayload(currentPatients);
+      const payload = await buildBackupPayloadWithAttachments(currentPatients);
       const content = serializeBackup(payload);
       const fileName =
         "rekammedisku-backup-" + toLocalIsoDate() + ".json";
@@ -191,6 +197,8 @@ export default function BackupDataPage({
       appendBackupHistory(entry);
       setHistory((current) => [entry, ...current].slice(0, 30));
       setToast("Export gagal. Coba lagi.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -258,11 +266,13 @@ export default function BackupDataPage({
     event.target.value = "";
   };
 
-  const handleConfirmRestore = () => {
-    if (restoreState.status !== "valid") return;
+  const handleConfirmRestore = async () => {
+    if (restoreState.status !== "valid" || isProcessing) return;
+
+    setIsProcessing(true);
 
     try {
-      const counts = restoreBackupPayload(restoreState.data);
+      const counts = await restoreBackupPayload(restoreState.data);
       const entry = createBackupHistoryEntry(
         "Restore",
         "Berhasil",
@@ -274,7 +284,9 @@ export default function BackupDataPage({
           counts.followUpCount +
           " follow-up, " +
           counts.draftCount +
-          " draf.",
+          " draf, " +
+          counts.attachmentCount +
+          " lampiran.",
       );
 
       appendBackupHistory(entry);
@@ -295,6 +307,8 @@ export default function BackupDataPage({
       appendBackupHistory(entry);
       setHistory((current) => [entry, ...current].slice(0, 30));
       setToast("Restore gagal. Data belum diubah.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -359,8 +373,9 @@ export default function BackupDataPage({
                 </div>
                 <button
                   type="button"
-                  onClick={handleExport}
-                  className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#1677FF] px-4 text-xs font-semibold text-[#1677FF] transition hover:bg-blue-50 active:scale-[0.99]"
+                  onClick={() => void handleExport()}
+                  disabled={isProcessing}
+                  className="mt-6 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#1677FF] px-4 text-xs font-semibold text-[#1677FF] transition hover:bg-blue-50 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Icon name="arrow" className="h-4 w-4 rotate-[-90deg]" />
                   Export JSON
@@ -856,8 +871,8 @@ export default function BackupDataPage({
               </button>
               <button
                 type="button"
-                disabled={restoreState.status !== "valid"}
-                onClick={handleConfirmRestore}
+                disabled={restoreState.status !== "valid" || isProcessing}
+                onClick={() => void handleConfirmRestore()}
                 className="rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Konfirmasi Restore

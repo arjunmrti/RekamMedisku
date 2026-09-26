@@ -7,12 +7,21 @@ import {
 } from "../data/localFollowUps";
 import { loadPatients, replacePatients } from "../data/localPatients";
 import {
+  getStoredAttachment,
+  loadAllAttachments,
+  replaceAllAttachments,
+  type StoredAttachment,
+} from "../data/localAttachments";
+import {
   loadActiveRotationId,
   loadRotations,
   saveRotations,
   setActiveRotationId,
 } from "../data/localRotations";
-import type { BackupPayload } from "../types/backup";
+import type {
+  BackupAttachment,
+  BackupPayload,
+} from "../types/backup";
 import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
 import type { PatientListItem } from "../types/patient";
@@ -30,6 +39,99 @@ function mergeFollowUps(
     seen.add(entry.id);
     return true;
   });
+}
+
+const MAX_ATTACHMENT_SIZE = 2 * 1024 * 1024;
+export const MAX_BACKUP_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+const BASE64_PATTERN =
+  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const chunkSize = 0x8000;
+  let binary = "";
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(index, index + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+}
+
+function base64ToBlob(dataBase64: string, type: string): Blob {
+  const binary = atob(dataBase64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return new Blob([bytes], { type });
+}
+
+function collectAttachmentIds(
+  followUpsByPatient: Record<string, FollowUpEntry[]>,
+  followUpDrafts: Record<string, FollowUpFormValues>,
+): Set<string> {
+  const ids = new Set<string>();
+
+  for (const entries of Object.values(followUpsByPatient)) {
+    for (const entry of entries) {
+      for (const exam of entry.supportingExams ?? []) {
+        if (exam.attachmentId) {
+          ids.add(exam.attachmentId);
+        }
+      }
+    }
+  }
+
+  for (const draft of Object.values(followUpDrafts)) {
+    for (const exam of draft.supportingExams) {
+      if (exam.attachmentId) {
+        ids.add(exam.attachmentId);
+      }
+    }
+  }
+
+  return ids;
+}
+
+async function buildBackupAttachments(
+  followUpsByPatient: Record<string, FollowUpEntry[]>,
+  followUpDrafts: Record<string, FollowUpFormValues>,
+): Promise<BackupAttachment[]> {
+  const attachments: BackupAttachment[] = [];
+  const attachmentIds = collectAttachmentIds(
+    followUpsByPatient,
+    followUpDrafts,
+  );
+
+  for (const id of attachmentIds) {
+    const stored = await getStoredAttachment(id);
+
+    if (!stored) {
+      throw new Error(
+        "Lampiran " + id + " tidak ditemukan di penyimpanan browser.",
+      );
+    }
+
+    if (stored.size > MAX_ATTACHMENT_SIZE) {
+      throw new Error(
+        "Lampiran " + stored.name + " melebihi batas ukuran 2 MB.",
+      );
+    }
+
+    attachments.push({
+      id: stored.id,
+      name: stored.name,
+      type: stored.type,
+      size: stored.size,
+      dataBase64: await blobToBase64(stored.blob),
+    });
+  }
+
+  return attachments;
 }
 
 export function buildBackupPayload(
@@ -58,8 +160,24 @@ export function buildBackupPayload(
     patients,
     followUpsByPatient,
     followUpDrafts,
+    attachments: undefined,
     rotations: loadRotations(),
     activeRotationId: loadActiveRotationId(),
+  };
+}
+
+export async function buildBackupPayloadWithAttachments(
+  patients: PatientListItem[],
+): Promise<BackupPayload> {
+  const payload = buildBackupPayload(patients);
+  const attachments = await buildBackupAttachments(
+    payload.followUpsByPatient,
+    payload.followUpDrafts,
+  );
+
+  return {
+    ...payload,
+    attachments,
   };
 }
 
@@ -98,6 +216,9 @@ function isSupportingExam(value: unknown): boolean {
     (value.result === undefined || typeof value.result === "string") &&
     (value.attachmentName === undefined ||
       typeof value.attachmentName === "string") &&
+    (value.attachmentId === undefined ||
+      (typeof value.attachmentId === "string" &&
+        value.attachmentId.trim().length > 0)) &&
     (value.attachmentType === undefined ||
       typeof value.attachmentType === "string") &&
     (value.attachmentSize === undefined ||
@@ -285,6 +406,9 @@ function isSupportingExamForm(value: unknown): boolean {
     typeof value.date === "string" &&
     typeof value.result === "string" &&
     typeof value.attachmentName === "string" &&
+    (value.attachmentId === undefined ||
+      (typeof value.attachmentId === "string" &&
+        value.attachmentId.trim().length > 0)) &&
     (value.attachmentType === undefined ||
       typeof value.attachmentType === "string") &&
     (value.attachmentSize === undefined ||
@@ -297,6 +421,49 @@ function isSupportingExamForm(value: unknown): boolean {
           value.attachmentDataUrl.startsWith("data:image/") ||
           value.attachmentDataUrl.startsWith("data:application/pdf"))))
   );
+}
+
+function isBackupAttachment(value: unknown): value is BackupAttachment {
+  if (!isRecord(value)) return false;
+
+  return (
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    typeof value.name === "string" &&
+    typeof value.type === "string" &&
+    typeof value.size === "number" &&
+    Number.isInteger(value.size) &&
+    value.size >= 0 &&
+    value.size <= MAX_ATTACHMENT_SIZE &&
+    typeof value.dataBase64 === "string" &&
+    value.dataBase64.length % 4 === 0 &&
+    BASE64_PATTERN.test(value.dataBase64)
+  );
+}
+
+function validateAttachments(
+  value: unknown,
+  followUpsByPatient: Record<string, FollowUpEntry[]>,
+  followUpDrafts: Record<string, FollowUpFormValues>,
+): value is BackupAttachment[] | undefined {
+  if (value === undefined) return true;
+  if (!Array.isArray(value)) return false;
+
+  const attachmentIds = new Set<string>();
+  for (const attachment of value) {
+    if (!isBackupAttachment(attachment) || attachmentIds.has(attachment.id)) {
+      return false;
+    }
+    attachmentIds.add(attachment.id);
+  }
+
+  for (const id of collectAttachmentIds(followUpsByPatient, followUpDrafts)) {
+    if (!attachmentIds.has(id)) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function validateDraftMap(
@@ -388,6 +555,19 @@ export function parseBackupText(
       return { ok: false, error: "Struktur data draf tidak valid." };
     }
 
+    if (
+      !validateAttachments(
+        parsed.attachments,
+        parsed.followUpsByPatient,
+        parsed.followUpDrafts,
+      )
+    ) {
+      return {
+        ok: false,
+        error: "Struktur data lampiran tidak valid atau tidak lengkap.",
+      };
+    }
+
     let rotations: Rotation[] | undefined;
     if (parsed.rotations !== undefined) {
       if (!Array.isArray(parsed.rotations) || !parsed.rotations.every(isRotation)) {
@@ -452,6 +632,7 @@ export function parseBackupText(
         patients,
         followUpsByPatient: parsed.followUpsByPatient,
         followUpDrafts: parsed.followUpDrafts,
+        attachments: parsed.attachments,
         rotations,
         activeRotationId:
           typeof parsed.activeRotationId === "string"
@@ -464,12 +645,15 @@ export function parseBackupText(
   }
 }
 
-export function restoreBackupPayload(payload: BackupPayload) {
+export async function restoreBackupPayload(
+  payload: BackupPayload,
+) {
   const previousPatients = loadPatients();
   const previousFollowUps = loadSavedFollowUps();
   const previousRotations = loadRotations();
   const previousActiveRotationId = loadActiveRotationId();
   const previousDrafts: Record<string, FollowUpFormValues> = {};
+  const previousAttachments = await loadAllAttachments();
 
   for (const patient of previousPatients) {
     const draft = loadFollowUpDraft(patient.id);
@@ -478,7 +662,29 @@ export function restoreBackupPayload(payload: BackupPayload) {
     }
   }
 
+  const restoredAttachments: StoredAttachment[] = [];
+
+  for (const attachment of payload.attachments ?? []) {
+    const blob = base64ToBlob(attachment.dataBase64, attachment.type);
+
+    if (blob.size !== attachment.size) {
+      throw new Error(
+        "Ukuran lampiran " + attachment.name + " tidak cocok dengan backup.",
+      );
+    }
+
+    restoredAttachments.push({
+      id: attachment.id,
+      name: attachment.name,
+      type: attachment.type,
+      size: attachment.size,
+      blob,
+    });
+  }
+
   try {
+    await replaceAllAttachments(restoredAttachments);
+
     replacePatients(payload.patients);
     replaceSavedFollowUps(payload.followUpsByPatient);
 
@@ -496,6 +702,8 @@ export function restoreBackupPayload(payload: BackupPayload) {
     }
   } catch (error) {
     try {
+      await replaceAllAttachments(previousAttachments);
+
       replacePatients(previousPatients);
       replaceSavedFollowUps(previousFollowUps);
       saveRotations(previousRotations);
@@ -519,6 +727,7 @@ export function restoreBackupPayload(payload: BackupPayload) {
       0,
     ),
     draftCount: Object.keys(payload.followUpDrafts).length,
+    attachmentCount: payload.attachments?.length ?? 0,
   };
 }
 
@@ -527,6 +736,11 @@ export function triggerJsonDownload(
   fileName: string,
 ): number {
   const blob = new Blob([content], { type: "application/json;charset=utf-8" });
+
+  if (blob.size > MAX_BACKUP_FILE_SIZE_BYTES) {
+    throw new Error("Ukuran backup melebihi batas 25 MB.");
+  }
+
   const href = URL.createObjectURL(blob);
   const link = document.createElement("a");
 

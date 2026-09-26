@@ -7,6 +7,8 @@ export type SupportingExam = {
   date: string;
   result?: string;
   attachmentName?: string;
+  attachmentId?: string;
+  /** Legacy field kept so existing local data can still be opened. */
   attachmentDataUrl?: string;
   attachmentType?: string;
   attachmentSize?: number;
