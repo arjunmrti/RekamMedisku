@@ -16,6 +16,14 @@ export type BackupHistoryEntry = {
   note: string;
 };
 
+export type BackupAttachment = {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  dataBase64: string;
+};
+
 export type BackupPayload = {
   schemaVersion: 1;
   product: "RekamMedisku";
@@ -23,6 +31,11 @@ export type BackupPayload = {
   patients: PatientListItem[];
   followUpsByPatient: Record<string, FollowUpEntry[]>;
   followUpDrafts: Record<string, FollowUpFormValues>;
+  /**
+   * Optional so older MVP backups remain restorable.
+   * New exports always include this field, even when empty.
+   */
+  attachments?: BackupAttachment[];
   rotations?: Rotation[];
   activeRotationId?: string;
 };

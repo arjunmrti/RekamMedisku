@@ -1,7 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import FormSection from "./FormSection";
 import Icon from "../ui/Icon";
 import { toLocalIsoDate } from "../../utils/date";
+import {
+  deleteAttachment,
+  getAttachment,
+  saveAttachment,
+} from "../../data/localAttachments";
 import type { SupportingExamForm } from "../../types/followUpForm";
 
 type SupportingExamSectionProps = {
@@ -9,6 +14,11 @@ type SupportingExamSectionProps = {
   onToggle: () => void;
   exams: SupportingExamForm[];
   onChange: (value: SupportingExamForm[]) => void;
+};
+
+type AttachmentDownloadProps = {
+  attachmentId: string;
+  attachmentName: string;
 };
 
 const MAX_ATTACHMENT_SIZE = 2 * 1024 * 1024;
@@ -19,10 +29,76 @@ const emptyExam = (): SupportingExamForm => ({
   date: toLocalIsoDate(),
   result: "",
   attachmentName: "",
+  attachmentId: "",
   attachmentDataUrl: "",
   attachmentType: "",
   attachmentSize: 0,
 });
+
+function AttachmentDownload({
+  attachmentId,
+  attachmentName,
+}: AttachmentDownloadProps) {
+  const [url, setUrl] = useState("");
+  const [loadFailed, setLoadFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl = "";
+
+    setUrl("");
+    setLoadFailed(false);
+
+    void getAttachment(attachmentId)
+      .then((blob) => {
+        if (cancelled) return;
+
+        if (!blob) {
+          setLoadFailed(true);
+          return;
+        }
+
+        objectUrl = URL.createObjectURL(blob);
+        setUrl(objectUrl);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLoadFailed(true);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [attachmentId]);
+
+  if (loadFailed) {
+    return (
+      <span className="font-medium text-rose-500">
+        Lampiran tidak tersedia
+      </span>
+    );
+  }
+
+  if (!url) {
+    return <span className="font-medium text-slate-400">Menyiapkan...</span>;
+  }
+
+  return (
+    <a
+      href={url}
+      download={attachmentName}
+      onClick={(event) => event.stopPropagation()}
+      className="font-semibold text-[#1677FF] hover:underline"
+    >
+      Unduh
+    </a>
+  );
+}
 
 export default function SupportingExamSection({
   open,
@@ -34,31 +110,113 @@ export default function SupportingExamSection({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<SupportingExamForm>(emptyExam());
   const [attachmentError, setAttachmentError] = useState("");
+  const [isSavingAttachment, setIsSavingAttachment] = useState(false);
 
-  const resetDraft = () => {
+  const resetDraft = (cleanupAttachment = true) => {
+    if (cleanupAttachment && draft.attachmentId) {
+      const stillReferenced = exams.some(
+        (exam) => exam.attachmentId === draft.attachmentId,
+      );
+
+      if (!stillReferenced) {
+        void deleteAttachment(draft.attachmentId);
+      }
+    }
+
     setDraft(emptyExam());
     setEditingId(null);
     setAdding(false);
     setAttachmentError("");
+    setIsSavingAttachment(false);
   };
 
   const addExam = () => {
-    if (!draft.examType.trim() || !draft.date) return;
+    if (!draft.examType.trim() || !draft.date || isSavingAttachment) return;
     if (attachmentError) return;
+
+    const previousExam = editingId
+      ? exams.find((exam) => exam.id === editingId)
+      : undefined;
+    const nextExam = {
+      ...draft,
+      id: editingId ?? draft.id,
+    };
+
     if (editingId) {
       onChange(
         exams.map((exam) =>
-          exam.id === editingId ? { ...draft, id: editingId } : exam,
+          exam.id === editingId ? nextExam : exam,
         ),
       );
     } else {
-      onChange([...exams, draft]);
+      onChange([...exams, nextExam]);
     }
-    resetDraft();
+
+    if (
+      previousExam?.attachmentId &&
+      previousExam.attachmentId !== draft.attachmentId
+    ) {
+      void deleteAttachment(previousExam.attachmentId);
+    }
+
+    resetDraft(false);
   };
 
   const removeExam = (id: string) => {
-    onChange(exams.filter((exam) => exam.id !== id));
+    const exam = exams.find((entry) => entry.id === id);
+    onChange(exams.filter((entry) => entry.id !== id));
+
+    if (exam?.attachmentId) {
+      void deleteAttachment(exam.attachmentId);
+    }
+  };
+
+  const handleAttachmentChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    setAttachmentError("");
+
+    if (!file) return;
+
+    if (file.size > MAX_ATTACHMENT_SIZE) {
+      setAttachmentError("Ukuran lampiran maksimal 2 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    const previousAttachmentId = draft.attachmentId;
+
+    setIsSavingAttachment(true);
+
+    try {
+      const attachmentId = await saveAttachment(file);
+
+      setDraft((current) => ({
+        ...current,
+        attachmentName: file.name,
+        attachmentId,
+        attachmentDataUrl: "",
+        attachmentType: file.type,
+        attachmentSize: file.size,
+      }));
+
+      if (
+        previousAttachmentId &&
+        !exams.some(
+          (exam) => exam.attachmentId === previousAttachmentId,
+        )
+      ) {
+        void deleteAttachment(previousAttachmentId);
+      }
+    } catch {
+      setAttachmentError(
+        "Lampiran gagal disimpan. Pastikan penyimpanan browser masih tersedia.",
+      );
+    } finally {
+      setIsSavingAttachment(false);
+      event.target.value = "";
+    }
   };
 
   return (
@@ -93,10 +251,14 @@ export default function SupportingExamSection({
           <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
               <label className="space-y-1.5">
-                <span className="text-[11px] font-semibold text-slate-600">Jenis Pemeriksaan</span>
+                <span className="text-[11px] font-semibold text-slate-600">
+                  Jenis Pemeriksaan
+                </span>
                 <select
                   value={draft.examType}
-                  onChange={(event) => setDraft({ ...draft, examType: event.target.value })}
+                  onChange={(event) =>
+                    setDraft({ ...draft, examType: event.target.value })
+                  }
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 outline-none focus:border-[#1677FF]"
                 >
                   <option>Laboratorium</option>
@@ -109,20 +271,28 @@ export default function SupportingExamSection({
               </label>
 
               <label className="space-y-1.5">
-                <span className="text-[11px] font-semibold text-slate-600">Tanggal</span>
+                <span className="text-[11px] font-semibold text-slate-600">
+                  Tanggal
+                </span>
                 <input
                   type="date"
                   value={draft.date}
-                  onChange={(event) => setDraft({ ...draft, date: event.target.value })}
+                  onChange={(event) =>
+                    setDraft({ ...draft, date: event.target.value })
+                  }
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 outline-none focus:border-[#1677FF]"
                 />
               </label>
 
               <label className="space-y-1.5 md:col-span-2">
-                <span className="text-[11px] font-semibold text-slate-600">Hasil</span>
+                <span className="text-[11px] font-semibold text-slate-600">
+                  Hasil
+                </span>
                 <input
                   value={draft.result}
-                  onChange={(event) => setDraft({ ...draft, result: event.target.value })}
+                  onChange={(event) =>
+                    setDraft({ ...draft, result: event.target.value })
+                  }
                   placeholder="Masukkan hasil yang dicatat pengguna..."
                   className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-medium text-slate-700 outline-none focus:border-[#1677FF] placeholder:text-slate-400"
                 />
@@ -137,46 +307,19 @@ export default function SupportingExamSection({
                   type="file"
                   accept="image/*,.pdf"
                   onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    setAttachmentError("");
-
-                    if (!file) {
-                      setDraft({
-                        ...draft,
-                        attachmentName: "",
-                        attachmentDataUrl: "",
-                        attachmentType: "",
-                        attachmentSize: 0,
-                      });
-                      return;
-                    }
-
-                    if (file.size > MAX_ATTACHMENT_SIZE) {
-                      setAttachmentError("Ukuran lampiran maksimal 2 MB.");
-                      return;
-                    }
-
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      setDraft((current) => ({
-                        ...current,
-                        attachmentName: file.name,
-                        attachmentDataUrl:
-                          typeof reader.result === "string" ? reader.result : "",
-                        attachmentType: file.type,
-                        attachmentSize: file.size,
-                      }));
-                    };
-                    reader.onerror = () => {
-                      setAttachmentError("Lampiran gagal dibaca.");
-                    };
-                    reader.readAsDataURL(file);
+                    void handleAttachmentChange(event);
                   }}
-                  className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#1677FF]"
+                  disabled={isSavingAttachment}
+                  className="block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-[#1677FF] disabled:cursor-wait disabled:opacity-60"
                 />
                 {draft.attachmentName ? (
                   <p className="text-[10px] text-slate-500">
-                    Terpilih: <span className="font-semibold">{draft.attachmentName}</span>
+                    {isSavingAttachment ? "Menyimpan lampiran..." : "Terpilih: "}
+                    {!isSavingAttachment ? (
+                      <span className="font-semibold">
+                        {draft.attachmentName}
+                      </span>
+                    ) : null}
                   </p>
                 ) : null}
                 {attachmentError ? (
@@ -189,15 +332,17 @@ export default function SupportingExamSection({
               <div className="flex items-end gap-2 xl:justify-end">
                 <button
                   type="button"
-                  onClick={resetDraft}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-600"
+                  onClick={() => resetDraft(true)}
+                  disabled={isSavingAttachment}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-600 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Batal
                 </button>
                 <button
                   type="button"
                   onClick={addExam}
-                  className="rounded-xl bg-[#1677FF] px-3 py-2.5 text-xs font-semibold text-white"
+                  disabled={isSavingAttachment}
+                  className="rounded-xl bg-[#1677FF] px-3 py-2.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Tambahkan
                 </button>
@@ -208,15 +353,21 @@ export default function SupportingExamSection({
 
         {exams.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-6 text-center">
-            <p className="text-xs font-semibold text-slate-600">Belum ada pemeriksaan penunjang.</p>
+            <p className="text-xs font-semibold text-slate-600">
+              Belum ada pemeriksaan penunjang.
+            </p>
             <p className="mt-1 text-[11px] text-slate-400">
-              Tambahkan hasil pemeriksaan yang relevan sebagai bagian terstruktur follow-up.
+              Tambahkan hasil pemeriksaan yang relevan sebagai bagian terstruktur
+              follow-up.
             </p>
           </div>
         ) : (
           <div className="space-y-3">
             {exams.map((exam) => (
-              <div key={exam.id} className="rounded-2xl border border-slate-200 p-4">
+              <div
+                key={exam.id}
+                className="rounded-2xl border border-slate-200 p-4"
+              >
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex min-w-0 gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1677FF]">
@@ -224,12 +375,16 @@ export default function SupportingExamSection({
                     </span>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-bold text-slate-800">{exam.examType}</span>
+                        <span className="text-xs font-bold text-slate-800">
+                          {exam.examType}
+                        </span>
                         <span className="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-[#1677FF]">
                           Pemeriksaan
                         </span>
                       </div>
-                      <p className="mt-1 text-[11px] text-slate-400">{exam.date}</p>
+                      <p className="mt-1 text-[11px] text-slate-400">
+                        {exam.date}
+                      </p>
                       <p className="mt-2 text-xs leading-relaxed text-slate-600">
                         {exam.result || "Hasil belum diisi."}
                       </p>
@@ -238,7 +393,12 @@ export default function SupportingExamSection({
                           <span className="text-slate-400">
                             Lampiran: {exam.attachmentName}
                           </span>
-                          {exam.attachmentDataUrl ? (
+                          {exam.attachmentId ? (
+                            <AttachmentDownload
+                              attachmentId={exam.attachmentId}
+                              attachmentName={exam.attachmentName}
+                            />
+                          ) : exam.attachmentDataUrl ? (
                             <a
                               href={exam.attachmentDataUrl}
                               download={exam.attachmentName}

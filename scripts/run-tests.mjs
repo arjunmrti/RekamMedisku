@@ -1,12 +1,16 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootDir = path.resolve(fileURLToPath(new URL("../", import.meta.url)));
 const outputDir = path.join(rootDir, ".test-dist");
 const tscPath = path.join(rootDir, "node_modules", "typescript", "bin", "tsc");
-const testFile = path.join(outputDir, "tests", "reportGenerator.test.js");
 
 function run(command, args, env = {}) {
   execFileSync(command, args, {
@@ -31,7 +35,17 @@ try {
     "utf8",
   );
 
-  run(process.execPath, ["--test", testFile], {
+  const testDir = path.join(outputDir, "tests");
+  const testFiles = readdirSync(testDir)
+    .filter((fileName) => fileName.endsWith(".test.js"))
+    .sort()
+    .map((fileName) => path.join(testDir, fileName));
+
+  if (testFiles.length === 0) {
+    throw new Error("Tidak ada file test hasil kompilasi yang ditemukan.");
+  }
+
+  run(process.execPath, ["--test", ...testFiles], {
     TZ: "Asia/Makassar",
   });
 } catch (error) {
