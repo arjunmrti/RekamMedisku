@@ -1,7 +1,15 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseBackupText, serializeBackup } from "../src/utils/backup";
+import {
+  parseBackupText,
+  restoreBackupPayload,
+  serializeBackup,
+  type RestoreBackupLocalState,
+} from "../src/utils/backup";
 import type { BackupPayload } from "../src/types/backup";
+import type { FollowUpFormValues } from "../src/types/followUpForm";
+import type { Rotation } from "../src/types/rotation";
+import type { StoredAttachment } from "../src/data/localAttachments";
 
 const patient = {
   id: "p-test",
@@ -28,6 +36,103 @@ const basePayload: BackupPayload = {
   },
   followUpDrafts: {},
 };
+
+const validRotation: Rotation = {
+  id: "rotation-neurologi",
+  name: "Neurologi",
+  specialty: "Neurologi",
+  startDate: "2026-09-01",
+  endDate: "2026-09-30",
+  status: "Aktif",
+  createdAt: "2026-09-01T00:00:00.000Z",
+  updatedAt: "2026-09-01T00:00:00.000Z",
+};
+
+const secondRotation: Rotation = {
+  ...validRotation,
+  id: "rotation-ilmu-penyakit-dalam",
+  name: "Ilmu Penyakit Dalam",
+  specialty: "Ilmu Penyakit Dalam",
+  status: "Selesai",
+};
+
+function withRotations(
+  payload: BackupPayload = basePayload,
+  rotations: Rotation[] = [validRotation],
+): BackupPayload {
+  return {
+    ...payload,
+    rotations,
+    activeRotationId: rotations.find((rotation) => rotation.status === "Aktif")?.id,
+  };
+}
+
+function createRestoreLocalState(
+  initialPatients: typeof patient[] = [{ ...patient, name: "Pasien Lama" }],
+  initialRotations: Rotation[] = [secondRotation],
+): {
+  state: RestoreBackupLocalState;
+  getSnapshot: () => {
+    patients: typeof initialPatients;
+    followUps: Record<string, unknown[]>;
+    rotations: Rotation[];
+    activeRotationId: string;
+    drafts: Record<string, FollowUpFormValues>;
+    attachments: StoredAttachment[];
+  };
+} {
+  let patients = initialPatients;
+  let followUps: Record<string, unknown[]> = { [patient.id]: [] };
+  let rotations = initialRotations;
+  let activeRotationId = initialRotations.find(
+    (rotation) => rotation.status === "Aktif",
+  )?.id ?? "";
+  let drafts: Record<string, FollowUpFormValues> = {};
+  let attachments: StoredAttachment[] = [];
+
+  const state: RestoreBackupLocalState = {
+    loadPatients: () => patients,
+    replacePatients: (value) => {
+      patients = value;
+    },
+    loadSavedFollowUps: () =>
+      followUps as ReturnType<RestoreBackupLocalState["loadSavedFollowUps"]>,
+    replaceSavedFollowUps: (value) => {
+      followUps = value;
+    },
+    loadRotations: () => rotations,
+    saveRotations: (value) => {
+      rotations = value;
+    },
+    loadActiveRotationId: () => activeRotationId,
+    setActiveRotationId: (value) => {
+      activeRotationId = value;
+    },
+    loadFollowUpDraft: (patientId) => drafts[patientId] ?? null,
+    saveFollowUpDraft: (patientId, value) => {
+      drafts[patientId] = value;
+    },
+    clearAllFollowUpDrafts: () => {
+      drafts = {};
+    },
+    loadAllAttachments: async () => attachments,
+    replaceAllAttachments: async (value) => {
+      attachments = value;
+    },
+  };
+
+  return {
+    state,
+    getSnapshot: () => ({
+      patients,
+      followUps,
+      rotations,
+      activeRotationId,
+      drafts,
+      attachments,
+    }),
+  };
+}
 
 function withAttachment(
   attachmentId: string,
@@ -271,4 +376,166 @@ test("backup menolak timestamp ekspor yang tidak valid", () => {
   const result = parseBackupText(serializeBackup(payload));
 
   assert.equal(result.ok, false);
+});
+
+test("backup menolak ID pasien yang duplikat", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    patients: [
+      patient,
+      {
+        ...patient,
+        name: "Pasien Duplikat",
+      },
+    ],
+    followUpsByPatient: {
+      [patient.id]: [],
+    },
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak ID stase yang duplikat", () => {
+  const payload = withRotations(basePayload, [
+    validRotation,
+    { ...secondRotation, id: validRotation.id },
+  ]);
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak lebih dari satu stase Aktif", () => {
+  const payload = withRotations(basePayload, [
+    validRotation,
+    { ...secondRotation, status: "Aktif" },
+  ]);
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak activeRotationId yang tidak menunjuk ke stase", () => {
+  const payload = {
+    ...withRotations(),
+    activeRotationId: "rotation-tidak-ada",
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak activeRotationId yang menunjuk ke stase nonaktif", () => {
+  const payload = {
+    ...withRotations(basePayload, [validRotation, secondRotation]),
+    activeRotationId: secondRotation.id,
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak pasien yang merujuk ke stase yang tidak ada", () => {
+  const payload = {
+    ...withRotations(),
+    patients: [
+      {
+        ...patient,
+        rotationId: "rotation-tidak-ada",
+      },
+    ],
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("restore mempertahankan local baru ketika cloud sudah sukses tetapi sync gagal", async () => {
+  const payload = withRotations({
+    ...basePayload,
+    patients: [{ ...patient, name: "Pasien Baru" }],
+  });
+
+  const { state, getSnapshot } = createRestoreLocalState();
+  let persistCalls = 0;
+  let syncCalls = 0;
+
+  const result = await restoreBackupPayload(payload, {
+    localState: state,
+    persistRemote: async () => {
+      persistCalls += 1;
+    },
+    syncRemote: async () => {
+      syncCalls += 1;
+      throw new Error("sync gagal");
+    },
+  });
+
+  const snapshot = getSnapshot();
+
+  assert.equal(result.syncStatus, "partial");
+  assert.equal(persistCalls, 1);
+  assert.equal(syncCalls, 1);
+  assert.equal(snapshot.patients[0]?.name, "Pasien Baru");
+  assert.equal(snapshot.rotations[0]?.id, validRotation.id);
+  assert.equal(snapshot.activeRotationId, validRotation.id);
+});
+
+test("restore rollback local jika cloud restore gagal", async () => {
+  const payload = withRotations({
+    ...basePayload,
+    patients: [{ ...patient, name: "Pasien Baru" }],
+  });
+
+  const { state, getSnapshot } = createRestoreLocalState();
+  let syncCalls = 0;
+
+  await assert.rejects(
+    restoreBackupPayload(payload, {
+      localState: state,
+      persistRemote: async () => {
+        throw new Error("restore cloud gagal");
+      },
+      syncRemote: async () => {
+        syncCalls += 1;
+      },
+    }),
+    /restore cloud gagal/,
+  );
+
+  const snapshot = getSnapshot();
+
+  assert.equal(syncCalls, 0);
+  assert.equal(snapshot.patients[0]?.name, "Pasien Lama");
+  assert.equal(snapshot.rotations[0]?.id, secondRotation.id);
+  assert.equal(snapshot.activeRotationId, "");
+});
+
+test("restore sukses melaporkan status synced setelah persist dan sync berhasil", async () => {
+  const payload = withRotations({
+    ...basePayload,
+    patients: [{ ...patient, name: "Pasien Baru" }],
+  });
+
+  const { state, getSnapshot } = createRestoreLocalState();
+
+  const result = await restoreBackupPayload(payload, {
+    localState: state,
+    persistRemote: async () => {},
+    syncRemote: async () => {},
+  });
+
+  const snapshot = getSnapshot();
+
+  assert.equal(result.syncStatus, "synced");
+  assert.equal(snapshot.patients[0]?.name, "Pasien Baru");
+  assert.equal(snapshot.rotations[0]?.id, validRotation.id);
 });
