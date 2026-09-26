@@ -215,7 +215,7 @@ function buildFollowUpEntry(
   templateType: FollowUpEntry["templateType"],
 ): FollowUpEntry {
   const subjective = [
-    "Keluhan: " + values.subjective.keluhan,
+    "Keluhan Pagi Ini: " + values.subjective.keluhan,
     "Riwayat Keluhan Serupa: " + values.subjective.riwayatKeluhanSerupa,
     "RPD: " + values.subjective.pastHistory,
     "RPO: " + values.subjective.medicationHistory,
@@ -563,7 +563,7 @@ export default function FollowUpFormPage({
 
     if (!values.subjective.keluhan.trim()) {
       setErrorMessage(
-        "Keluhan Pagi Ini wajib diisi sebelum follow-up disimpan.",
+        "Keluhan / Perkembangan Hari Ini wajib diisi sebelum follow-up disimpan.",
       );
       setOpenSections((current) => ({ ...current, subjective: true }));
       return;
@@ -857,6 +857,7 @@ export default function FollowUpFormPage({
                   onChange={(subjective) =>
                     updateValues({ ...values, subjective })
                   }
+                  admissionComplaint={patient.admissionComplaint}
                 />
               </div>
 

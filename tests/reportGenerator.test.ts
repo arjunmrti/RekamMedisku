@@ -23,6 +23,7 @@ const patient: PatientListItem = {
   lastFollowUp: "26 September 2026 · 10.00",
   followUpNumber: 2,
   admissionDate: "2026-09-01",
+  admissionComplaint: "Sakit kepala sejak 3 hari sebelum masuk.",
   status: "Aktif",
 };
 
@@ -155,6 +156,7 @@ test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", ()
   assert.match(report, /Stase: Neurologi/);
   assert.match(report, /Tanggal Masuk: 01 September 2026/);
   assert.match(report, /Tanggal Follow-Up: 26 September 2026/);
+  assert.match(report, /Keluhan Masuk: Sakit kepala sejak 3 hari sebelum masuk./);
   assert.match(report, /Pemeriksaan neurologis:/);
   assert.match(report, /- Kesadaran: Compos mentis/);
   assert.match(report, /- GCS E\/M\/V: 456/);
