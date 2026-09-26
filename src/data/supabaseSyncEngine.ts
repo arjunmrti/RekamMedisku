@@ -4,7 +4,7 @@ import { syncSlaberanLocationsWithSupabase } from "./supabaseSlaberanLocations";
 import { syncSlaberanTemplatesWithSupabase } from "./supabaseSlaberanTemplates";
 
 const WORKSPACE_SYNC_EVENT = "rekammedisku:workspace-synced";
-const REALTIME_WATCHDOG_INTERVAL_MS = 60_000;
+const REALTIME_WATCHDOG_INTERVAL_MS = 5 * 60_000;
 const SYNC_RETRY_DELAYS_MS = [5_000, 15_000, 30_000, 60_000];
 
 let syncInFlight: Promise<void> | null = null;
@@ -76,9 +76,9 @@ export function startWorkspaceSync(userId: string): () => void {
     if (disposed || watchdogTimer !== null) return;
 
     watchdogTimer = window.setInterval(() => {
-      // Keep a low-frequency authoritative refresh even while Realtime says
-      // SUBSCRIBED. This closes the "silent/stuck channel" gap where no status
-      // error is emitted even though events stop arriving.
+      // Keep an infrequent authoritative refresh even while Realtime says
+      // SUBSCRIBED. Realtime remains the primary cross-browser path; the
+      // watchdog is only a fallback for a silent/stuck channel.
       sync();
     }, REALTIME_WATCHDOG_INTERVAL_MS);
   };
