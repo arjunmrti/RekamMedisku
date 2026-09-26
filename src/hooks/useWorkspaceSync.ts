@@ -2,25 +2,21 @@ import { useSyncExternalStore } from "react";
 import { getWorkspaceSyncEventName } from "../data/supabaseSyncEngine";
 
 let revision = 0;
-let initialized = false;
 const subscribers = new Set<() => void>();
 
-function ensureEventBridge() {
-  if (initialized || typeof window === "undefined") return;
+function handleWorkspaceSynced() {
+  revision += 1;
 
-  window.addEventListener(getWorkspaceSyncEventName(), () => {
-    revision += 1;
+  for (const subscriber of subscribers) {
+    subscriber();
+  }
+}
 
-    for (const subscriber of subscribers) {
-      subscriber();
-    }
-  });
-
-  initialized = true;
+if (typeof window !== "undefined") {
+  window.addEventListener(getWorkspaceSyncEventName(), handleWorkspaceSynced);
 }
 
 function subscribe(callback: () => void) {
-  ensureEventBridge();
   subscribers.add(callback);
 
   return () => {
@@ -29,7 +25,6 @@ function subscribe(callback: () => void) {
 }
 
 function getSnapshot() {
-  ensureEventBridge();
   return revision;
 }
 
