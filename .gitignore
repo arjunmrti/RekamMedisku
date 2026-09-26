@@ -25,3 +25,14 @@ dist-ssr
 
 # Generated test compilation output
 .test-dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build
+dist/
