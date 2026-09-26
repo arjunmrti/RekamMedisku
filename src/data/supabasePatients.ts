@@ -19,10 +19,12 @@ type PatientRow = {
   gender: string;
   rm: string;
   room: string;
+  current_location_id: string | null;
   current_location_type: string | null;
   current_location_name: string | null;
   bed: string;
   doctor: string;
+  admission_location_id: string | null;
   admission_location_type: string | null;
   admission_location_name: string | null;
   created_at: string;
@@ -100,6 +102,7 @@ function toPatient(
     room: row.current_location_name?.trim() || row.room,
     currentLocation: normalizePatientLocation(
       {
+        locationId: row.current_location_id ?? undefined,
         type:
           row.current_location_type === "special"
             ? "special"
@@ -117,6 +120,7 @@ function toPatient(
     admissionLocation: normalizePatientAdmissionLocation(
       row.admission_location_name
         ? {
+            locationId: row.admission_location_id ?? undefined,
             type:
               row.admission_location_type === "special"
                 ? "special"
@@ -179,11 +183,13 @@ function patientPayload(patient: PatientListItem, remoteRotationId: string) {
     room: currentLocation.name,
     bed: currentLocation.bed,
     doctor: patient.doctor,
+    current_location_id: currentLocation.locationId ?? null,
     current_location_type: currentLocation.type,
     current_location_name: currentLocation.name,
     created_at: patient.createdAt ?? new Date().toISOString(),
     admission_date: patient.admissionDate ?? null,
     admission_complaint: patient.admissionComplaint?.trim() || null,
+    admission_location_id: patient.admissionLocation?.locationId ?? null,
     admission_location_type: patient.admissionLocation?.type ?? null,
     admission_location_name: patient.admissionLocation?.name ?? null,
     status: patient.status,
@@ -254,7 +260,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
   const { data: remoteRows, error } = await supabase
     .from("patients")
     .select(
-      "id,user_id,rotation_id,name,age,gender,rm,room,current_location_type,current_location_name,bed,doctor,created_at,admission_date,admission_complaint,admission_location_type,admission_location_name,status,follow_ups(number,iso_date,time,status)",
+      "id,user_id,rotation_id,name,age,gender,rm,room,current_location_id,current_location_type,current_location_name,bed,doctor,created_at,admission_date,admission_complaint,admission_location_id,admission_location_type,admission_location_name,status,follow_ups(number,iso_date,time,status)",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -401,6 +407,7 @@ export async function upsertPatientWithSupabase(
       room: remoteRow.current_location_name?.trim() || remoteRow.room,
       currentLocation: normalizePatientLocation(
         {
+          locationId: remoteRow.current_location_id ?? undefined,
           type:
             remoteRow.current_location_type === "special"
               ? "special"
@@ -418,6 +425,7 @@ export async function upsertPatientWithSupabase(
       admissionLocation: normalizePatientAdmissionLocation(
         remoteRow.admission_location_name
           ? {
+              locationId: remoteRow.admission_location_id ?? undefined,
               type:
                 remoteRow.admission_location_type === "special"
                   ? "special"
