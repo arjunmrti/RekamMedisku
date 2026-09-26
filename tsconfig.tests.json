@@ -26,6 +26,7 @@
     "src/types/backup.ts",
     "src/utils/objectiveFormatter.ts",
     "src/utils/dashboardFollowUp.ts",
+    "src/utils/patientContext.ts",
     "src/data/localFollowUps.ts"
   ]
 }
