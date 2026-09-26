@@ -2,6 +2,7 @@ import { supabase } from "../utils/supabase";
 import { syncFollowUpsWithSupabase } from "./supabaseFollowUps";
 
 const WORKSPACE_SYNC_EVENT = "rekammedisku:workspace-synced";
+const REALTIME_FALLBACK_INTERVAL_MS = 30_000;
 
 let syncInFlight: Promise<void> | null = null;
 let activeCleanup: (() => void) | null = null;
@@ -36,8 +37,27 @@ export function startWorkspaceSync(userId: string): () => void {
     if (disposed) return;
 
     void syncWorkspaceWithSupabase().catch((error) => {
-      console.error("Supabase Realtime sync failed:", error);
+      console.error("Supabase workspace sync failed:", error);
+      startPolling();
     });
+  };
+
+  let pollingTimer: number | null = null;
+
+  const stopPolling = () => {
+    if (pollingTimer === null) return;
+    window.clearInterval(pollingTimer);
+    pollingTimer = null;
+  };
+
+  const startPolling = () => {
+    if (disposed || pollingTimer !== null) return;
+
+    sync();
+
+    pollingTimer = window.setInterval(() => {
+      sync();
+    }, REALTIME_FALLBACK_INTERVAL_MS);
   };
 
   const channel = supabase
@@ -83,15 +103,26 @@ export function startWorkspaceSync(userId: string): () => void {
       sync,
     )
     .subscribe((status) => {
-      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+      if (status === "SUBSCRIBED") {
+        stopPolling();
+        return;
+      }
+
+      if (
+        status === "CHANNEL_ERROR" ||
+        status === "TIMED_OUT" ||
+        status === "CLOSED"
+      ) {
         console.warn(
-          "Supabase Realtime unavailable; no background polling is active.",
+          "Supabase Realtime unavailable; falling back to background polling.",
         );
+        startPolling();
       }
     });
 
   activeCleanup = () => {
     disposed = true;
+    stopPolling();
     void supabase.removeChannel(channel);
     activeCleanup = null;
   };
