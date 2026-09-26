@@ -294,53 +294,6 @@ async function hydrateRemoteAttachment(row: SupportingExamRow) {
   }
 }
 
-type SupportingExamIdentityRow = Pick<
-  SupportingExamRow,
-  "id" | "name" | "exam_type" | "exam_date" | "attachment_id"
->;
-
-function findExistingSupportingExamId(
-  exam: SupportingExam,
-  existingExams: SupportingExamIdentityRow[],
-): string | null {
-  const isoDate = exam.isoDate ?? toIsoDate(exam.date);
-
-  const candidates = existingExams.filter((row) => {
-    const sameAttachment =
-      Boolean(exam.attachmentId) &&
-      Boolean(row.attachment_id) &&
-      row.attachment_id === exam.attachmentId;
-
-    const sameIdentity =
-      row.name === exam.name &&
-      (row.exam_type ?? "") === (exam.examType ?? "") &&
-      row.exam_date === isoDate;
-
-    return sameAttachment || sameIdentity;
-  });
-
-  return candidates.length === 1 ? candidates[0].id : null;
-}
-
-function examPayload(exam: SupportingExam, remoteFollowUpId: string) {
-  const isoDate =
-    exam.isoDate ?? toIsoDate(exam.date);
-
-  return {
-    follow_up_id: remoteFollowUpId,
-    name: exam.name,
-    exam_type: exam.examType ?? null,
-    exam_date: isoDate,
-    result: exam.result ?? null,
-    attachment_name: exam.attachmentName ?? null,
-    attachment_id: exam.attachmentId ?? null,
-    attachment_type: exam.attachmentType ?? null,
-    attachment_size: exam.attachmentSize ?? null,
-    attachment_count: exam.attachmentCount ?? null,
-    icon: exam.icon,
-  };
-}
-
 function getErrorMessage(
   error: unknown,
   fallback = "Gagal menyimpan follow-up ke Supabase.",
