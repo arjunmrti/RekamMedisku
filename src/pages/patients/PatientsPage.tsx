@@ -10,12 +10,12 @@ import { loadPatients } from "../../data/localPatients";
 import {
   deletePatientWithSupabase,
   getSupabasePatientErrorMessage,
-  syncPatientsWithSupabase,
   setPatientStatusWithSupabase,
   upsertPatientWithSupabase,
 } from "../../data/supabasePatients";
 import type { PatientListItem } from "../../types/patient";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
+import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 
 type PatientsPageProps = NavigationProps & {
   onOpenPatientProfile: (patient: PatientListItem) => void;
@@ -103,7 +103,8 @@ export default function PatientsPage({
       setErrorMessage("");
 
       try {
-        const nextPatients = await syncPatientsWithSupabase();
+        await syncWorkspaceWithSupabase();
+        const nextPatients = loadPatients();
 
         if (cancelled) return;
 
