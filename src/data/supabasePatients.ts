@@ -4,6 +4,7 @@ import { deletePatient, loadPatients, savePatients } from "./localPatients";
 import { syncRotationsWithSupabase } from "./supabaseRotations";
 import { supabase } from "../utils/supabase";
 import { derivePatientFollowUpSummaryFromRemote } from "./patientFollowUpSummary";
+import { deleteAttachmentsWithSupabase } from "./supabaseAttachments";
 
 type PatientRow = {
   id: string;
@@ -29,6 +30,11 @@ type PatientRow = {
 };
 
 type PatientIdMap = Record<string, string>;
+
+type DeletePatientRemoteResult = {
+  deleted?: boolean;
+  attachmentIds?: unknown;
+};
 
 const PATIENT_ID_MAP_KEY = "rekammedisku:supabase-patient-ids";
 const ROTATION_ID_MAP_KEY = "rekammedisku:supabase-rotation-ids";
@@ -424,18 +430,48 @@ export async function deletePatientWithSupabase(
      * menjalankan DELETE parent patient dalam satu transaksi PostgreSQL;
      * follow-up dan supporting exam ikut terhapus lewat ON DELETE CASCADE.
      */
-    const { data: deleted, error: deleteError } = await supabase.rpc(
+    const { data: deleteResult, error: deleteError } = await supabase.rpc(
       "delete_patient_with_history",
       { target_patient_id: remotePatientId },
     );
 
     if (deleteError) throw deleteError;
 
-    if (deleted !== true) {
+    const remoteDelete =
+      typeof deleteResult === "boolean"
+        ? { deleted: deleteResult, attachmentIds: [] }
+        : (deleteResult as DeletePatientRemoteResult | null);
+
+    if (!remoteDelete?.deleted) {
       throw new Error("Pasien tidak ditemukan di Supabase.");
     }
 
     remoteCommitted = true;
+
+    const attachmentIdsToDelete = Array.isArray(remoteDelete.attachmentIds)
+      ? remoteDelete.attachmentIds.filter(
+          (value): value is string =>
+            typeof value === "string" && value.length > 0,
+        )
+      : [];
+
+    if (attachmentIdsToDelete.length) {
+      try {
+        await deleteAttachmentsWithSupabase(attachmentIdsToDelete);
+      } catch (storageError) {
+        // The patient DB deletion is already committed. Storage cleanup is
+        // intentionally best-effort so a transient Storage failure cannot
+        // resurrect the deleted patient locally.
+        console.warn(
+          "Data pasien sudah terhapus dari cloud, tetapi sebagian lampiran Storage belum bisa dibersihkan.",
+          storageError,
+        );
+      }
+    } else if (typeof deleteResult === "boolean") {
+      console.warn(
+        "RPC hapus pasien masih mengembalikan format lama; jalankan migration P6 agar lampiran Storage ikut dibersihkan.",
+      );
+    }
 
     try {
       await deletePatient(patient.id);
