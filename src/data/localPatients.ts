@@ -1,6 +1,7 @@
-import { deleteAttachment } from "./localAttachments";
+import { deleteAttachments } from "./localAttachments";
 import {
   deleteFollowUpsForPatient,
+  getOtherPatientFollowUpAttachmentIds,
   getPatientFollowUpAttachmentIds,
 } from "./localFollowUps";
 import type { PatientListItem, PatientStatus } from "../types/patient";
@@ -84,14 +85,28 @@ export async function deletePatient(patientId: string): Promise<boolean> {
   if (!patientExists) return false;
 
   const attachmentIds = getPatientFollowUpAttachmentIds(patientId);
-
-  await Promise.all(
-    attachmentIds.map((attachmentId) => deleteAttachment(attachmentId)),
+  const sharedAttachmentIds = getOtherPatientFollowUpAttachmentIds(patientId);
+  const deletableAttachmentIds = attachmentIds.filter(
+    (attachmentId) => !sharedAttachmentIds.has(attachmentId),
   );
-
   const remainingPatients = patients.filter((patient) => patient.id !== patientId);
-  savePatients(remainingPatients);
-  deleteFollowUpsForPatient(patientId);
+  const rollbackFollowUps = deleteFollowUpsForPatient(patientId);
+
+  try {
+    savePatients(remainingPatients);
+    await deleteAttachments(deletableAttachmentIds);
+  } catch (error) {
+    try {
+      savePatients(patients);
+      rollbackFollowUps();
+    } catch {
+      throw new Error(
+        "Penghapusan pasien gagal dan pemulihan data lokal juga gagal.",
+      );
+    }
+
+    throw error;
+  }
 
   return true;
 }
