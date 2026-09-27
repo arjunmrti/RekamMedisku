@@ -8,7 +8,6 @@ import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
 type ReportHubPageProps = NavigationProps & {
   onSelectMode: (mode: "follow-up" | "slaberan") => void;
-  onOpenPatients: () => void;
   hasSelectedPatient: boolean;
 };
 
@@ -16,7 +15,6 @@ export default function ReportHubPage({
   activeItem,
   onNavigate,
   onSelectMode,
-  onOpenPatients,
   hasSelectedPatient,
 }: ReportHubPageProps) {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
@@ -47,12 +45,7 @@ export default function ReportHubPage({
   }, [activePatients]);
 
   const handleFollowUp = () => {
-    if (!hasSelectedPatient) {
-      onOpenPatients();
-      return;
-    }
-
-    onSelectMode("follow-up");
+    onNavigate("Follow-Up Baru");
   };
 
   return (
@@ -151,7 +144,7 @@ export default function ReportHubPage({
                     onClick={handleFollowUp}
                     className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
                   >
-                    {hasSelectedPatient ? "Buka Follow-Up" : "Pilih Pasien"}
+                    Buka Follow-Up
                     <Icon name="arrow" className="h-3.5 w-3.5" />
                   </button>
                 </div>
