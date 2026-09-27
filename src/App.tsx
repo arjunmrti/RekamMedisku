@@ -70,7 +70,7 @@ function App() {
         setActiveItem((currentItem) =>
           currentItem === "Profil Pasien" ||
           currentItem === "Follow-Up Baru" ||
-          currentItem === "Semua Laporan"
+          (currentItem === "Semua Laporan" && reportMode !== "hub")
             ? "Daftar Pasien"
             : currentItem,
         );
