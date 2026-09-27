@@ -285,7 +285,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
   const { data: remoteRows, error } = await supabase
     .from("patients")
     .select(
-      "id,user_id,rotation_id,name,age,gender,rm,room,current_location_id,current_location_type,current_location_name,bed,doctor,created_at,admission_date,admission_complaint,admission_location_id,admission_location_type,admission_location_name,status,follow_ups(number,iso_date,time,status)",
+      "id,user_id,rotation_id,name,age,gender,rm,room,current_location_id,current_location_type,current_location_name,bed,doctor,created_at,admission_date,admission_complaint,admission_location_id,admission_location_type,admission_location_name,status,follow_ups!follow_ups_patient_user_fkey(number,iso_date,time,status)",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -584,3 +584,4 @@ export async function deletePatientWithSupabase(
     throw new Error(getErrorMessage(error));
   }
 }
+
