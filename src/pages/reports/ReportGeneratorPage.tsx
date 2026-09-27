@@ -20,13 +20,17 @@ import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
 type ReportGeneratorPageProps = NavigationProps & {
   patient?: PatientListItem;
+  availablePatients?: PatientListItem[];
   mode?: ReportMode;
   onModeChange?: (mode: ReportMode) => void;
+  onPatientChange?: (patientId: string) => void;
 };
 
 type FollowUpReportGeneratorPageProps = NavigationProps & {
   patient?: PatientListItem;
+  availablePatients?: PatientListItem[];
   onModeChange?: (mode: ReportMode) => void;
+  onPatientChange?: (patientId: string) => void;
 };
 
 function ReportModeSwitch({
@@ -125,8 +129,10 @@ export default function ReportGeneratorPage({
   activeItem,
   onNavigate,
   patient,
+  availablePatients = [],
   mode = "hub",
   onModeChange,
+  onPatientChange,
 }: ReportGeneratorPageProps) {
   if (mode === "hub") {
     return (
@@ -152,7 +158,9 @@ export default function ReportGeneratorPage({
       activeItem={activeItem}
       onNavigate={onNavigate}
       patient={patient}
+      availablePatients={availablePatients}
       onModeChange={onModeChange}
+      onPatientChange={onPatientChange}
     />
   );
 }
@@ -161,7 +169,9 @@ function FollowUpReportGeneratorPage({
   activeItem,
   onNavigate,
   patient,
+  availablePatients = [],
   onModeChange,
+  onPatientChange,
 }: FollowUpReportGeneratorPageProps) {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
   const activeRotation = loadActiveRotation();
@@ -482,8 +492,10 @@ function FollowUpReportGeneratorPage({
 
           <ReportPatientContext
             patient={patient}
+            availablePatients={availablePatients}
             followUps={followUps}
             selectedFollowUp={selectedFollowUp}
+            onPatientChange={onPatientChange ?? (() => undefined)}
             onFollowUpChange={handleFollowUpChange}
           />
 
