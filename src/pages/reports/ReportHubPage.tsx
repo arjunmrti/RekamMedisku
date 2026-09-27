@@ -4,6 +4,8 @@ import Icon from "../../components/ui/Icon";
 import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients } from "../../data/localPatients";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
+import { loadSlaberanLocations } from "../../data/localSlaberanLocations";
+import { loadSlaberanTemplates } from "../../data/localSlaberanTemplates";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
 type ReportHubPageProps = NavigationProps & {
@@ -41,6 +43,18 @@ export default function ReportHubPage({
       0,
     );
   }, [activePatients]);
+
+  const slaberanStats = useMemo(() => {
+    const storedTemplates = loadSlaberanTemplates();
+    const activeLocations = loadSlaberanLocations().filter(
+      (location) => location.isActive,
+    );
+
+    return {
+      templateCount: storedTemplates.length > 0 ? storedTemplates.length : 1,
+      activeLocationCount: activeLocations.length,
+    };
+  }, [workspaceSyncVersion]);
 
   const handleFollowUp = () => {
     onSelectMode("follow-up");
@@ -137,14 +151,28 @@ export default function ReportHubPage({
                 </div>
 
                 <div className="mt-auto pt-7">
-                  <button
-                    type="button"
-                    onClick={handleFollowUp}
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
-                  >
-                    Buka Follow-Up
-                    <Icon name="arrow" className="h-3.5 w-3.5" />
-                  </button>
+                  <div className="space-y-2.5">
+                    {!activePatients.length ? (
+                      <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2.5">
+                        <Icon
+                          name="alert"
+                          className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600"
+                        />
+                        <p className="text-[11px] leading-relaxed text-amber-800">
+                          Belum ada pasien aktif. Tambahkan pasien terlebih dahulu
+                          agar laporan Follow-Up bisa dibuat.
+                        </p>
+                      </div>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={handleFollowUp}
+                      className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+                    >
+                      Buat Laporan Follow-Up
+                      <Icon name="arrow" className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </article>
 
@@ -179,10 +207,18 @@ export default function ReportHubPage({
                   </div>
                   <div className="rounded-xl border border-blue-100/80 bg-white/80 p-3.5">
                     <p className="text-[10px] font-semibold text-slate-400">
-                      Workflow
+                      Template tersedia
                     </p>
-                    <p className="mt-1 text-xs font-bold text-slate-800">
-                      Template · Lokasi
+                    <p className="mt-1 text-lg font-bold text-slate-900">
+                      {slaberanStats.templateCount}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-blue-100/80 bg-white/80 p-3.5">
+                    <p className="text-[10px] font-semibold text-slate-400">
+                      Lokasi aktif
+                    </p>
+                    <p className="mt-1 text-lg font-bold text-slate-900">
+                      {slaberanStats.activeLocationCount}
                     </p>
                   </div>
                 </div>
