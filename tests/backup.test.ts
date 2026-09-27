@@ -397,6 +397,73 @@ test("backup ditolak jika Base64 attachment tidak valid", () => {
   assert.equal(result.ok, false);
 });
 
+test("backup menolak follow-up dengan nomor 0", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    followUpsByPatient: {
+      [patient.id]: [
+        {
+          id: "fu-invalid-zero",
+          number: 0,
+          date: "26 September 2026",
+          isoDate: "2026-09-26",
+          time: "09.30",
+          status: "Tersimpan",
+          subjective: "Keluhan",
+          objective: "Objektif",
+          assessment: "Assessment",
+          plan: "Plan",
+          summary: "Ringkasan",
+        },
+      ],
+    },
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak nomor follow-up duplikat pada pasien yang sama", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    followUpsByPatient: {
+      [patient.id]: [
+        {
+          id: "fu-duplicate-1",
+          number: 1,
+          date: "26 September 2026",
+          isoDate: "2026-09-26",
+          time: "09.30",
+          status: "Tersimpan",
+          subjective: "Keluhan pertama",
+          objective: "Objektif",
+          assessment: "Assessment",
+          plan: "Plan",
+          summary: "Ringkasan pertama",
+        },
+        {
+          id: "fu-duplicate-2",
+          number: 1,
+          date: "27 September 2026",
+          isoDate: "2026-09-27",
+          time: "09.30",
+          status: "Tersimpan",
+          subjective: "Keluhan kedua",
+          objective: "Objektif",
+          assessment: "Assessment",
+          plan: "Plan",
+          summary: "Ringkasan kedua",
+        },
+      ],
+    },
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
 test("backup menolak tanggal kalender follow-up yang tidak valid", () => {
   const payload = withAttachment("att-invalid-date");
   payload.followUpsByPatient[patient.id][0].isoDate = "2026-02-30";
