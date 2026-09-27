@@ -297,6 +297,62 @@ test("backup lama tanpa field attachments tetap valid", () => {
   assert.equal(result.data.attachments, undefined);
 });
 
+test("backup v2 membawa lokasi dan template Slaberan", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    schemaVersion: 2,
+    slaberanLocations: [slaberanLocation],
+    slaberanTemplates: [slaberanTemplate],
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.equal(result.data.schemaVersion, 2);
+  assert.equal(result.data.slaberanLocations?.[0]?.id, "floor-test");
+  assert.equal(result.data.slaberanTemplates?.[0]?.id, "template-test");
+});
+
+test("backup menolak lokasi Slaberan dengan parent yang tidak ada", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    schemaVersion: 2,
+    slaberanLocations: [
+      {
+        ...slaberanLocation,
+        parentId: "missing-parent",
+      },
+    ],
+    slaberanTemplates: [],
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak lebih dari satu template Slaberan default", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    schemaVersion: 2,
+    slaberanLocations: [],
+    slaberanTemplates: [
+      slaberanTemplate,
+      {
+        ...slaberanTemplate,
+        id: "template-test-2",
+        name: "Template Test 2",
+      },
+    ],
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
 test("backup baru membawa attachment IndexedDB yang direferensikan follow-up", () => {
   const result = parseBackupText(
     serializeBackup(withAttachment("att-test")),
