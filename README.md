@@ -2,121 +2,92 @@
 
 Personal clinical documentation workspace for medical students and co-assistants.
 
-RekamMedisku is a product-oriented web application designed to simplify clinical rotation documentation by bringing patient management, follow-up records, examination findings, report generation, and data backup into a single workspace.
+RekamMedisku is a web application for organizing clinical rotations, patient records, follow-up documentation, supporting examinations, report generation, and backups in one workspace.
 
-The project emphasizes a responsive user experience, structured clinical workflows, reliable data handling, and a practical local-first architecture with Supabase synchronization.
+> RekamMedisku is a personal documentation workspace. It is not a hospital EMR or an official medical record system.
 
-> **Scope:** RekamMedisku is a personal documentation workspace. It is not a hospital EMR, official medical record system, or institutional clinical information system.
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![CI](https://github.com/arjunmrti/RekamMedisku/actions/workflows/qa.yml/badge.svg)](https://github.com/arjunmrti/RekamMedisku/actions/workflows/qa.yml)
 
-## Product Overview
+## Features
 
-Clinical documentation during rotations often involves maintaining patient context, recording repeated follow-ups, attaching supporting examinations, and preparing reports across different workflows.
+- Rotation-based patient management
+- Structured SOAP-style follow-up documentation
+- Rotation-specific examination templates
+- Patient timeline and clinical history
+- Supporting examination records and attachments
+- Report generation from saved follow-ups
+- JSON backup and restore with validation
+- Supabase authentication and cloud synchronization
+- Realtime workspace updates
+- Local persistence with localStorage and IndexedDB
 
-RekamMedisku addresses this workflow with a focused workspace built around:
-
-- Rotation-based patient organization
-- Structured follow-up documentation
-- Patient timelines and history
-- Supporting examinations and file attachments
-- Report generation
-- Backup and restore
-- Authenticated cloud synchronization
-
-The interface is designed for repeated daily use, with an emphasis on clear hierarchy, responsive layouts, and predictable interaction patterns.
-
-## Core Features
-
-### Rotation Management
-
-Manage clinical rotations and establish an active rotation as the current workspace context. Patient data is isolated by rotation to reduce accidental cross-rotation access.
-
-### Patient Management
-
-Create, edit, archive, restore, and permanently delete patients while preserving associated documentation and enforcing rotation-level uniqueness for medical record numbers.
-
-### Clinical Follow-Up
-
-Record structured follow-ups using SOAP-style workflows with rotation-specific examination templates, draft states, follow-up numbering, and chronological history.
-
-### Supporting Examinations
-
-Create and manage supporting examination records with image and PDF attachments, including client-side validation and Supabase Storage integration.
-
-### Report Generation
-
-Generate reports directly from saved follow-up data, preview the generated output, make temporary edits, regenerate from the latest source data, and copy the result without modifying the original clinical record.
-
-### Backup and Restore
-
-Export workspace data as JSON and restore validated backups with schema, relationship, and integrity checks designed to prevent partial or inconsistent restores.
-
-### Cloud Synchronization
-
-Use Supabase for authentication, PostgreSQL persistence, realtime updates, and file storage while maintaining local workspace data for responsive interaction and offline-tolerant behavior.
-
-## Technical Architecture
+## Architecture
 
 ```text
-                         RekamMedisku
-                              |
-                 +------------+------------+
-                 |                         |
-                 v                         v
-        React + TypeScript          Local Workspace
-             + Vite                 localStorage / IndexedDB
-                 |                         |
-                 +------------+------------+
-                              |
-                         Sync Engine
-                              |
-                              v
-                         Supabase
-            +----------------+----------------+
-            |                |                |
-            v                v                v
-          Auth           PostgreSQL        Storage
-                              |
-                              v
-                          Realtime
+React + TypeScript + Vite
+          |
+          +----------------------+
+          |                      |
+          v                      v
+   Local Workspace          Sync Engine
+localStorage / IndexedDB         |
+          |                      v
+          +--------------->   Supabase
+                              |  |  |
+                              |  |  +-- Storage
+                              |  +----- PostgreSQL
+                              +-------- Auth / Realtime
 ```
 
-The application separates UI concerns, local persistence, remote data access, synchronization, and domain-specific utilities. Supabase acts as the cloud data layer for supported entities, while local storage provides fast workspace access and a resilient client-side cache.
+The application separates UI components, page-level workflows, domain types, local persistence, remote data access, synchronization, and shared utilities.
 
-## Technology Stack
+The local data layer provides fast client-side access, while Supabase provides authentication, synchronized cloud data, realtime updates, and file storage.
+
+## Tech Stack
 
 | Area | Technology |
 | --- | --- |
-| UI | React 19 |
+| Frontend | React 19 |
 | Language | TypeScript |
-| Build | Vite 8 |
+| Build Tool | Vite 8 |
 | Styling | Tailwind CSS 4 |
 | Backend Platform | Supabase |
 | Database | PostgreSQL |
 | Authentication | Supabase Auth |
 | Realtime | Supabase Realtime |
-| File Storage | Supabase Storage |
+| Storage | Supabase Storage |
 | Local Persistence | localStorage + IndexedDB |
-| Linting | Oxlint |
 | Testing | Node.js test runner |
+| Linting | Oxlint |
 | CI | GitHub Actions |
 
-## Engineering Highlights
+## Engineering
 
-- Rotation-aware data isolation and patient context handling
+The project includes:
+
+- Rotation-aware data isolation
 - Local-to-cloud synchronization and reconciliation
-- Optimistic local state with cloud persistence
-- Conflict-aware patient updates using version timestamps
+- Version-aware patient updates
 - Atomic database operations for critical mutations
-- Attachment lifecycle and storage cleanup handling
-- Validated backup and restore workflows
-- Automated linting, tests, and production builds in CI
-- Responsive UI behavior across desktop, tablet, and mobile layouts
+- Attachment lifecycle handling
+- Backup schema and relationship validation
+- Automated CI quality checks
+- Responsive desktop, tablet, and mobile layouts
 
-## Quality Assurance
+## Quality
 
-The repository includes both automated and manual verification.
+Run the full quality gate:
 
-### Automated
+```bash
+npm run qa
+```
+
+Equivalent checks:
 
 ```bash
 npm run lint
@@ -124,68 +95,46 @@ npm run test
 npm run build
 ```
 
-Or run the complete quality gate:
+GitHub Actions runs these checks for pushes and pull requests targeting `main`.
 
-```bash
-npm run qa
-```
+Manual QA coverage includes rotation isolation, patient lifecycle, follow-ups, attachments, history, reports, backup/restore, responsive behavior, accessibility, and data safety.
 
-GitHub Actions runs the same core checks on pushes and pull requests targeting `main`.
+## Database
 
-### Manual
-
-The project includes a QA checklist covering:
-
-- Rotation isolation
-- Patient CRUD and lifecycle
-- Follow-up workflows
-- Supporting examinations
-- Attachment handling
-- Timeline and history
-- Report generation
-- Backup and restore
-- Responsive behavior
-- Keyboard accessibility
-- Data safety
-
-## Database Migrations
-
-Database changes are versioned in:
+Database migrations are versioned in:
 
 ```text
 supabase/migrations/
 ```
 
-The migration history covers workspace safety, follow-up integrity, attachment storage, atomic mutations, patient lifecycle handling, patient location modelling, and related domain changes.
-
-Keeping migrations in source control makes the database structure reproducible across environments and supports a controlled production deployment process.
+The migration history covers workspace safety, follow-up integrity, attachment storage, atomic mutations, patient lifecycle handling, and related application features.
 
 ## Project Structure
 
 ```text
 RekamMedisku/
 ├── src/
-│   ├── components/       # Reusable UI components
-│   ├── data/             # Local persistence and Supabase data access
-│   ├── hooks/            # React hooks and application state
-│   ├── pages/            # Feature and workflow pages
-│   ├── types/            # Shared domain types
-│   └── utils/            # Backup, reporting, formatting, and helpers
+│   ├── components/    # Shared UI components
+│   ├── data/          # Local and Supabase data access
+│   ├── hooks/         # React hooks and state
+│   ├── pages/         # Application workflows
+│   ├── types/         # Domain types
+│   └── utils/         # Shared utilities
 ├── supabase/
-│   └── migrations/       # Database migrations
-├── scripts/               # Project and test scripts
-├── tests/                 # Automated tests
+│   └── migrations/    # Database migrations
+├── scripts/            # Project scripts
+├── tests/              # Automated tests
 └── .github/
-    └── workflows/         # CI configuration
+    └── workflows/      # CI configuration
 ```
 
 ## Getting Started
 
-### Requirements
+### Prerequisites
 
 - Node.js 22+
 - npm
-- A configured Supabase project for authentication and cloud-backed features
+- Supabase project
 
 ### Installation
 
@@ -195,9 +144,9 @@ cd RekamMedisku
 npm ci
 ```
 
-### Environment Variables
+### Environment
 
-Create a local environment file containing:
+Create a local environment file:
 
 ```env
 VITE_SUPABASE_URL=your_supabase_url
@@ -217,53 +166,43 @@ npm run build
 npm run preview
 ```
 
-### Quality Gate
-
-```bash
-npm run qa
-```
-
 ## Deployment
 
-The application produces a standard Vite production build and is suitable for frontend platforms such as Vercel, Cloudflare Pages, or Netlify.
+The application produces a standard Vite production build and can be deployed to Vercel, Cloudflare Pages, or Netlify.
 
-Recommended production topology:
+Recommended topology:
 
 ```text
 GitHub
-   |
-   v
+  |
+  v
 Vercel
-   |
-   v
+  |
+  v
 React + Vite
-   |
-   +------> Supabase Auth
-   +------> Supabase PostgreSQL
-   +------> Supabase Realtime
-   +------> Supabase Storage
+  |
+  +----> Supabase Auth
+  +----> Supabase PostgreSQL
+  +----> Supabase Realtime
+  +----> Supabase Storage
 ```
 
-Before production release, the deployment should use the intended Supabase project, verified migrations, configured authentication settings, and tested database and storage access policies.
+Before production release, verify migrations, authentication settings, database policies, storage policies, and production environment variables.
 
 ## Data Safety
 
-Because the application may process sensitive clinical documentation, development and demonstration environments should use dummy or anonymized data.
+Use dummy or anonymized data for development and demonstrations.
 
-Backup files should be treated as sensitive data. Production access policies, authentication, database authorization, and storage rules should be validated before real-world use.
+Backup files should be treated as sensitive data. Production authorization and storage policies should be reviewed before using the application with real clinical information.
 
-## Project Status
+## Status
 
 **Production-oriented MVP — pre-deployment**
 
-The core application workflows, synchronization layer, database migrations, automated quality checks, and responsive interface are implemented. The remaining work is focused on final production verification, deployment configuration, and launch readiness.
+Core application workflows, Supabase integration, database migrations, automated QA, and responsive UI are implemented. Current work is focused on final production verification and deployment.
 
 ## Author
 
 **Arjuna Murti**
 
-RekamMedisku is a portfolio project focused on product-oriented frontend engineering, healthcare workflow design, data persistence, synchronization, and application reliability.
-
----
-
-For portfolio review, the most relevant areas of the codebase are the data layer, Supabase synchronization engine, clinical documentation workflows, backup/restore validation, and CI/QA setup.
+This project is part of my portfolio and reflects work across frontend engineering, product-oriented UX, data persistence, synchronization, and application reliability.
