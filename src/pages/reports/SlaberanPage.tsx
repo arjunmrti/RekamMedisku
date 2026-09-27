@@ -244,9 +244,10 @@ export default function SlaberanPage({
       <button
         type="button"
         onClick={() => onNavigate("Semua Laporan")}
-        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-[#1677FF]"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold text-slate-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#1677FF]"
       >
-        Follow-Up
+        <Icon name="arrow" className="h-3.5 w-3.5 rotate-180" />
+        Kembali ke Semua Laporan
       </button>
       <button
         type="button"
