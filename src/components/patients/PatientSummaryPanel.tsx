@@ -76,7 +76,7 @@ export default function PatientSummaryPanel({
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 p-4 sm:p-5 md:grid-cols-2 md:gap-x-6 md:gap-y-6 lg:grid-cols-[1.25fr_0.9fr_1.2fr_0.8fr] lg:gap-0 lg:p-6">
+        <div className="grid grid-cols-1 gap-4 p-4 sm:gap-5 sm:p-5 md:grid-cols-2 md:gap-x-6 md:gap-y-6 lg:grid-cols-[1.25fr_0.9fr_1.2fr_0.8fr] lg:gap-0 lg:p-6">
           <div className="min-w-0 lg:pr-6">
             <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
               Identitas
@@ -168,11 +168,11 @@ export default function PatientSummaryPanel({
               Aksi
             </p>
 
-            <div className="mt-3 space-y-2">
+            <div className="mt-3 grid grid-cols-2 gap-2 md:block md:space-y-2">
               <button
                 type="button"
                 onClick={() => onOpenProfile(patient)}
-                className="flex min-h-11 w-full items-center justify-between rounded-xl bg-[#1677FF] px-4 py-3 text-xs font-semibold text-white shadow-sm shadow-blue-200 transition-colors hover:bg-blue-700 active:bg-blue-800"
+                className="col-span-2 flex min-h-11 w-full items-center justify-between rounded-xl bg-[#1677FF] px-4 py-3 text-xs font-semibold text-white shadow-sm shadow-blue-200 transition-colors hover:bg-blue-700 active:bg-blue-800"
               >
                 <span>Buka Profil Pasien</span>
                 <Icon name="arrow" className="h-4 w-4" />
