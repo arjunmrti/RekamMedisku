@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import ReportPreview from "../../components/report/ReportPreview";
 import { getDefaultSlaberanTemplate } from "../../data/slaberanTemplates";
+import { loadSlaberanLocations } from "../../data/localSlaberanLocations";
+import { loadSlaberanTemplates } from "../../data/localSlaberanTemplates";
+import { adaptSlaberanTemplateRecord } from "../../utils/slaberanTemplateAdapter";
 import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients } from "../../data/localPatients";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
@@ -58,7 +61,18 @@ export default function SlaberanPage({
 }: SlaberanPageProps) {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
   const activeRotation = loadActiveRotation();
-  const template = getDefaultSlaberanTemplate();
+  const cloudTemplate = useMemo(() => {
+    const templates = loadSlaberanTemplates();
+    const record = templates.find((item) => item.isDefault) ?? templates[0];
+    return record
+      ? adaptSlaberanTemplateRecord(
+          record,
+          loadSlaberanLocations(),
+          getDefaultSlaberanTemplate(),
+        )
+      : null;
+  }, [workspaceSyncVersion]);
+  const template = cloudTemplate ?? getDefaultSlaberanTemplate();
   const allPatients = useMemo(
     () =>
       loadPatients().filter(
