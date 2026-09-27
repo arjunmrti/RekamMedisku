@@ -469,16 +469,20 @@ function validateFollowUpMap(
     if (!patientIds.has(patientId) || !Array.isArray(entries)) return false;
 
     const seen = new Set<string>();
+    const seenNumbers = new Set<number>();
     for (const entry of entries) {
       if (
         !isFollowUp(entry) ||
         seen.has(entry.id) ||
-        allEntryIds.has(entry.id)
+        allEntryIds.has(entry.id) ||
+        entry.number <= 0 ||
+        seenNumbers.has(entry.number)
       ) {
         return false;
       }
       seen.add(entry.id);
       allEntryIds.add(entry.id);
+      seenNumbers.add(entry.number);
 
       if (
         !isValidIsoDate(entry.isoDate) ||
