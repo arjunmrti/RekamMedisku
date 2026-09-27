@@ -130,13 +130,13 @@ export default function TopHeader({
           type="button"
           onClick={onMenuClick}
           aria-label="Buka menu navigasi"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 xl:hidden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 lg:hidden"
         >
           <Icon name="menu" className="h-5 w-5" />
         </button>
 
         {!searchEnabled ? (
-          <div className="min-w-0 flex-1 xl:hidden">
+          <div className="min-w-0 flex-1 lg:hidden">
             <p className="truncate text-sm font-bold text-slate-800 sm:text-base">
               {activeItem}
             </p>
