@@ -80,7 +80,7 @@ export default function PatientTable({
                 <td className="whitespace-nowrap px-3 py-3 text-xs font-medium text-slate-500">
                   {patient.rm}
                 </td>
-                <td className="px-3 py-3 text-xs font-medium text-slate-500">{patient.room}</td>
+                <td className="px-3 py-3 text-xs font-medium text-slate-500">{patient.currentLocation?.name || patient.room}</td>
                 <td className="px-3 py-3 text-xs font-medium text-slate-500">{patient.bed}</td>
                 <td className="hidden px-3 py-3 text-xs font-medium text-slate-600 lg:table-cell">{patient.doctor}</td>
                 <td className="hidden whitespace-nowrap px-3 py-3 text-xs text-slate-500 xl:table-cell">{patient.lastFollowUp}</td>
@@ -111,7 +111,7 @@ export default function PatientTable({
               </div>
               <div>
                 <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Ruangan / Bed</p>
-                <p className="font-semibold text-slate-700">{patient.room} / {patient.bed}</p>
+                <p className="font-semibold text-slate-700">{patient.currentLocation?.name || patient.room} / {patient.bed}</p>
               </div>
               <div>
                 <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Follow-Up</p>
