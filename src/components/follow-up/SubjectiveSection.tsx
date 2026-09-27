@@ -74,6 +74,7 @@ export default function SubjectiveSection({
           </div>
           <textarea
             required
+            aria-label="Keluhan / Perkembangan Hari Ini"
             maxLength={1000}
             rows={4}
             value={value.keluhan}
