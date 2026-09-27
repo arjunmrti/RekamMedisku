@@ -118,7 +118,7 @@ export function deleteFollowUpsForPatient(patientId: string): () => void {
   delete current[patientId];
 
   const rollback = () => {
-    restoreStorageValue(SAVED_KEY, previousSavedFollowUps);
+    restoreStorageValue(savedFollowUpsKey, previousSavedFollowUps);
     restoreStorageValue(draftKey, previousDraft);
   };
 
@@ -144,7 +144,7 @@ export function appendSavedFollowUp(
   const current = loadSavedFollowUps();
   const next = [followUp, ...(current[patientId] ?? [])];
   window.localStorage.setItem(
-    SAVED_KEY,
+    workspaceStorageKey(SAVED_KEY),
     JSON.stringify({ ...current, [patientId]: next }),
   );
 }
