@@ -43,7 +43,7 @@ export default function ReportHubPage({
   }, [activePatients]);
 
   const handleFollowUp = () => {
-    onNavigate("Follow-Up Baru");
+    onSelectMode("follow-up");
   };
 
   return (
