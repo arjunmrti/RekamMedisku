@@ -12,6 +12,7 @@ import {
   upsertRotation as saveLocalRotation,
 } from "./localRotations";
 import { supabase } from "../utils/supabase";
+import { workspaceStorageKey } from "./workspaceStorage";
 
 type RotationRow = {
   id: string;
@@ -27,7 +28,7 @@ type RotationRow = {
 
 type RotationIdMap = Record<string, string>;
 
-const ROTATION_ID_MAP_KEY = "rekammedisku:supabase-rotation-ids";
+const ROTATION_ID_MAP_KEY = "supabase-rotation-ids";
 
 const ROTATION_SPECIALTIES: RotationSpecialty[] = [
   "Neurologi",
@@ -46,7 +47,7 @@ const ROTATION_STATUSES: RotationStatus[] = [
 
 function readIdMap(): RotationIdMap {
   try {
-    const raw = window.localStorage.getItem(ROTATION_ID_MAP_KEY);
+    const raw = window.localStorage.getItem(workspaceStorageKey(ROTATION_ID_MAP_KEY));
     const parsed = raw ? (JSON.parse(raw) as unknown) : null;
 
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
@@ -67,7 +68,7 @@ function readIdMap(): RotationIdMap {
 }
 
 function saveIdMap(map: RotationIdMap) {
-  window.localStorage.setItem(ROTATION_ID_MAP_KEY, JSON.stringify(map));
+  window.localStorage.setItem(workspaceStorageKey(ROTATION_ID_MAP_KEY), JSON.stringify(map));
 }
 
 function getRemoteId(localId: string, map: RotationIdMap) {
