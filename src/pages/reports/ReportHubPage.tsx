@@ -1,15 +1,19 @@
 import { useMemo } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
-import Icon from "../../components/ui/Icon";
+import ReportHubCard, {
+  type ReportHubStat,
+} from "../../components/report/ReportHubCard";
+import { REPORT_HUB_CATALOG, type ReportHubMode } from "../../data/reportHubCatalog";
 import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients } from "../../data/localPatients";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
 import { loadSlaberanLocations } from "../../data/localSlaberanLocations";
 import { loadSlaberanTemplates } from "../../data/localSlaberanTemplates";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
+import type { ReportMode } from "../../types/report";
 
 type ReportHubPageProps = NavigationProps & {
-  onSelectMode: (mode: "follow-up" | "slaberan") => void;
+  onSelectMode: (mode: Exclude<ReportMode, "hub">) => void;
 };
 
 export default function ReportHubPage({
@@ -31,33 +35,53 @@ export default function ReportHubPage({
     [activeRotation.id, patients, workspaceSyncVersion],
   );
 
-  const storedFollowUpCount = useMemo(() => {
-    const saved = loadSavedFollowUps();
+  const reportStats = useMemo<Record<ReportHubMode, ReportHubStat[]>>(() => {
+    const savedFollowUps = loadSavedFollowUps();
 
-    return activePatients.reduce(
+    const storedFollowUpCount = activePatients.reduce(
       (total, patient) =>
         total +
-        (saved[patient.id] ?? []).filter(
+        (savedFollowUps[patient.id] ?? []).filter(
           (entry) => entry.status === "Tersimpan",
         ).length,
       0,
     );
-  }, [activePatients]);
 
-  const slaberanStats = useMemo(() => {
     const storedTemplates = loadSlaberanTemplates();
-    const activeLocations = loadSlaberanLocations().filter(
+    const activeLocationCount = loadSlaberanLocations().filter(
       (location) => location.isActive,
-    );
+    ).length;
 
     return {
-      templateCount: storedTemplates.length > 0 ? storedTemplates.length : 1,
-      activeLocationCount: activeLocations.length,
+      "follow-up": [
+        {
+          label: "Follow-Up tersimpan",
+          value: storedFollowUpCount,
+        },
+        {
+          label: "Pasien aktif",
+          value: activePatients.length,
+        },
+      ],
+      slaberan: [
+        {
+          label: "Pasien aktif",
+          value: activePatients.length,
+        },
+        {
+          label: "Template tersedia",
+          value: storedTemplates.length > 0 ? storedTemplates.length : 1,
+        },
+        {
+          label: "Lokasi aktif",
+          value: activeLocationCount,
+        },
+      ],
     };
-  }, [workspaceSyncVersion]);
+  }, [activePatients, workspaceSyncVersion]);
 
-  const handleFollowUp = () => {
-    onSelectMode("follow-up");
+  const handleSelectReport = (mode: ReportHubMode) => {
+    onSelectMode(mode);
   };
 
   return (
@@ -111,135 +135,25 @@ export default function ReportHubPage({
             </div>
 
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-              <article className="group flex min-h-[360px] flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-6 shadow-[0_8px_30px_-22px_rgba(16,42,86,0.22)] transition duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_18px_42px_-24px_rgba(22,119,255,0.22)] sm:p-7">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
-                    <Icon name="document" className="h-5 w-5" strokeWidth={2.25} />
-                  </div>
-                  <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Follow-Up
-                  </span>
-                </div>
-
-                <div className="mt-6">
-                  <h3 className="text-xl font-bold tracking-tight text-slate-900">
-                    Laporan Follow-Up
-                  </h3>
-                  <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                    Ubah follow-up pasien yang sudah tersimpan menjadi laporan
-                    yang siap ditinjau, diedit, dan disalin.
-                  </p>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-3">
-                  <div className="min-h-[78px] rounded-xl border border-slate-100 bg-slate-50/80 p-3.5">
-                    <p className="text-[10px] font-semibold text-slate-400">
-                      Follow-Up tersimpan
-                    </p>
-                    <p className="mt-1 text-xl font-bold leading-none text-slate-900">
-                      {storedFollowUpCount}
-                    </p>
-                  </div>
-                  <div className="min-h-[78px] rounded-xl border border-slate-100 bg-slate-50/80 p-3.5">
-                    <p className="text-[10px] font-semibold text-slate-400">
-                      Pasien aktif
-                    </p>
-                    <p className="mt-1 text-lg font-bold text-slate-900">
-                      {activePatients.length}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-auto pt-7">
-                  <div className="space-y-2.5">
-                    {!activePatients.length ? (
-                      <div className="flex items-start gap-2 rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2.5">
-                        <Icon
-                          name="alert"
-                          className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600"
-                        />
-                        <p className="text-[11px] leading-relaxed text-amber-800">
-                          Belum ada pasien aktif. Tambahkan pasien terlebih dahulu
-                          agar laporan Follow-Up bisa dibuat.
-                        </p>
-                      </div>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={handleFollowUp}
-                      className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
-                    >
-                      Buat Laporan Follow-Up
-                      <Icon name="arrow" className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </article>
-
-              <article className="group flex min-h-[360px] flex-col overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/80 via-white to-white p-6 shadow-[0_8px_30px_-22px_rgba(22,119,255,0.28)] transition duration-200 hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_18px_42px_-24px_rgba(22,119,255,0.24)] sm:p-7">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-[#1677FF]">
-                    <Icon name="layers" className="h-5 w-5" strokeWidth={2.25} />
-                  </div>
-                  <span className="rounded-full border border-blue-100 bg-white/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[#1677FF]">
-                    Slaberan
-                  </span>
-                </div>
-
-                <div className="mt-6">
-                  <h3 className="text-xl font-bold tracking-tight text-slate-900">
-                    Buat Slaberan
-                  </h3>
-                  <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                    Generate laporan harian dari template dokter, pasien aktif,
-                    lokasi, dan follow-up yang sudah tersimpan.
-                  </p>
-                </div>
-
-                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  <div className="min-h-[78px] rounded-xl border border-blue-100/80 bg-white/80 p-3.5">
-                    <p className="text-[10px] font-semibold text-slate-400">
-                      Pasien aktif
-                    </p>
-                    <p className="mt-1 text-lg font-bold text-slate-900">
-                      {activePatients.length}
-                    </p>
-                  </div>
-                  <div className="min-h-[78px] rounded-xl border border-blue-100/80 bg-white/80 p-3.5">
-                    <p className="text-[10px] font-semibold text-slate-400">
-                      Template tersedia
-                    </p>
-                    <p className="mt-1 text-lg font-bold text-slate-900">
-                      {slaberanStats.templateCount}
-                    </p>
-                  </div>
-                  <div className="min-h-[78px] rounded-xl border border-blue-100/80 bg-white/80 p-3.5">
-                    <p className="text-[10px] font-semibold text-slate-400">
-                      Lokasi aktif
-                    </p>
-                    <p className="mt-1 text-lg font-bold text-slate-900">
-                      {slaberanStats.activeLocationCount}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-auto pt-7">
-                  <button
-                    type="button"
-                    onClick={() => onSelectMode("slaberan")}
-                    className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
-                  >
-                    Buka Slaberan
-                    <Icon name="arrow" className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </article>
+              {REPORT_HUB_CATALOG.map((item) => (
+                <ReportHubCard
+                  key={item.mode}
+                  item={item}
+                  stats={reportStats[item.mode]}
+                  warning={
+                    item.mode === "follow-up" && activePatients.length === 0
+                      ? "Belum ada pasien aktif. Tambahkan pasien terlebih dahulu agar laporan Follow-Up bisa dibuat."
+                      : undefined
+                  }
+                  onAction={() => handleSelectReport(item.mode)}
+                />
+              ))}
             </div>
           </section>
 
           <div className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 sm:p-5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-100 text-slate-500">
-              <Icon name="lightbulb" className="h-4 w-4" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-100">
+              <span aria-hidden="true">i</span>
             </div>
             <div>
               <p className="text-sm font-bold text-slate-800">
