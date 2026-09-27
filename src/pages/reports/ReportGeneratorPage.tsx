@@ -14,11 +14,9 @@ import {
   getReportTemplateForSpecialty,
 } from "../../utils/reportGenerator";
 import type { PatientListItem } from "../../types/patient";
-import type { ReportStep, ReportTemplateType } from "../../types/report";
+import type { ReportMode, ReportStep, ReportTemplateType } from "../../types/report";
 import Icon from "../../components/ui/Icon";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
-
-export type ReportMode = "hub" | "follow-up" | "slaberan";
 
 type ReportGeneratorPageProps = NavigationProps & {
   patient?: PatientListItem;
