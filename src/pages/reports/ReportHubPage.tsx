@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
+import Icon from "../../components/ui/Icon";
 import ReportHubCard, {
   type ReportHubStat,
 } from "../../components/report/ReportHubCard";
@@ -153,7 +154,7 @@ export default function ReportHubPage({
 
           <div className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 sm:p-5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-100">
-              <span aria-hidden="true">i</span>
+              <Icon name="lightbulb" className="h-4 w-4" />
             </div>
             <div>
               <p className="text-sm font-bold text-slate-800">
