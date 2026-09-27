@@ -145,41 +145,6 @@ export default function SlaberanPage({
   );
 
   useEffect(() => {
-    let disposed = false;
-
-    void Promise.all([
-      syncSlaberanLocationsWithSupabase(),
-      syncSlaberanTemplatesWithSupabase(),
-    ])
-      .then(([nextLocations, nextTemplates]) => {
-        if (disposed) return;
-
-        setLocations(nextLocations);
-        setTemplates(
-          nextTemplates.length > 0
-            ? nextTemplates
-            : [createStarterSlaberanTemplate()],
-        );
-        setSyncNotice("");
-      })
-      .catch((error: unknown) => {
-        if (disposed) return;
-
-        setLocations(loadSlaberanLocations());
-        setTemplates(getReportTemplates());
-        setSyncNotice(
-          error instanceof Error
-            ? "Data Slaberan menggunakan cache lokal. " + error.message
-            : "Data Slaberan menggunakan cache lokal.",
-        );
-      });
-
-    return () => {
-      disposed = true;
-    };
-  }, []);
-
-  useEffect(() => {
     if (!selectedTemplate) {
       setTemplateId("");
       return;
@@ -215,10 +180,16 @@ export default function SlaberanPage({
             ? nextTemplates
             : [createStarterSlaberanTemplate()],
         );
+        setSyncNotice("");
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         setLocations(loadSlaberanLocations());
         setTemplates(getReportTemplates());
+        setSyncNotice(
+          error instanceof Error
+            ? "Data Slaberan menggunakan cache lokal. " + error.message
+            : "Data Slaberan menggunakan cache lokal.",
+        );
       });
   }, [workspaceSyncVersion]);
 
