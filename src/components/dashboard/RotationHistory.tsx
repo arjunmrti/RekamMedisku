@@ -26,13 +26,13 @@ export default function RotationHistory() {
     .sort((a, b) => a.startDate.localeCompare(b.startDate));
 
   return (
-    <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)] sm:p-6">
+    <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)] sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Icon name="document" className="h-5 w-5 text-slate-500" />
           <div>
             <h3 className="text-sm font-bold text-slate-900">Riwayat Stase</h3>
-            <p className="mt-0.5 text-[11px] text-slate-400">
+            <p className="mt-0.5 text-xs text-slate-400">
               Stase yang pernah dan sedang dijalani
             </p>
           </div>
@@ -78,7 +78,7 @@ export default function RotationHistory() {
                         {rotation.name}
                       </h4>
                       <span className={
-                        "text-[10px] font-medium " +
+                        "text-[11px] font-medium " +
                         (active ? "text-blue-600" : "text-emerald-600")
                       }>
                         {rotation.status}
@@ -86,7 +86,7 @@ export default function RotationHistory() {
                     </div>
                   </div>
 
-                  <span className="shrink-0 whitespace-nowrap text-[10px] font-medium text-slate-400">
+                  <span className="shrink-0 whitespace-nowrap text-[11px] font-medium text-slate-400">
                     {formatPeriod(rotation.startDate, rotation.endDate)}
                   </span>
                 </div>
