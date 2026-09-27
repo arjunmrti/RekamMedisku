@@ -44,8 +44,8 @@ export default function AppShell({
   }, [mobileMenuOpen]);
 
   return (
-    <div className="min-h-screen bg-[#F7F9FC] text-slate-800">
-      <div className="flex min-h-screen">
+    <div className="min-h-[100dvh] overflow-x-hidden bg-[#F7F9FC] text-slate-800">
+      <div className="flex min-h-[100dvh] min-w-0">
         <Sidebar activeItem={activeItem} onNavigate={navigate} />
 
         <div className="flex min-w-0 flex-1 flex-col">
