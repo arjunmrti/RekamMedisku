@@ -17,6 +17,7 @@ import {
 import {
   deleteAttachmentsWithSupabase,
   downloadAttachmentWithSupabase,
+  flushPendingAttachmentCleanupWithSupabase,
   uploadAttachmentWithSupabase,
 } from "./supabaseAttachments";
 
@@ -536,6 +537,15 @@ async function persistFollowUpWithSupabaseInternal(
 
       saveMap(FOLLOW_UP_ID_MAP_KEY, followUpMap);
       saveMap(SUPPORTING_EXAM_ID_MAP_KEY, examMap);
+      try {
+        await flushPendingAttachmentCleanupWithSupabase();
+      } catch (cleanupQueueError) {
+        console.warn(
+          "Penyimpanan follow-up berhasil, tetapi cleanup lampiran cloud tertunda.",
+          cleanupQueueError,
+        );
+      }
+
     } catch (postCommitError) {
       // DB commit already succeeded. A local mapping problem must never make
       // the caller restore the pre-save UI state; the next workspace sync can
