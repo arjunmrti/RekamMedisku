@@ -1,6 +1,7 @@
 import type { PatientListItem, PatientStatus } from "../types/patient";
 import { deleteFollowUpsForPatient } from "./localFollowUps";
 import { deletePatient, loadPatients, savePatients } from "./localPatients";
+import { loadSlaberanLocations } from "./localSlaberanLocations";
 import { syncRotationsWithSupabase } from "./supabaseRotations";
 import { supabase } from "../utils/supabase";
 import { workspaceStorageKey } from "./workspaceStorage";
@@ -88,10 +89,35 @@ function normalizeGender(value: string): PatientListItem["gender"] {
 function toPatient(
   row: PatientRow,
   localId: string,
+  locations = loadSlaberanLocations(),
 ): PatientListItem {
   const followUpSummary = derivePatientFollowUpSummaryFromRemote(
     row.follow_ups ?? [],
   );
+  const currentLocation = normalizePatientLocation(
+    {
+      locationId: row.current_location_id ?? undefined,
+      type:
+        row.current_location_type === "special"
+          ? "special"
+          : row.current_location_type === "ward"
+            ? "ward"
+            : undefined,
+      name: row.current_location_name ?? "",
+      bed: row.bed,
+    },
+    row.room,
+    row.bed,
+  );
+  const canonicalLocation = currentLocation.locationId
+    ? locations.find((location) => location.id === currentLocation.locationId)
+    : undefined;
+  const resolvedCurrentLocation = canonicalLocation
+    ? {
+        ...currentLocation,
+        name: canonicalLocation.name,
+      }
+    : currentLocation;
 
   return {
     id: localId,
@@ -100,22 +126,8 @@ function toPatient(
     age: row.age,
     gender: normalizeGender(row.gender),
     rm: row.rm,
-    room: row.current_location_name?.trim() || row.room,
-    currentLocation: normalizePatientLocation(
-      {
-        locationId: row.current_location_id ?? undefined,
-        type:
-          row.current_location_type === "special"
-            ? "special"
-            : row.current_location_type === "ward"
-              ? "ward"
-              : undefined,
-        name: row.current_location_name ?? "",
-        bed: row.bed,
-      },
-      row.room,
-      row.bed,
-    ),
+    room: resolvedCurrentLocation.name || row.room,
+    currentLocation: resolvedCurrentLocation,
     bed: row.bed,
     doctor: row.doctor,
     admissionLocation: normalizePatientAdmissionLocation(
@@ -174,6 +186,17 @@ function patientPayload(patient: PatientListItem, remoteRotationId: string) {
     patient.room,
     patient.bed,
   );
+  const canonicalLocation = currentLocation.locationId
+    ? loadSlaberanLocations().find(
+        (location) => location.id === currentLocation.locationId,
+      )
+    : undefined;
+  const resolvedCurrentLocation = canonicalLocation
+    ? {
+        ...currentLocation,
+        name: canonicalLocation.name,
+      }
+    : currentLocation;
 
   return {
     rotation_id: remoteRotationId,
@@ -181,12 +204,12 @@ function patientPayload(patient: PatientListItem, remoteRotationId: string) {
     age: patient.age,
     gender: patient.gender,
     rm: patient.rm,
-    room: currentLocation.name,
-    bed: currentLocation.bed,
+    room: resolvedCurrentLocation.name,
+    bed: resolvedCurrentLocation.bed,
     doctor: patient.doctor,
-    current_location_id: currentLocation.locationId ?? null,
-    current_location_type: currentLocation.type,
-    current_location_name: currentLocation.name,
+    current_location_id: resolvedCurrentLocation.locationId ?? null,
+    current_location_type: resolvedCurrentLocation.type,
+    current_location_name: resolvedCurrentLocation.name,
     created_at: patient.createdAt ?? new Date().toISOString(),
     admission_date: patient.admissionDate ?? null,
     admission_complaint: patient.admissionComplaint?.trim() || null,
@@ -255,6 +278,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
   await syncRotationsWithSupabase();
 
   const localPatients = loadPatients();
+  const locations = loadSlaberanLocations();
   const patientMap: PatientIdMap = readMap(PATIENT_ID_MAP_KEY);
   const rotationMap = readMap(ROTATION_ID_MAP_KEY);
 
@@ -312,7 +336,7 @@ export async function syncPatientsWithSupabase(): Promise<PatientListItem[]> {
       )?.[0] ?? row.rotation_id;
 
     nextLocal = mergePatientIntoLocal(nextLocal, {
-      ...toPatient(row, localId),
+      ...toPatient(row, localId, locations),
       rotationId: localRotationId,
     });
   }
@@ -399,48 +423,8 @@ export async function upsertPatientWithSupabase(
     remoteCommitted = true;
 
     const persistedPatient: PatientListItem = {
-      ...patient,
-      id: patient.id,
-      name: remoteRow.name,
-      age: remoteRow.age,
-      gender: normalizeGender(remoteRow.gender),
-      rm: remoteRow.rm,
-      room: remoteRow.current_location_name?.trim() || remoteRow.room,
-      currentLocation: normalizePatientLocation(
-        {
-          locationId: remoteRow.current_location_id ?? undefined,
-          type:
-            remoteRow.current_location_type === "special"
-              ? "special"
-              : remoteRow.current_location_type === "ward"
-                ? "ward"
-                : undefined,
-          name: remoteRow.current_location_name ?? "",
-          bed: remoteRow.bed,
-        },
-        remoteRow.room,
-        remoteRow.bed,
-      ),
-      bed: remoteRow.bed,
-      doctor: remoteRow.doctor,
-      admissionLocation: normalizePatientAdmissionLocation(
-        remoteRow.admission_location_name
-          ? {
-              locationId: remoteRow.admission_location_id ?? undefined,
-              type:
-                remoteRow.admission_location_type === "special"
-                  ? "special"
-                  : "ward",
-              name: remoteRow.admission_location_name,
-            }
-          : undefined,
-      ),
+      ...toPatient(remoteRow, patient.id),
       rotationId: patient.rotationId,
-      createdAt: remoteRow.created_at,
-      admissionDate: remoteRow.admission_date ?? undefined,
-      admissionComplaint: remoteRow.admission_complaint ?? undefined,
-      updatedAt: remoteRow.updated_at,
-      status: normalizeStatus(remoteRow.status),
     };
 
     const persistedPatients = localExists
