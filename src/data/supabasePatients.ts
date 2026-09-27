@@ -584,3 +584,4 @@ export async function deletePatientWithSupabase(
     throw new Error(getErrorMessage(error));
   }
 }
+

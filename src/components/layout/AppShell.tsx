@@ -63,7 +63,7 @@ export default function AppShell({
       <MobileBottomNav activeItem={activeItem} onNavigate={navigate} />
 
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 xl:hidden">
+        <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
             aria-label="Tutup menu"

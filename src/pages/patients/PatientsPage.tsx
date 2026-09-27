@@ -123,7 +123,7 @@ export default function PatientsPage({
   const availableRooms = useMemo(
     () =>
       Array.from(
-        new Set(activeRotationPatients.map((patient) => patient.room).filter(Boolean)),
+        new Set(activeRotationPatients.map((patient) => patient.currentLocation?.name || patient.room).filter(Boolean)),
       ).sort((a, b) => a.localeCompare(b)),
     [activeRotationPatients],
   );
@@ -137,7 +137,7 @@ export default function PatientsPage({
         patient.rm,
         patient.age,
         patient.gender,
-        patient.room,
+        patient.currentLocation?.name || patient.room,
         patient.bed,
         patient.doctor,
       ]
@@ -146,7 +146,9 @@ export default function PatientsPage({
 
       const matchesSearch = !query || searchable.includes(query);
       const matchesStatus = status === "Semua" || patient.status === status;
-      const matchesRoom = room === "Semua" || patient.room === room;
+      const matchesRoom =
+        room === "Semua" ||
+        (patient.currentLocation?.name || patient.room) === room;
 
       return matchesSearch && matchesStatus && matchesRoom;
     });

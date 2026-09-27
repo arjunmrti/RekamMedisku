@@ -1,6 +1,7 @@
 import type { SlaberanTemplateRecord } from "../types/slaberanTemplate";
 import { replaceSlaberanTemplates } from "./localSlaberanTemplates";
 import { supabase } from "../utils/supabase";
+import { getAuthenticatedUserId } from "../utils/authenticatedUser";
 
 type SlaberanTemplateRow = {
   id: string;
@@ -30,15 +31,19 @@ function getErrorMessage(error: unknown) {
 
     if (typeof candidate.message === "string" && candidate.message) {
       const parts = [candidate.message];
+
       if (typeof candidate.code === "string" && candidate.code) {
         parts.push("Kode: " + candidate.code);
       }
+
       if (typeof candidate.details === "string" && candidate.details) {
         parts.push("Detail: " + candidate.details);
       }
+
       if (typeof candidate.hint === "string" && candidate.hint) {
         parts.push("Petunjuk: " + candidate.hint);
       }
+
       return parts.join(" · ");
     }
   }
@@ -49,6 +54,7 @@ function getErrorMessage(error: unknown) {
 
 function parseBlocks(value: unknown): SlaberanTemplateRecord["blocks"] {
   if (!Array.isArray(value)) return [];
+
   return value.filter(
     (item): item is SlaberanTemplateRecord["blocks"][number] =>
       typeof item === "object" &&
@@ -86,15 +92,21 @@ function toTemplate(row: SlaberanTemplateRow): SlaberanTemplateRecord {
 }
 
 async function getCurrentUserId() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+  return getAuthenticatedUserId();
+}
 
-  if (error) throw error;
-  if (!user) throw new Error("Sesi RekamMedisku tidak ditemukan.");
+async function clearDefaultTemplate(userId: string, excludedId?: string) {
+  let query = supabase
+    .from("slaberan_templates")
+    .update({ is_default: false })
+    .eq("user_id", userId)
+    .eq("is_default", true);
 
-  return user.id;
+  if (excludedId) query = query.neq("id", excludedId);
+
+  const { error } = await query;
+
+  if (error) throw new Error(getErrorMessage(error));
 }
 
 export async function syncSlaberanTemplatesWithSupabase(): Promise<
@@ -118,12 +130,13 @@ export async function syncSlaberanTemplatesWithSupabase(): Promise<
 }
 
 export async function createSlaberanTemplate(
-  input: Omit<
-    SlaberanTemplateRecord,
-    "id" | "createdAt" | "updatedAt"
-  >,
+  input: Omit<SlaberanTemplateRecord, "id" | "createdAt" | "updatedAt">,
 ): Promise<SlaberanTemplateRecord> {
   const userId = await getCurrentUserId();
+
+  if (input.isDefault) {
+    await clearDefaultTemplate(userId);
+  }
 
   const { data, error } = await supabase
     .from("slaberan_templates")
@@ -146,14 +159,15 @@ export async function createSlaberanTemplate(
     .single<SlaberanTemplateRow>();
 
   if (error) throw new Error(getErrorMessage(error));
-  return toTemplate(data);
+
+  const createdTemplate = toTemplate(data);
+  await syncSlaberanTemplatesWithSupabase();
+  return createdTemplate;
 }
 
 export async function updateSlaberanTemplate(
   templateId: string,
-  input: Partial<
-    Omit<SlaberanTemplateRecord, "id" | "createdAt" | "updatedAt">
-  >,
+  input: Partial<Omit<SlaberanTemplateRecord, "id" | "createdAt" | "updatedAt">>,
 ): Promise<SlaberanTemplateRecord> {
   const userId = await getCurrentUserId();
   const update: Record<string, unknown> = {
@@ -175,6 +189,10 @@ export async function updateSlaberanTemplate(
   }
   if (input.isDefault !== undefined) update.is_default = input.isDefault;
 
+  if (input.isDefault === true) {
+    await clearDefaultTemplate(userId, templateId);
+  }
+
   const { data, error } = await supabase
     .from("slaberan_templates")
     .update(update)
@@ -186,7 +204,10 @@ export async function updateSlaberanTemplate(
     .single<SlaberanTemplateRow>();
 
   if (error) throw new Error(getErrorMessage(error));
-  return toTemplate(data);
+
+  const updatedTemplate = toTemplate(data);
+  await syncSlaberanTemplatesWithSupabase();
+  return updatedTemplate;
 }
 
 export async function deleteSlaberanTemplate(
@@ -201,4 +222,5 @@ export async function deleteSlaberanTemplate(
     .eq("user_id", userId);
 
   if (error) throw new Error(getErrorMessage(error));
+  await syncSlaberanTemplatesWithSupabase();
 }

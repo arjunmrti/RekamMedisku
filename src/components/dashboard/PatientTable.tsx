@@ -27,7 +27,7 @@ export default function PatientTable({
   onViewAll,
 }: PatientTableProps) {
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
+    <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)]">
       <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-2.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
@@ -37,7 +37,7 @@ export default function PatientTable({
             <h2 className="text-sm font-bold text-slate-900 sm:text-base">
               Pasien Terbaru
             </h2>
-            <p className="mt-0.5 text-[11px] text-slate-400">
+            <p className="mt-0.5 text-xs text-slate-400">
               Pasien aktif pada stase saat ini
             </p>
           </div>
@@ -56,7 +56,7 @@ export default function PatientTable({
       <div className="hidden md:block">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="border-b border-slate-100 bg-[#F7FAFE] text-[10px] font-semibold text-slate-400 xl:text-[11px]">
+            <tr className="border-b border-slate-100 bg-[#F7FAFE] text-[11px] font-semibold text-slate-400">
               <th className="px-5 py-3 font-semibold xl:px-6">Nama Pasien</th>
               <th className="px-3 py-3 font-semibold">RM</th>
               <th className="px-3 py-3 font-semibold">Ruangan</th>
@@ -80,7 +80,7 @@ export default function PatientTable({
                 <td className="whitespace-nowrap px-3 py-3 text-xs font-medium text-slate-500">
                   {patient.rm}
                 </td>
-                <td className="px-3 py-3 text-xs font-medium text-slate-500">{patient.room}</td>
+                <td className="px-3 py-3 text-xs font-medium text-slate-500">{patient.currentLocation?.name || patient.room}</td>
                 <td className="px-3 py-3 text-xs font-medium text-slate-500">{patient.bed}</td>
                 <td className="hidden px-3 py-3 text-xs font-medium text-slate-600 lg:table-cell">{patient.doctor}</td>
                 <td className="hidden whitespace-nowrap px-3 py-3 text-xs text-slate-500 xl:table-cell">{patient.lastFollowUp}</td>
@@ -106,19 +106,19 @@ export default function PatientTable({
 
             <div className="mt-4 grid grid-cols-2 gap-3 text-xs">
               <div>
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">No. RM</p>
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">No. RM</p>
                 <p className="font-semibold text-slate-700">{patient.rm}</p>
               </div>
               <div>
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Ruangan / Bed</p>
-                <p className="font-semibold text-slate-700">{patient.room} / {patient.bed}</p>
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Ruangan / Bed</p>
+                <p className="font-semibold text-slate-700">{patient.currentLocation?.name || patient.room} / {patient.bed}</p>
               </div>
               <div>
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Follow-Up</p>
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">Follow-Up</p>
                 <p className="font-medium text-slate-600">{patient.lastFollowUp}</p>
               </div>
               <div className="col-span-2">
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">DPJP</p>
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">DPJP</p>
                 <p className="font-medium text-slate-600">{patient.doctor}</p>
               </div>
             </div>

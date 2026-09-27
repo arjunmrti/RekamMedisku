@@ -117,7 +117,7 @@ export default function PatientSummaryPanel({
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4">
-              <Detail label="Ruangan" value={patient.room || "—"} />
+              <Detail label="Ruangan" value={patient.currentLocation?.name || patient.room || "—"} />
               <Detail label="Bed" value={patient.bed || "—"} />
               <div className="col-span-2">
                 <Detail label="DPJP" value={patient.doctor || "—"} />
@@ -143,7 +143,7 @@ export default function PatientSummaryPanel({
                       : "Belum ada follow-up"}
                   </p>
                   <span className="shrink-0 text-[10px] font-semibold text-[#1677FF]">
-                    {patient.followUpNumber} catatan
+                    {patient.followUpNumber > 0 ? "Terakhir #" + patient.followUpNumber : "Belum ada"}
                   </span>
                 </div>
 

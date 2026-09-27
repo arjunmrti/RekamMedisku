@@ -51,7 +51,7 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
   const activeRotation = loadActiveRotation();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col overflow-hidden border-r border-[#E5EAF1] bg-[#F8FBFF] xl:flex">
+    <aside className="sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col overflow-hidden border-r border-[#E5EAF1] bg-[#F8FBFF] lg:flex">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex h-[72px] items-center gap-3 px-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1677FF] text-white shadow-sm shadow-blue-500/20">
@@ -118,7 +118,7 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
               />
             </div>
             <div>
-              <span className="block text-[9px] font-bold uppercase leading-none tracking-wider text-slate-400">
+              <span className="block text-[10px] font-bold uppercase leading-none tracking-wider text-slate-400">
                 Stase Aktif
               </span>
               <span className="text-xs font-bold tracking-tight text-slate-800">

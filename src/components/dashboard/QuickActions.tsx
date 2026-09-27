@@ -35,7 +35,7 @@ export default function QuickActions({ onNavigate }: QuickActionsProps) {
           </span>
           <div>
             <h2 className="text-sm font-bold text-slate-900">Aksi Cepat</h2>
-            <p className="mt-0.5 text-[10px] font-medium text-slate-400">
+            <p className="mt-0.5 text-[11px] font-medium text-slate-400">
               Shortcut untuk workflow utama
             </p>
           </div>
@@ -54,7 +54,7 @@ export default function QuickActions({ onNavigate }: QuickActionsProps) {
             </span>
             <span className="min-w-0">
               <span className="block text-xs font-bold">Follow-Up Baru</span>
-              <span className="mt-1 block text-[10px] leading-relaxed text-blue-100">
+              <span className="mt-1 block text-[11px] leading-relaxed text-blue-100">
                 Catat perkembangan pasien hari ini.
               </span>
             </span>
@@ -79,7 +79,7 @@ export default function QuickActions({ onNavigate }: QuickActionsProps) {
               <span className="mt-3 block text-[11px] font-bold text-slate-800">
                 {action.label}
               </span>
-              <span className="mt-1 block text-[9px] leading-relaxed text-slate-400">
+              <span className="mt-1 block text-[11px] leading-relaxed text-slate-400">
                 {action.helper}
               </span>
             </button>
@@ -99,7 +99,7 @@ export default function QuickActions({ onNavigate }: QuickActionsProps) {
               <span className="block text-[11px] font-bold text-slate-800">
                 {secondaryActions[2].label}
               </span>
-              <span className="block text-[9px] text-slate-400">
+              <span className="block text-[11px] text-slate-400">
                 {secondaryActions[2].helper}
               </span>
             </span>

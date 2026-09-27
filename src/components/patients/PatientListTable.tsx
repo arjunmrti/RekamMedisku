@@ -135,7 +135,7 @@ export default function PatientListTable({
 
                   <td className="whitespace-nowrap px-3 py-3.5">
                     <p className="text-xs font-semibold text-slate-700">
-                      {patient.room || "—"}
+                      {patient.currentLocation?.name || patient.room || "—"}
                     </p>
                     <p className="mt-0.5 text-[10px] text-slate-400">
                       Bed {patient.bed || "—"}
@@ -240,7 +240,7 @@ export default function PatientListTable({
                     Lokasi
                   </p>
                   <p className="font-semibold text-slate-700">
-                    {patient.room} · Bed {patient.bed}
+                    {patient.currentLocation?.name || patient.room} · Bed {patient.bed}
                   </p>
                 </div>
 

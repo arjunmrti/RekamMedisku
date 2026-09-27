@@ -274,7 +274,7 @@ export default function RotationManagementPage({
 
                   <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <div className="rounded-2xl border border-white/80 bg-white/80 p-4">
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         Pasien
                       </p>
                       <p className="mt-1 text-xl font-bold text-slate-900">
@@ -282,7 +282,7 @@ export default function RotationManagementPage({
                       </p>
                     </div>
                     <div className="rounded-2xl border border-white/80 bg-white/80 p-4">
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         Specialty
                       </p>
                       <p className="mt-1 text-xs font-bold text-slate-800">
@@ -290,7 +290,7 @@ export default function RotationManagementPage({
                       </p>
                     </div>
                     <div className="rounded-2xl border border-white/80 bg-white/80 p-4">
-                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                         Status Workspace
                       </p>
                       <p className="mt-1 text-xs font-bold text-emerald-600">

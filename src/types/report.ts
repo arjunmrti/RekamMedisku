@@ -1,3 +1,5 @@
+export type ReportMode = "hub" | "follow-up" | "slaberan";
+
 export type ReportTemplateType = "Neurologi" | "Ilmu Penyakit Dalam";
 
 export type ReportTemplate = {

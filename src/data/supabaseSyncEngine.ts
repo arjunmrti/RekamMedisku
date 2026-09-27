@@ -5,7 +5,8 @@ import { syncSlaberanTemplatesWithSupabase } from "./supabaseSlaberanTemplates";
 import { flushPendingAttachmentCleanupWithSupabase } from "./supabaseAttachments";
 
 const WORKSPACE_SYNC_EVENT = "rekammedisku:workspace-synced";
-const REALTIME_WATCHDOG_INTERVAL_MS = 30_000;
+const REALTIME_WATCHDOG_INTERVAL_MS = 5 * 60_000;
+const SYNC_RETRY_DELAYS_MS = [5_000, 15_000, 30_000, 60_000];
 
 let syncInFlight: Promise<void> | null = null;
 let activeCleanup: (() => void) | null = null;
@@ -47,13 +48,31 @@ export function startWorkspaceSync(userId: string): () => void {
   if (activeCleanup) return activeCleanup;
 
   let disposed = false;
+  let consecutiveFailures = 0;
+  let nextRetryAt = 0;
 
   const sync = () => {
-    if (disposed) return;
+    if (disposed || Date.now() < nextRetryAt) return;
 
-    void syncWorkspaceWithSupabase().catch((error) => {
-      console.error("Supabase workspace sync failed:", error);
-    });
+    void syncWorkspaceWithSupabase()
+      .then(() => {
+        consecutiveFailures = 0;
+        nextRetryAt = 0;
+      })
+      .catch((error) => {
+        const delayIndex = Math.min(
+          consecutiveFailures,
+          SYNC_RETRY_DELAYS_MS.length - 1,
+        );
+        const delay = SYNC_RETRY_DELAYS_MS[delayIndex];
+        consecutiveFailures += 1;
+        nextRetryAt = Date.now() + delay;
+
+        console.error(
+          "Supabase workspace sync failed; backing off before the next automatic retry.",
+          error,
+        );
+      });
   };
 
   let watchdogTimer: number | null = null;
@@ -68,14 +87,25 @@ export function startWorkspaceSync(userId: string): () => void {
     if (disposed || watchdogTimer !== null) return;
 
     watchdogTimer = window.setInterval(() => {
-      // Keep a low-frequency authoritative refresh even while Realtime says
-      // SUBSCRIBED. This closes the "silent/stuck channel" gap where no status
-      // error is emitted even though events stop arriving.
+      // Keep an infrequent authoritative refresh even while Realtime says
+      // SUBSCRIBED. Realtime remains the primary cross-browser path; the
+      // watchdog is only a fallback for a silent/stuck channel.
       sync();
     }, REALTIME_WATCHDOG_INTERVAL_MS);
   };
 
   startWatchdog();
+
+  const handleConnectivityRecovery = () => {
+    nextRetryAt = 0;
+    sync();
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === "visible") {
+      handleConnectivityRecovery();
+    }
+  };
 
   const channel = supabase
     .channel("rekammedisku-workspace-sync-" + userId)
@@ -156,9 +186,14 @@ export function startWorkspaceSync(userId: string): () => void {
       }
     });
 
+  window.addEventListener("online", handleConnectivityRecovery);
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
   activeCleanup = () => {
     disposed = true;
     stopWatchdog();
+    window.removeEventListener("online", handleConnectivityRecovery);
+    document.removeEventListener("visibilitychange", handleVisibilityChange);
     void supabase.removeChannel(channel);
     activeCleanup = null;
   };
