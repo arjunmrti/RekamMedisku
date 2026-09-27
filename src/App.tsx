@@ -42,6 +42,10 @@ function App() {
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(() => getInitialPatient());
   const [reportMode, setReportMode] = useState<ReportMode>("hub");
+  const activeRotationId = loadActiveRotation().id;
+  const reportPatients = loadPatients().filter((candidate) =>
+    isActivePatientInRotation(candidate, activeRotationId),
+  );
 
   useEffect(() => {
     if (workspaceSyncVersion === 0) return;
@@ -221,7 +225,17 @@ function App() {
         key={`${selectedPatient?.id ?? "none"}:${reportMode}`}
         {...navigationProps}
         patient={selectedPatient ?? undefined}
+        availablePatients={reportPatients}
         mode={reportMode}
+        onPatientChange={(patientId) => {
+          const nextPatient = reportPatients.find(
+            (candidate) => candidate.id === patientId,
+          );
+
+          if (nextPatient) {
+            setSelectedPatient(nextPatient);
+          }
+        }}
         onModeChange={(nextMode) => {
           if (nextMode === "follow-up" && !selectedPatient) {
             const activeRotation = loadActiveRotation();
