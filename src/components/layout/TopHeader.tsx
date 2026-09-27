@@ -124,6 +124,10 @@ export default function TopHeader({
       ? metadata.role.trim()
       : "Akun RekamMedisku";
 
+  const headerSizeClass = searchEnabled
+    ? "h-[104px] min-h-[104px] sm:h-16 sm:min-h-16 xl:h-[72px] xl:min-h-[72px]"
+    : "h-16 min-h-16 xl:h-[72px] xl:min-h-[72px]";
+
   const today = new Intl.DateTimeFormat("id-ID", {
     weekday: "long",
     day: "2-digit",
@@ -132,7 +136,7 @@ export default function TopHeader({
   }).format(new Date());
 
   return (
-    <header className="sticky top-0 z-30 flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#E5EAF1] bg-white px-3 py-2 sm:flex-nowrap sm:gap-3 sm:px-4 sm:py-0 xl:h-[72px] xl:gap-6 xl:px-8">
+    <header className={`fixed inset-x-0 top-0 z-30 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#E5EAF1] bg-white px-3 py-2 sm:flex-nowrap sm:gap-3 sm:px-4 sm:py-0 xl:gap-6 xl:px-8 lg:left-[252px] ${headerSizeClass}`}>
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           type="button"

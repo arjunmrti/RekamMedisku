@@ -43,12 +43,16 @@ export default function AppShell({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [mobileMenuOpen]);
 
+  const contentOffsetClass = searchEnabled
+    ? "pt-[104px] sm:pt-16 xl:pt-[72px]"
+    : "pt-16 xl:pt-[72px]";
+
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-[#F7F9FC] text-slate-800">
       <div className="flex min-h-[100dvh] min-w-0">
         <Sidebar activeItem={activeItem} onNavigate={navigate} />
 
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <TopHeader
             searchValue={searchValue}
             onSearchChange={onSearchChange}
@@ -56,7 +60,10 @@ export default function AppShell({
             activeItem={activeItem}
             onMenuClick={() => setMobileMenuOpen(true)}
           />
-          {children}
+
+          <div className={`flex min-h-0 min-w-0 flex-1 flex-col ${contentOffsetClass}`}>
+            {children}
+          </div>
         </div>
       </div>
 
