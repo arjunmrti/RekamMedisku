@@ -812,7 +812,7 @@ export default function FollowUpFormPage({
                           <span className="block text-[11px] font-bold">
                             {item.label}
                           </span>
-                          <span className="block text-[9px] font-medium text-slate-400">
+                          <span className="block text-[10px] font-medium text-slate-400">
                             {stat.filled}/{stat.total} terisi
                           </span>
                         </span>
