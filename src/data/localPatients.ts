@@ -5,12 +5,13 @@ import {
   getPatientFollowUpAttachmentIds,
 } from "./localFollowUps";
 import type { PatientListItem, PatientStatus } from "../types/patient";
+import { workspaceStorageKey } from "./workspaceStorage";
 import {
   normalizePatientAdmissionLocation,
   normalizePatientLocation,
 } from "../utils/patientLocation";
 
-const PATIENTS_KEY = "rekammedisku:patients";
+const PATIENTS_KEY = "patients";
 
 const LEGACY_DEMO_PATIENT_IDS = new Set([
   "p-rotation-interna-24012607-demo",
@@ -67,13 +68,13 @@ function removeLegacyDemoPatients(patients: PatientListItem[]) {
 }
 
 export function loadPatients(): PatientListItem[] {
-  const stored = window.localStorage.getItem(PATIENTS_KEY);
+  const stored = window.localStorage.getItem(workspaceStorageKey(PATIENTS_KEY));
 
   if (!stored) {
     return [];
   }
 
-  const parsed = readJson<unknown>(PATIENTS_KEY, null);
+  const parsed = readJson<unknown>(workspaceStorageKey(PATIENTS_KEY), null);
 
   if (!Array.isArray(parsed)) {
     return [];
@@ -96,7 +97,7 @@ export function loadPatients(): PatientListItem[] {
 }
 
 export function savePatients(patients: PatientListItem[]) {
-  window.localStorage.setItem(PATIENTS_KEY, JSON.stringify(patients));
+  window.localStorage.setItem(workspaceStorageKey(PATIENTS_KEY), JSON.stringify(patients));
 }
 
 export function replacePatients(patients: PatientListItem[]) {
