@@ -124,7 +124,11 @@ export default function TopHeader({
       ? metadata.role.trim()
       : "Akun RekamMedisku";
 
-  const headerSizeClass = searchEnabled\n    ? "h-[104px] min-h-[104px] sm:h-16 sm:min-h-16 xl:h-[72px] xl:min-h-[72px]"\n    : "h-16 min-h-16 xl:h-[72px] xl:min-h-[72px]";\n\n  const today = new Intl.DateTimeFormat("id-ID", {
+  const headerSizeClass = searchEnabled
+    ? "h-[104px] min-h-[104px] sm:h-16 sm:min-h-16 xl:h-[72px] xl:min-h-[72px]"
+    : "h-16 min-h-16 xl:h-[72px] xl:min-h-[72px]";
+
+  const today = new Intl.DateTimeFormat("id-ID", {
     weekday: "long",
     day: "2-digit",
     month: "long",
