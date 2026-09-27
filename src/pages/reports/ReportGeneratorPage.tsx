@@ -29,44 +29,19 @@ type ReportGeneratorPageProps = NavigationProps & {
 type FollowUpReportGeneratorPageProps = NavigationProps & {
   patient?: PatientListItem;
   availablePatients?: PatientListItem[];
-  onModeChange?: (mode: ReportMode) => void;
   onPatientChange?: (patientId: string) => void;
 };
 
-function ReportModeSwitch({
-  mode,
-  onModeChange,
-}: {
-  mode: ReportMode;
-  onModeChange?: (mode: ReportMode) => void;
-}) {
-  if (!onModeChange) return null;
-
+function ReportBackLink({ onNavigate }: Pick<NavigationProps, "onNavigate">) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <button
-        type="button"
-        onClick={() => onModeChange("follow-up")}
-        className={
-          mode === "follow-up"
-            ? "rounded-lg bg-[#1677FF] px-3 py-2 text-[11px] font-semibold text-white"
-            : "rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-[#1677FF]"
-        }
-      >
-        Follow-Up
-      </button>
-      <button
-        type="button"
-        onClick={() => onModeChange("slaberan")}
-        className={
-          mode === "slaberan"
-            ? "rounded-lg bg-[#1677FF] px-3 py-2 text-[11px] font-semibold text-white"
-            : "rounded-lg border border-slate-200 bg-white px-3 py-2 text-[11px] font-semibold text-slate-600 hover:border-blue-200 hover:bg-blue-50 hover:text-[#1677FF]"
-        }
-      >
-        Slaberan
-      </button>
-    </div>
+    <button
+      type="button"
+      onClick={() => onNavigate("Semua Laporan")}
+      className="inline-flex items-center gap-2 text-xs font-semibold text-[#1677FF] transition hover:text-blue-700"
+    >
+      <Icon name="arrow" className="h-3.5 w-3.5 rotate-180" />
+      Semua Laporan
+    </button>
   );
 }
 
@@ -159,7 +134,6 @@ export default function ReportGeneratorPage({
       onNavigate={onNavigate}
       patient={patient}
       availablePatients={availablePatients}
-      onModeChange={onModeChange}
       onPatientChange={onPatientChange}
     />
   );
@@ -170,7 +144,6 @@ function FollowUpReportGeneratorPage({
   onNavigate,
   patient,
   availablePatients = [],
-  onModeChange,
   onPatientChange,
 }: FollowUpReportGeneratorPageProps) {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
@@ -280,7 +253,7 @@ function FollowUpReportGeneratorPage({
       >
         <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <div className="mx-auto mb-5 w-full max-w-xl">
-            <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
+            <ReportBackLink onNavigate={onNavigate} />
           </div>
           <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
@@ -320,7 +293,7 @@ function FollowUpReportGeneratorPage({
       >
         <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <div className="mx-auto mb-5 w-full max-w-xl">
-            <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
+            <ReportBackLink onNavigate={onNavigate} />
           </div>
           <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
@@ -367,7 +340,7 @@ function FollowUpReportGeneratorPage({
       >
         <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <div className="mx-auto mb-5 w-full max-w-xl">
-            <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
+            <ReportBackLink onNavigate={onNavigate} />
           </div>
           <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
@@ -406,7 +379,7 @@ function FollowUpReportGeneratorPage({
       >
         <main className="flex-1 overflow-y-auto px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:pb-8 md:pb-8 sm:px-6 lg:px-8 lg:py-7">
           <div className="mx-auto mb-5 w-full max-w-xl">
-            <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
+            <ReportBackLink onNavigate={onNavigate} />
           </div>
           <div className="mx-auto flex min-h-[70vh] w-full max-w-[900px] items-center justify-center">
             <section className="w-full rounded-3xl border border-slate-200/90 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)] sm:p-12">
@@ -458,16 +431,7 @@ function FollowUpReportGeneratorPage({
       <main className="flex-1 overflow-y-auto px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:pb-8 md:pb-8 sm:px-6 lg:px-8 lg:py-7">
         <div className="mx-auto w-full max-w-[1400px] space-y-6">
           <header className="space-y-3">
-            <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
-
-            <button
-              type="button"
-              onClick={() => onNavigate("Profil Pasien")}
-              className="inline-flex items-center gap-2 text-xs font-semibold text-[#1677FF] transition hover:text-blue-700"
-            >
-              <Icon name="arrow" className="h-3.5 w-3.5 rotate-180" />
-              Kembali ke Profil Pasien
-            </button>
+            <ReportBackLink onNavigate={onNavigate} />
 
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
