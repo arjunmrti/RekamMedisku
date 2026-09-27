@@ -44,7 +44,7 @@ export default function PatientListToolbar({
 
         <div className="hidden h-7 w-px bg-slate-200 lg:block" />
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:shrink-0">
+        <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:flex lg:shrink-0">
           <select
             value={status}
             onChange={(event) =>
@@ -81,7 +81,7 @@ export default function PatientListToolbar({
                 event.target.value as "newest" | "oldest" | "name" | "bed",
               )
             }
-            className="min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 lg:min-h-10 lg:w-[170px] sm:col-span-1 focus:border-[#1677FF] focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="col-span-2 min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-600 focus:border-[#1677FF] focus:outline-none focus:ring-1 focus:ring-blue-500 md:col-span-1 lg:min-h-10 lg:w-[170px]"
             aria-label="Urutkan pasien"
           >
             <option value="newest">Urutkan: Terbaru</option>
