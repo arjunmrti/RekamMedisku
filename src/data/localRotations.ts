@@ -1,7 +1,8 @@
 import type { Rotation, RotationStatus, RotationSpecialty } from "../types/rotation";
+import { workspaceStorageKey } from "./workspaceStorage";
 
-const ROTATIONS_KEY = "rekammedisku:rotations";
-const ACTIVE_ROTATION_KEY = "rekammedisku:active-rotation";
+const ROTATIONS_KEY = "rotations";
+const ACTIVE_ROTATION_KEY = "active-rotation";
 
 const LEGACY_DEMO_ROTATION_IDS = new Set([
   "rotation-neurologi",
@@ -23,13 +24,13 @@ function readJson<T>(key: string, fallback: T): T {
 }
 
 export function loadRotations(): Rotation[] {
-  const raw = window.localStorage.getItem(ROTATIONS_KEY);
+  const raw = window.localStorage.getItem(workspaceStorageKey(ROTATIONS_KEY));
 
   if (!raw) {
     return [];
   }
 
-  const stored = readJson<unknown>(ROTATIONS_KEY, null);
+  const stored = readJson<unknown>(workspaceStorageKey(ROTATIONS_KEY), null);
 
   if (Array.isArray(stored) && stored.length > 0) {
     const migrationsApplied = stored.filter(
@@ -53,11 +54,11 @@ export function loadRotations(): Rotation[] {
 }
 
 export function saveRotations(rotations: Rotation[]) {
-  window.localStorage.setItem(ROTATIONS_KEY, JSON.stringify(rotations));
+  window.localStorage.setItem(workspaceStorageKey(ROTATIONS_KEY), JSON.stringify(rotations));
 }
 
 export function loadActiveRotationId(): string {
-  const storedId = window.localStorage.getItem(ACTIVE_ROTATION_KEY);
+  const storedId = window.localStorage.getItem(workspaceStorageKey(ACTIVE_ROTATION_KEY));
   const rotations = loadRotations();
 
   const storedRotation = rotations.find((rotation) => rotation.id === storedId);
@@ -88,7 +89,7 @@ export function loadActiveRotation(): Rotation {
 }
 
 export function setActiveRotationId(rotationId: string) {
-  window.localStorage.setItem(ACTIVE_ROTATION_KEY, rotationId);
+  window.localStorage.setItem(workspaceStorageKey(ACTIVE_ROTATION_KEY), rotationId);
 }
 
 export function activateRotation(rotationId: string): Rotation[] {
