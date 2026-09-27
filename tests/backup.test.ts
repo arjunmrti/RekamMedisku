@@ -93,6 +93,7 @@ function createRestoreLocalState(
   )?.id ?? "";
   let drafts: Record<string, FollowUpFormValues> = {};
   let attachments: StoredAttachment[] = [];
+  let slaberanLocations: SlaberanLocation[] = [];
 
   const state: RestoreBackupLocalState = {
     loadPatients: () => patients,
@@ -121,6 +122,10 @@ function createRestoreLocalState(
     loadAllAttachments: async () => attachments,
     replaceAllAttachments: async (value) => {
       attachments = value;
+    },
+    loadSlaberanLocations: () => slaberanLocations,
+    replaceSlaberanLocations: (value) => {
+      slaberanLocations = value;
     },
   };
 
