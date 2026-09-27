@@ -51,7 +51,7 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
   const activeRotation = loadActiveRotation();
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col overflow-hidden border-r border-[#E5EAF1] bg-[#F8FBFF] xl:flex">
+    <aside className="sticky top-0 hidden h-screen w-[252px] shrink-0 flex-col overflow-hidden border-r border-[#E5EAF1] bg-[#F8FBFF] lg:flex">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex h-[72px] items-center gap-3 px-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1677FF] text-white shadow-sm shadow-blue-500/20">
