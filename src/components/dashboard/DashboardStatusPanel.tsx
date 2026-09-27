@@ -26,7 +26,7 @@ export default function DashboardStatusPanel({
             <Icon name="pulse" className="h-4 w-4" />
           </div>
           <div>
-            <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-slate-400">
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-slate-400">
               Ringkasan Dashboard
             </p>
             <h2 className="text-sm font-bold text-slate-900">
@@ -43,7 +43,7 @@ export default function DashboardStatusPanel({
               <p className="text-xs font-semibold text-slate-600">
                 Progress follow-up
               </p>
-              <p className="mt-1 text-[10px] text-slate-400">
+              <p className="mt-1 text-[11px] text-slate-400">
                 {followUpsToday} dari {activePatients} pasien aktif tercatat hari ini
               </p>
             </div>
@@ -62,7 +62,7 @@ export default function DashboardStatusPanel({
 
         <div className="grid grid-cols-3 gap-2.5">
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-3">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-emerald-600">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
               Selesai
             </p>
             <p className="mt-1 text-xl font-extrabold text-slate-900">
@@ -71,7 +71,7 @@ export default function DashboardStatusPanel({
           </div>
 
           <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-3">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-amber-600">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600">
               Pending
             </p>
             <p className="mt-1 text-xl font-extrabold text-slate-900">
@@ -80,7 +80,7 @@ export default function DashboardStatusPanel({
           </div>
 
           <div className="rounded-xl border border-purple-100 bg-purple-50/70 p-3">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-purple-600">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-purple-600">
               Arsip
             </p>
             <p className="mt-1 text-xl font-extrabold text-slate-900">
@@ -91,7 +91,7 @@ export default function DashboardStatusPanel({
 
         <div className="flex items-start gap-2.5 rounded-xl border border-blue-100 bg-blue-50/60 p-3">
           <Icon name="alert" className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-          <p className="text-[10px] leading-[1.65] text-slate-500">
+          <p className="text-[11px] leading-[1.6] text-slate-500">
             {pendingFollowUps > 0
               ? `${pendingFollowUps} pasien masih perlu ditindaklanjuti hari ini.`
               : activePatients > 0
