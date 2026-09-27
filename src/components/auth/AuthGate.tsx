@@ -56,6 +56,7 @@ function getWorkspaceSyncErrorMessage(error: unknown) {
 
 export default function AuthGate({ children }: AuthGateProps) {
   const { session, loading } = useAuth();
+  setWorkspaceUserId(session?.user.id ?? null);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workspaceError, setWorkspaceError] = useState("");
 
