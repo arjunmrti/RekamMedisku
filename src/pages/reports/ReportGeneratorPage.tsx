@@ -259,7 +259,7 @@ function FollowUpReportGeneratorPage({
         onSearchChange={() => undefined}
         searchEnabled={false}
       >
-        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
+        <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <div className="mx-auto mb-5 w-full max-w-xl">
             <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
           </div>
@@ -299,7 +299,7 @@ function FollowUpReportGeneratorPage({
         onSearchChange={() => undefined}
         searchEnabled={false}
       >
-        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
+        <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <div className="mx-auto mb-5 w-full max-w-xl">
             <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
           </div>
@@ -346,7 +346,7 @@ function FollowUpReportGeneratorPage({
         onSearchChange={() => undefined}
         searchEnabled={false}
       >
-        <main className="flex flex-1 items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
+        <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
           <div className="mx-auto mb-5 w-full max-w-xl">
             <ReportModeSwitch mode="follow-up" onModeChange={onModeChange} />
           </div>
