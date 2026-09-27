@@ -1,15 +1,16 @@
+import { workspaceStorageKey } from "./workspaceStorage";
 import type {
   BackupHistoryEntry,
   BackupOperationStatus,
   BackupOperationType,
 } from "../types/backup";
 
-const HISTORY_KEY = "rekammedisku:backup-history";
-const SNAPSHOT_KEY = "rekammedisku:backup-snapshot";
+const HISTORY_KEY = "backup-history";
+const SNAPSHOT_KEY = "backup-snapshot";
 
 function readJson<T>(key: string, fallback: T): T {
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = window.localStorage.getItem(workspaceStorageKey(key));
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
@@ -59,14 +60,14 @@ export function loadBackupHistory(): BackupHistoryEntry[] {
 export function appendBackupHistory(entry: BackupHistoryEntry) {
   const current = loadBackupHistory();
   window.localStorage.setItem(
-    HISTORY_KEY,
+    workspaceStorageKey(HISTORY_KEY),
     JSON.stringify([entry, ...current].slice(0, 30)),
   );
 }
 
 export function saveBackupSnapshot(exportedAt: string) {
   window.localStorage.setItem(
-    SNAPSHOT_KEY,
+    workspaceStorageKey(SNAPSHOT_KEY),
     JSON.stringify({ exportedAt }),
   );
 }
