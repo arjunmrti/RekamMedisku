@@ -136,8 +136,6 @@ export default function ReportGeneratorPage({
         activeItem={activeItem}
         onNavigate={onNavigate}
         onSelectMode={(nextMode) => onModeChange?.(nextMode)}
-        onOpenPatients={() => onNavigate("Daftar Pasien")}
-        hasSelectedPatient={Boolean(patient)}
       />
     );
   }
