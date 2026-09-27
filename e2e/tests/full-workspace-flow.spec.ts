@@ -258,10 +258,7 @@ test("alur browser utama: login → stase → pasien → follow-up → backup", 
     page.getByRole("heading", { name: "Follow-Up Baru" }),
   ).toBeVisible();
   await page
-    .getByText("Keluhan / Perkembangan Hari Ini", { exact: true })
-    .locator("..")
-    .locator("..")
-    .locator("textarea")
+    .getByLabel("Keluhan / Perkembangan Hari Ini", { exact: true })
     .fill("Keluhan hari ini membaik.");
 
   await page.getByRole("button", { name: "Simpan Follow-Up" }).click();
