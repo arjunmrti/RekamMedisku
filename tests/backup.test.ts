@@ -12,6 +12,8 @@ import type { Rotation } from "../src/types/rotation";
 import type { StoredAttachment } from "../src/data/localAttachments";
 import type { PatientListItem } from "../src/types/patient";
 import type { FollowUpEntry } from "../src/types/followUp";
+import type { SlaberanLocation } from "../src/types/slaberanLocation";
+import type { SlaberanTemplateRecord } from "../src/types/slaberanTemplate";
 
 const patient = {
   id: "p-test",
