@@ -3,6 +3,7 @@ import { replaceSavedFollowUps } from "./localFollowUps";
 import { updatePatient } from "./localPatients";
 import { syncPatientsWithSupabase } from "./supabasePatients";
 import { supabase } from "../utils/supabase";
+import { workspaceStorageKey } from "./workspaceStorage";
 import { derivePatientFollowUpSummary } from "./patientFollowUpSummary";
 import {
   deleteAttachments,
@@ -68,9 +69,9 @@ type AtomicFollowUpSaveResult = {
   supportingExamIds: Record<string, string>;
 };
 
-const FOLLOW_UP_ID_MAP_KEY = "rekammedisku:supabase-follow-up-ids";
-const SUPPORTING_EXAM_ID_MAP_KEY = "rekammedisku:supabase-supporting-exam-ids";
-const PATIENT_ID_MAP_KEY = "rekammedisku:supabase-patient-ids";
+const FOLLOW_UP_ID_MAP_KEY = "supabase-follow-up-ids";
+const SUPPORTING_EXAM_ID_MAP_KEY = "supabase-supporting-exam-ids";
+const PATIENT_ID_MAP_KEY = "supabase-patient-ids";
 
 const ID_MONTHS: Record<string, string> = {
   januari: "01",
@@ -89,7 +90,7 @@ const ID_MONTHS: Record<string, string> = {
 
 function readMap(key: string): IdMap {
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = window.localStorage.getItem(workspaceStorageKey(key));
     const parsed = raw ? (JSON.parse(raw) as unknown) : null;
 
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
@@ -110,7 +111,7 @@ function readMap(key: string): IdMap {
 }
 
 function saveMap(key: string, map: IdMap) {
-  window.localStorage.setItem(key, JSON.stringify(map));
+  window.localStorage.setItem(workspaceStorageKey(key), JSON.stringify(map));
 }
 
 function toIsoDate(value: string) {
