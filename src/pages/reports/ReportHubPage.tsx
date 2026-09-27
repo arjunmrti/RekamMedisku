@@ -196,7 +196,7 @@ export default function ReportHubPage({
                   </p>
                 </div>
 
-                <div className="mt-6 grid grid-cols-2 gap-3">
+                <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
                   <div className="rounded-xl border border-blue-100/80 bg-white/80 p-3.5">
                     <p className="text-[10px] font-semibold text-slate-400">
                       Pasien aktif
