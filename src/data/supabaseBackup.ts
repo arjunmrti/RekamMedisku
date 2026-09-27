@@ -124,6 +124,12 @@ export async function restoreWorkspaceBackupWithSupabase(
     followUpsByPatient: payload.followUpsByPatient,
     rotations: payload.rotations,
     activeRotationId: payload.activeRotationId ?? "",
+    ...(payload.slaberanLocations !== undefined
+      ? { slaberanLocations: payload.slaberanLocations }
+      : {}),
+    ...(payload.slaberanTemplates !== undefined
+      ? { slaberanTemplates: payload.slaberanTemplates }
+      : {}),
   };
 
   // Upload binary attachments before replacing the cloud database snapshot.
