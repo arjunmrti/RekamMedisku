@@ -131,7 +131,7 @@ export default function ProfileEditDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/35 px-4 py-6 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-950/35 p-0 backdrop-blur-[2px] sm:items-center sm:p-4 md:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="profile-edit-title"
@@ -141,8 +141,8 @@ export default function ProfileEditDialog({
         }
       }}
     >
-      <section className="w-full max-w-md overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.38)]">
-        <div className="flex items-start justify-between border-b border-slate-100 bg-slate-50/60 px-5 py-4 sm:px-6">
+      <section className="max-h-[100dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.38)] sm:max-h-[92dvh] sm:rounded-3xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-100 bg-slate-50/95 px-5 py-4 backdrop-blur sm:px-6">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
               Profil Akun

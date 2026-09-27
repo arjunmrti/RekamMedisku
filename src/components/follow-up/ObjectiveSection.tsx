@@ -142,13 +142,13 @@ export default function ObjectiveSection({
             <span className="text-[10px] text-slate-400">Input manual</span>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
             {vitalFields.map(([key, label, unit]) => (
               <label
                 key={key}
                 className={
                   key === "oxygenVia"
-                    ? "space-y-1.5 sm:col-span-2 xl:col-span-1"
+                    ? "space-y-1.5 md:col-span-2 xl:col-span-1"
                     : "space-y-1.5"
                 }
               >
@@ -222,7 +222,7 @@ export default function ObjectiveSection({
               </span>
             </div>
 
-            <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3">
               <label className="space-y-1.5">
                 <span className="block text-[11px] font-semibold text-slate-600">
                   GCS: Eye (1–4)
@@ -294,7 +294,7 @@ export default function ObjectiveSection({
               </label>
             </div>
 
-            <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
               <label className="space-y-1.5">
                 <span className="block text-[11px] font-semibold text-slate-600">
                   Status Kesadaran
@@ -345,7 +345,7 @@ export default function ObjectiveSection({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {neurologyFields.map(([key, label, placeholder]) => (
                 <label key={key} className="space-y-1.5">
                   <span className="block text-[11px] font-semibold text-slate-600">
@@ -373,11 +373,11 @@ export default function ObjectiveSection({
                 </label>
               ))}
 
-              <label className="space-y-1.5 sm:col-span-2">
+              <label className="space-y-1.5 md:col-span-2">
                 <span className="block text-[11px] font-semibold text-slate-600">
                   Meningeal Sign
                 </span>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                   <input
                     value={neurology.neckStiffness}
                     onChange={(event) =>
@@ -432,7 +432,7 @@ export default function ObjectiveSection({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {internalMedicineFields.map(([key, label, placeholder]) => (
                 <label key={key} className="space-y-1.5">
                   <span className="block text-[11px] font-semibold text-slate-600">

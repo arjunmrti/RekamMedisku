@@ -16,7 +16,7 @@ export default function RotationSwitchDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-slate-900/45 p-0 backdrop-blur-sm sm:p-4 md:items-center md:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="switch-rotation-title"
@@ -24,7 +24,7 @@ export default function RotationSwitchDialog({
         if (event.target === event.currentTarget) onCancel();
       }}
     >
-      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+      <div className="max-h-[100dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:max-h-[92dvh] sm:rounded-3xl sm:p-6">
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1677FF]">
             <Icon

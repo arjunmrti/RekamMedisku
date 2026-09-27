@@ -26,6 +26,7 @@ body {
 
 body {
   color: #172b4d;
+  overflow-x: hidden;
 }
 
 button,
@@ -79,6 +80,10 @@ select:focus-visible {
 
 ::selection {
   background: rgb(22 119 255 / 0.15);
+}
+
+html {
+  overflow-x: hidden;
 }
 
 ::-webkit-scrollbar {

@@ -90,7 +90,7 @@ export default function PatientListTable({
         </div>
       </div>
 
-      <div className="hidden overflow-x-auto xl:block">
+      <div className="hidden overflow-x-auto lg:block">
         <table className="w-full min-w-[980px] border-collapse text-left">
           <thead>
             <tr className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400">
@@ -209,14 +209,14 @@ export default function PatientListTable({
         </table>
       </div>
 
-      <div className="divide-y divide-slate-100 xl:hidden">
+      <div className="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-2 md:gap-4 md:divide-y-0 md:p-4 lg:hidden">
         {patients.map((patient) => (
-          <div key={patient.id} className="p-4">
+          <div key={patient.id} className="min-w-0 p-4 md:rounded-2xl md:border md:border-slate-200 md:bg-slate-50/60 md:p-4">
             <button
               type="button"
               onClick={() => onSelectPatient(patient)}
               className={
-                "block min-h-[44px] w-full rounded-xl p-2.5 text-left transition-colors sm:p-2 " +
+                "block min-h-[44px] w-full rounded-xl p-2.5 text-left transition-colors md:p-2 " +
                 (patient.id === selectedPatientId
                   ? "bg-blue-50/70"
                   : "hover:bg-slate-50")
@@ -227,7 +227,7 @@ export default function PatientListTable({
                 <StatusBadge status={patient.status} />
               </div>
 
-              <div className="mt-4 grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 sm:gap-4">
+              <div className="mt-4 grid grid-cols-1 gap-3 text-xs md:grid-cols-2 md:gap-4">
                 <div>
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                     No. RM
@@ -244,7 +244,7 @@ export default function PatientListTable({
                   </p>
                 </div>
 
-                <div className="sm:col-span-2">
+                <div className="md:col-span-2">
                   <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                     DPJP
                   </p>

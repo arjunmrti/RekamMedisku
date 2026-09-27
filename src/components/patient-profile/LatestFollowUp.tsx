@@ -73,14 +73,14 @@ export default function LatestFollowUp({
         {rows.map(([label, text]) => (
           <div
             key={label}
-            className="grid grid-cols-1 gap-1.5 sm:grid-cols-12 sm:items-baseline sm:gap-3"
+            className="grid grid-cols-1 gap-1.5 md:grid-cols-12 md:items-baseline md:gap-3"
           >
-            <span className="font-bold uppercase tracking-wide text-slate-700 sm:col-span-2">
+            <span className="font-bold uppercase tracking-wide text-slate-700 md:col-span-2">
               {label}
             </span>
             <p
               className={
-                "leading-relaxed sm:col-span-10 " +
+                "leading-relaxed md:col-span-10 " +
                 (label === "Assessment"
                   ? "font-semibold text-slate-800"
                   : "text-slate-600")

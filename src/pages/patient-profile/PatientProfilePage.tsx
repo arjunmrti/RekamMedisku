@@ -413,7 +413,7 @@ export default function PatientProfilePage({
 
       {hydratedSelectedExam ? (
       <div
-        className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm"
+        className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-900/45 p-0 backdrop-blur-sm sm:p-4 md:items-center md:p-6"
         role="dialog"
         aria-modal="true"
         aria-labelledby="exam-detail-title"
@@ -421,8 +421,8 @@ export default function PatientProfilePage({
           if (event.target === event.currentTarget) setSelectedExam(null);
         }}
       >
-        <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
-          <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+        <div className="flex max-h-[100dvh] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:max-h-[90dvh] sm:rounded-3xl">
+          <div className="sticky top-0 z-10 flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 pb-4 pt-5 backdrop-blur sm:px-6 sm:pt-6">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1677FF]">
                 Pemeriksaan Penunjang
@@ -442,7 +442,7 @@ export default function PatientProfilePage({
             </button>
           </div>
 
-          <div className="mt-5 space-y-4">
+          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5 pt-5 sm:px-6 sm:pb-6">
             <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
               <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                 Hasil yang dicatat

@@ -54,7 +54,7 @@ export default function ReportPreview({
               onChange={(event) => onTextChange(event.target.value)}
               rows={24}
               aria-label="Edit draft laporan"
-              className="min-h-[560px] w-full resize-y rounded-xl border border-blue-200 bg-white p-4 font-mono text-[11px] leading-6 text-slate-700 outline-none transition focus:border-[#1677FF] focus:ring-2 focus:ring-blue-500/10"
+              className="min-h-[420px] w-full sm:min-h-[560px] md:min-h-[620px] resize-y rounded-xl border border-blue-200 bg-white p-4 font-mono text-[11px] leading-6 text-slate-700 outline-none transition focus:border-[#1677FF] focus:ring-2 focus:ring-blue-500/10"
             />
             <div className="mt-3 flex justify-end">
               <button
@@ -68,7 +68,7 @@ export default function ReportPreview({
             </div>
           </div>
         ) : text ? (
-          <div className="max-h-[680px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-5 shadow-inner sm:p-6">
+          <div className="max-h-[560px] overflow-y-auto sm:max-h-[680px] rounded-xl border border-slate-200 bg-white p-5 shadow-inner sm:p-6">
             <div className="whitespace-pre-wrap font-mono text-[11px] leading-6 text-slate-700">
               {text}
             </div>
