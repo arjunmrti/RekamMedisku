@@ -3,10 +3,12 @@ import Icon from "../ui/Icon";
 import {
   createSlaberanLocation,
   deleteSlaberanLocation,
+  swapSlaberanLocations,
   syncSlaberanLocationsWithSupabase,
   updateSlaberanLocation,
 } from "../../data/supabaseSlaberanLocations";
 import { loadSlaberanLocations } from "../../data/localSlaberanLocations";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import { loadPatients } from "../../data/localPatients";
 import type {
   SlaberanLocation,
@@ -43,6 +45,7 @@ export default function SlaberanLocationManager({ onBack }: Props) {
   const [busy, setBusy] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const patients = useMemo(() => loadPatients(), []);
 
   const floors = useMemo(
@@ -80,7 +83,7 @@ export default function SlaberanLocationManager({ onBack }: Props) {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+  }, [refresh, workspaceSyncVersion]);
 
   useEffect(() => {
     if (type !== "ward") {
@@ -138,10 +141,7 @@ export default function SlaberanLocationManager({ onBack }: Props) {
     setBusy(true);
     setErrorMessage("");
     try {
-      await updateSlaberanLocation(location.id, { sortOrder: target.sortOrder });
-      await updateSlaberanLocation(target.id, {
-        sortOrder: location.sortOrder,
-      });
+      await swapSlaberanLocations(location.id, target.id);
       await refresh();
     } catch (error) {
       setErrorMessage(

@@ -4,6 +4,7 @@ import type {
 } from "../types/slaberanLocation";
 import { replaceSlaberanLocations } from "./localSlaberanLocations";
 import { supabase } from "../utils/supabase";
+import { getAuthenticatedUserId } from "../utils/authenticatedUser";
 
 type SlaberanLocationRow = {
   id: string;
@@ -31,15 +32,7 @@ function toLocation(row: SlaberanLocationRow): SlaberanLocation {
 }
 
 async function getCurrentUserId() {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-
-  if (error) throw error;
-  if (!user) throw new Error("Sesi RekamMedisku tidak ditemukan.");
-
-  return user.id;
+  return getAuthenticatedUserId();
 }
 
 function getErrorMessage(error: unknown) {
@@ -142,6 +135,21 @@ export async function updateSlaberanLocation(
     .update(update)
     .eq("id", locationId)
     .eq("user_id", userId);
+
+  if (error) throw new Error(getErrorMessage(error));
+  return syncSlaberanLocationsWithSupabase();
+}
+
+export async function swapSlaberanLocations(
+  locationId: string,
+  targetLocationId: string,
+): Promise<SlaberanLocation[]> {
+  await getCurrentUserId();
+
+  const { error } = await supabase.rpc("swap_slaberan_locations", {
+    p_location_id: locationId,
+    p_target_location_id: targetLocationId,
+  });
 
   if (error) throw new Error(getErrorMessage(error));
   return syncSlaberanLocationsWithSupabase();

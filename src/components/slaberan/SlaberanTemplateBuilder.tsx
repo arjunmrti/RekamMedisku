@@ -7,6 +7,7 @@ import {
   updateSlaberanTemplate,
 } from "../../data/supabaseSlaberanTemplates";
 import { loadSlaberanTemplates } from "../../data/localSlaberanTemplates";
+import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import {
   SLABERAN_PATIENT_FIELDS,
   SLABERAN_VARIABLES,
@@ -24,6 +25,9 @@ import {
 type Props = {
   onBack: () => void;
 };
+
+const MAX_TEMPLATE_IMPORT_SIZE_BYTES = 1 * 1024 * 1024;
+const SUPPORTED_TEMPLATE_SCHEMA_VERSION = 1;
 
 const BLOCK_META: Record<
   SlaberanTemplateBlockType,
@@ -137,6 +141,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
   const [templates, setTemplates] = useState<SlaberanTemplateRecord[]>(
     loadSlaberanTemplates(),
   );
+  const workspaceSyncVersion = useWorkspaceSyncVersion();
   const [selectedId, setSelectedId] = useState("");
   const [draft, setDraft] = useState<SlaberanTemplateRecord | null>(null);
   const [saving, setSaving] = useState(false);
@@ -183,7 +188,7 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
 
   useEffect(() => {
     void refresh();
-  }, [refresh]);
+  }, [refresh, workspaceSyncVersion]);
 
   useEffect(() => {
     if (!selectedId) return;
@@ -361,8 +366,22 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
     setErrorMessage("");
     try {
       const copy = cloneSlaberanTemplate(draft);
+      const baseName = copy.name.trim() || "Template Slaberan";
+      const existingNames = new Set(
+        templates
+          .filter((template) => template.id !== copy.id)
+          .map((template) => template.name.trim().toLowerCase()),
+      );
+      let duplicateName = baseName + " (2)";
+      let suffix = 2;
+
+      while (existingNames.has(duplicateName.toLowerCase())) {
+        suffix += 1;
+        duplicateName = baseName + " (" + suffix + ")";
+      }
+
       const created = await createSlaberanTemplate({
-        name: copy.name,
+        name: duplicateName,
         doctor: copy.doctor,
         specialty: copy.specialty,
         hospital: copy.hospital,
@@ -439,6 +458,10 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
     setErrorMessage("");
 
     try {
+      if (file.size > MAX_TEMPLATE_IMPORT_SIZE_BYTES) {
+        throw new Error("File template terlalu besar. Maksimal 1 MB.");
+      }
+
       const parsed = JSON.parse(await file.text()) as unknown;
 
       if (
@@ -452,42 +475,91 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
 
       const candidate = (parsed as { template?: unknown }).template;
 
-      if (
-        typeof candidate !== "object" ||
-        candidate === null ||
-        typeof (candidate as { name?: unknown }).name !== "string" ||
-        typeof (candidate as { specialty?: unknown }).specialty !== "string" ||
-        typeof (candidate as { hospital?: unknown }).hospital !== "string" ||
-        typeof (candidate as { opening?: unknown }).opening !== "string" ||
-        typeof (candidate as { showEmptyRooms?: unknown }).showEmptyRooms !==
-          "boolean" ||
-        !Array.isArray((candidate as { blocks?: unknown }).blocks)
-      ) {
+      if (typeof candidate !== "object" || candidate === null) {
         throw new Error("Struktur template JSON tidak lengkap.");
       }
 
-      const blocks = (candidate as { blocks: unknown[] }).blocks.filter(
-        (block): block is SlaberanTemplateBlock =>
-          typeof block === "object" &&
-          block !== null &&
-          typeof (block as { id?: unknown }).id === "string" &&
-          typeof (block as { type?: unknown }).type === "string" &&
-          Object.prototype.hasOwnProperty.call(
-            BLOCK_META,
-            (block as { type: string }).type,
-          ) &&
-          typeof (block as { label?: unknown }).label === "string" &&
-          typeof (block as { enabled?: unknown }).enabled === "boolean" &&
-          typeof (block as { config?: unknown }).config === "object" &&
-          (block as { config?: unknown }).config !== null,
-      );
+      const source = candidate as Record<string, unknown>;
+      const schemaVersion =
+        typeof source.schemaVersion === "number"
+          ? source.schemaVersion
+          : SUPPORTED_TEMPLATE_SCHEMA_VERSION;
 
-      if (!blocks.length) {
+      if (
+        !Number.isInteger(schemaVersion) ||
+        schemaVersion !== SUPPORTED_TEMPLATE_SCHEMA_VERSION
+      ) {
+        throw new Error(
+          "Versi template tidak didukung. Export ulang template dengan versi aplikasi terbaru.",
+        );
+      }
+
+      if (
+        typeof source.name !== "string" ||
+        !source.name.trim() ||
+        typeof source.doctor !== "string" ||
+        typeof source.specialty !== "string" ||
+        typeof source.hospital !== "string" ||
+        typeof source.opening !== "string" ||
+        typeof source.showEmptyRooms !== "boolean" ||
+        !Array.isArray(source.blocks)
+      ) {
+        throw new Error(
+          "Metadata template tidak lengkap atau memiliki tipe data yang salah.",
+        );
+      }
+
+      if (
+        !source.settings ||
+        typeof source.settings !== "object" ||
+        Array.isArray(source.settings)
+      ) {
+        throw new Error("Konfigurasi settings template tidak valid.");
+      }
+
+      const blocks = source.blocks as unknown[];
+
+      if (blocks.length === 0) {
         throw new Error("Template harus memiliki minimal satu blok.");
       }
 
-      const source = candidate as SlaberanTemplateRecord;
-      const baseName = source.name.trim() || "Template Slaberan Import";
+      const blockIds = new Set<string>();
+
+      for (const block of blocks) {
+        if (
+          typeof block !== "object" ||
+          block === null ||
+          typeof (block as { id?: unknown }).id !== "string" ||
+          !(block as { id: string }).id.trim() ||
+          typeof (block as { type?: unknown }).type !== "string" ||
+          !Object.prototype.hasOwnProperty.call(
+            BLOCK_META,
+            (block as { type: string }).type,
+          ) ||
+          typeof (block as { label?: unknown }).label !== "string" ||
+          !(block as { label: string }).label.trim() ||
+          typeof (block as { enabled?: unknown }).enabled !== "boolean" ||
+          typeof (block as { config?: unknown }).config !== "object" ||
+          (block as { config?: unknown }).config === null ||
+          Array.isArray((block as { config?: unknown }).config)
+        ) {
+          throw new Error(
+            "Ada blok template yang tidak valid. Import dibatalkan agar konfigurasi tidak rusak.",
+          );
+        }
+
+        const id = (block as { id: string }).id.trim();
+        if (blockIds.has(id)) {
+          throw new Error(
+            "Template memiliki ID blok duplikat. Export ulang template sumber sebelum mengimpor.",
+          );
+        }
+
+        blockIds.add(id);
+      }
+
+      const baseName =
+        source.name.trim() || "Template Slaberan Import";
       const existingNames = new Set(
         templates.map((template) => template.name.trim().toLowerCase()),
       );
@@ -501,24 +573,26 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
 
       const created = await createSlaberanTemplate({
         name: importedName,
-        doctor: typeof source.doctor === "string" ? source.doctor : "",
+        doctor: source.doctor.trim(),
         specialty: source.specialty.trim(),
         hospital: source.hospital.trim(),
         opening: source.opening,
         showEmptyRooms: source.showEmptyRooms,
-        blocks: blocks.map((block, index) => ({
-          ...block,
-          id: block.id + "-import-" + Date.now() + "-" + index,
-          config: { ...block.config },
-        })),
-        settings:
-          typeof source.settings === "object" &&
-          source.settings !== null &&
-          !Array.isArray(source.settings)
-            ? { ...source.settings }
-            : {},
-        schemaVersion:
-          typeof source.schemaVersion === "number" ? source.schemaVersion : 1,
+        blocks: blocks.map((block, index) => {
+          const typedBlock = block as SlaberanTemplateBlock;
+          return {
+            ...typedBlock,
+            id:
+              typedBlock.id.trim() +
+              "-import-" +
+              Date.now() +
+              "-" +
+              index,
+            config: { ...typedBlock.config },
+          };
+        }),
+        settings: { ...(source.settings as Record<string, unknown>) },
+        schemaVersion,
         isDefault: false,
       });
 

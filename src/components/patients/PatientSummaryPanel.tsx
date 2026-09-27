@@ -117,7 +117,7 @@ export default function PatientSummaryPanel({
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4">
-              <Detail label="Ruangan" value={patient.room || "—"} />
+              <Detail label="Ruangan" value={patient.currentLocation?.name || patient.room || "—"} />
               <Detail label="Bed" value={patient.bed || "—"} />
               <div className="col-span-2">
                 <Detail label="DPJP" value={patient.doctor || "—"} />
