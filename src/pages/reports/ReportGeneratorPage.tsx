@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import SlaberanPage from "./SlaberanPage";
+import ReportHubPage from "./ReportHubPage";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import ReportPatientContext from "../../components/report/ReportPatientContext";
 import ReportPreview from "../../components/report/ReportPreview";
@@ -17,7 +18,7 @@ import type { ReportStep, ReportTemplateType } from "../../types/report";
 import Icon from "../../components/ui/Icon";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
-export type ReportMode = "follow-up" | "slaberan";
+export type ReportMode = "hub" | "follow-up" | "slaberan";
 
 type ReportGeneratorPageProps = NavigationProps & {
   patient?: PatientListItem;
@@ -126,9 +127,21 @@ export default function ReportGeneratorPage({
   activeItem,
   onNavigate,
   patient,
-  mode = "follow-up",
+  mode = "hub",
   onModeChange,
 }: ReportGeneratorPageProps) {
+  if (mode === "hub") {
+    return (
+      <ReportHubPage
+        activeItem={activeItem}
+        onNavigate={onNavigate}
+        onSelectMode={(nextMode) => onModeChange?.(nextMode)}
+        onOpenPatients={() => onNavigate("Daftar Pasien")}
+        hasSelectedPatient={Boolean(patient)}
+      />
+    );
+  }
+
   if (mode === "slaberan") {
     return (
       <SlaberanPage
