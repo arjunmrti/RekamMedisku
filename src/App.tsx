@@ -221,9 +221,24 @@ function App() {
         {...navigationProps}
         patient={selectedPatient ?? undefined}
         mode={reportMode}
-        onModeChange={setReportMode}
-      />
-    );
+        onModeChange={(nextMode) => {
+          if (nextMode === "follow-up" && !selectedPatient) {
+            const activeRotation = loadActiveRotation();
+            const fallbackPatient =
+              loadPatients().find(
+                (patient) =>
+                  patient.rotationId === activeRotation.id &&
+                  patient.status === "Aktif",
+              ) ?? null;
+
+            if (fallbackPatient) {
+              setSelectedPatient(fallbackPatient);
+            }
+          }
+
+          setReportMode(nextMode);
+        }}
+      />    );
   }
 
   if (activeItem === "Cadangan & Data") {
