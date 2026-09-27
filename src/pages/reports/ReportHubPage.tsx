@@ -8,14 +8,12 @@ import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 
 type ReportHubPageProps = NavigationProps & {
   onSelectMode: (mode: "follow-up" | "slaberan") => void;
-  hasSelectedPatient: boolean;
 };
 
 export default function ReportHubPage({
   activeItem,
   onNavigate,
   onSelectMode,
-  hasSelectedPatient,
 }: ReportHubPageProps) {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
   const activeRotation = loadActiveRotation();
