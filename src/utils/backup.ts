@@ -18,6 +18,10 @@ import {
   saveRotations,
   setActiveRotationId,
 } from "../data/localRotations";
+import {
+  loadSlaberanLocations,
+  replaceSlaberanLocations,
+} from "../data/localSlaberanLocations";
 import type {
   BackupAttachment,
   BackupPayload,
