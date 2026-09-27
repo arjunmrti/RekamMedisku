@@ -10,6 +10,7 @@ export class SupabaseRestoreCommittedError extends Error {
   }
 }
 import {
+  flushPendingAttachmentCleanupWithSupabase,
   rollbackBackupAttachmentUploadsWithSupabase,
   uploadBackupAttachmentsWithSupabase,
 } from "./supabaseAttachments";
@@ -155,6 +156,15 @@ export async function restoreWorkspaceBackupWithSupabase(
       validationError instanceof Error
         ? validationError.message
         : "Respons restore workspace dari Supabase tidak valid.",
+    );
+  }
+
+  try {
+    await flushPendingAttachmentCleanupWithSupabase();
+  } catch (cleanupQueueError) {
+    console.warn(
+      "Restore cloud berhasil, tetapi cleanup lampiran lama tertunda dan akan dicoba lagi saat sinkronisasi berikutnya.",
+      cleanupQueueError,
     );
   }
 
