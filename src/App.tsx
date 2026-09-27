@@ -40,7 +40,7 @@ function App() {
   );
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(() => getInitialPatient());
-  const [reportMode, setReportMode] = useState<ReportMode>("follow-up");
+  const [reportMode, setReportMode] = useState<ReportMode>("hub");
 
   useEffect(() => {
     if (workspaceSyncVersion === 0) return;
@@ -79,7 +79,7 @@ function App() {
 
       return refreshed;
     });
-  }, [workspaceSyncVersion]);
+  }, [workspaceSyncVersion, reportMode]);
   const handleNavigate = (label: string) => {
     if (label === "Pasien") {
       setActiveItem("Daftar Pasien");
@@ -101,36 +101,7 @@ function App() {
       }
 
       if (label === "Semua Laporan") {
-        setReportMode("follow-up");
-        const activeRotation = loadActiveRotation();
-        const patients = loadPatients();
-        const currentPatient =
-          selectedPatient &&
-          selectedPatient.rotationId === activeRotation.id &&
-          selectedPatient.status === "Aktif"
-            ? patients.find(
-                (patient) =>
-                  patient.id === selectedPatient.id &&
-                  patient.rotationId === activeRotation.id &&
-                  patient.status === "Aktif",
-              ) ?? null
-            : null;
-        const nextPatient =
-          currentPatient ??
-          patients.find(
-            (patient) =>
-              patient.rotationId === activeRotation.id &&
-              patient.status === "Aktif",
-          ) ??
-          null;
-
-        if (!nextPatient) {
-          setSelectedPatient(null);
-          setActiveItem("Daftar Pasien");
-          return;
-        }
-
-        setSelectedPatient(nextPatient);
+        setReportMode("hub");
         setActiveItem("Semua Laporan");
         return;
       }
