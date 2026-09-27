@@ -48,7 +48,7 @@ export default function PatientProfileHeader({
 
             <div className="min-w-0">
               <div className="mb-1.5 flex flex-wrap items-center gap-2.5">
-                <h1 className="truncate text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                <h1 className="break-words text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
                   {patient.name}
                 </h1>
                 <StatusBadge status={patient.status} />
