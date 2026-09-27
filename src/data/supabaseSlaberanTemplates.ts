@@ -1,4 +1,5 @@
 import type { SlaberanTemplateRecord } from "../types/slaberanTemplate";
+import { replaceSlaberanTemplates } from "./localSlaberanTemplates";
 import { supabase } from "../utils/supabase";
 
 type SlaberanTemplateRow = {
@@ -111,7 +112,9 @@ export async function syncSlaberanTemplatesWithSupabase(): Promise<
 
   if (error) throw new Error(getErrorMessage(error));
 
-  return ((data ?? []) as SlaberanTemplateRow[]).map(toTemplate);
+  const templates = ((data ?? []) as SlaberanTemplateRow[]).map(toTemplate);
+  replaceSlaberanTemplates(templates);
+  return templates;
 }
 
 export async function createSlaberanTemplate(
