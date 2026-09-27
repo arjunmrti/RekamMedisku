@@ -3,6 +3,7 @@ import { deleteFollowUpsForPatient } from "./localFollowUps";
 import { deletePatient, loadPatients, savePatients } from "./localPatients";
 import { syncRotationsWithSupabase } from "./supabaseRotations";
 import { supabase } from "../utils/supabase";
+import { workspaceStorageKey } from "./workspaceStorage";
 import { derivePatientFollowUpSummaryFromRemote } from "./patientFollowUpSummary";
 import { deleteAttachmentsWithSupabase } from "./supabaseAttachments";
 import {
@@ -47,12 +48,12 @@ type DeletePatientRemoteResult = {
   attachmentIds?: unknown;
 };
 
-const PATIENT_ID_MAP_KEY = "rekammedisku:supabase-patient-ids";
-const ROTATION_ID_MAP_KEY = "rekammedisku:supabase-rotation-ids";
+const PATIENT_ID_MAP_KEY = "supabase-patient-ids";
+const ROTATION_ID_MAP_KEY = "supabase-rotation-ids";
 
 function readMap(key: string): Record<string, string> {
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = window.localStorage.getItem(workspaceStorageKey(key));
     const parsed = raw ? (JSON.parse(raw) as unknown) : null;
 
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
@@ -73,7 +74,7 @@ function readMap(key: string): Record<string, string> {
 }
 
 function saveMap(key: string, map: Record<string, string>) {
-  window.localStorage.setItem(key, JSON.stringify(map));
+  window.localStorage.setItem(workspaceStorageKey(key), JSON.stringify(map));
 }
 
 function normalizeStatus(value: string): PatientStatus {
