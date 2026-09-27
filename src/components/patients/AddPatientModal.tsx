@@ -242,7 +242,7 @@ export default function AddPatientModal({
 
   return (
     <div
-      className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-900/45 p-0 sm:items-center sm:p-4"
+      className="fixed inset-0 z-[70] flex items-end justify-center bg-slate-900/45 p-0 backdrop-blur-[2px] sm:p-4 md:items-center md:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="patient-form-title"
@@ -250,8 +250,8 @@ export default function AddPatientModal({
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:max-w-lg sm:rounded-2xl sm:p-6">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+      <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[92dvh] sm:max-w-xl sm:rounded-2xl md:max-w-2xl lg:max-w-3xl">
+        <div className="sticky top-0 z-10 flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 pb-4 pt-5 backdrop-blur sm:px-6 sm:pt-6">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1677FF]">
               {editing ? "Edit Pasien" : "Pasien Baru"}
@@ -277,7 +277,7 @@ export default function AddPatientModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 pb-5 pt-5 sm:px-6 sm:pb-6">
           <Field label="Nama Lengkap Pasien">
             <input
               required
@@ -288,7 +288,7 @@ export default function AddPatientModal({
             />
           </Field>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="No. Rekam Medis (RM)">
               <input
                 required
@@ -312,7 +312,7 @@ export default function AddPatientModal({
             </Field>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <Field label="Jenis Kelamin">
               <select
                 value={gender}
@@ -372,7 +372,7 @@ export default function AddPatientModal({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Field label="Jenis Lokasi">
                 <select
                   value={currentLocationType}
@@ -462,7 +462,7 @@ export default function AddPatientModal({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Field label="Jenis Lokasi Masuk">
                 <select
                   value={admissionLocationType}
@@ -534,7 +534,7 @@ export default function AddPatientModal({
             </div>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+          <div className="-mx-5 sticky bottom-0 flex flex-col-reverse gap-2 border-t border-slate-100 bg-white/95 px-5 pt-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:-mx-6 sm:px-6 sm:pb-1 md:flex-row md:justify-end">
             <button
               type="button"
               onClick={onClose}
