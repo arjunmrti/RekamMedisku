@@ -52,7 +52,7 @@ export default function AppShell({
       <div className="flex min-h-[100dvh] min-w-0">
         <Sidebar activeItem={activeItem} onNavigate={navigate} />
 
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:pl-[252px]">
           <TopHeader
             searchValue={searchValue}
             onSearchChange={onSearchChange}
