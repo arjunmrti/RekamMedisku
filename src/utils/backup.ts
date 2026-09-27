@@ -18,6 +18,10 @@ import {
   saveRotations,
   setActiveRotationId,
 } from "../data/localRotations";
+import {
+  loadSlaberanLocations,
+  replaceSlaberanLocations,
+} from "../data/localSlaberanLocations";
 import type {
   BackupAttachment,
   BackupPayload,
@@ -26,6 +30,8 @@ import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
 import type { PatientListItem } from "../types/patient";
 import type { Rotation } from "../types/rotation";
+import type { SlaberanLocation } from "../types/slaberanLocation";
+import type { SlaberanTemplateRecord } from "../types/slaberanTemplate";
 import {
   normalizePatientAdmissionLocation,
   normalizePatientLocation,
@@ -146,6 +152,7 @@ async function buildBackupAttachments(
 
 export function buildBackupPayload(
   patients: PatientListItem[],
+  options: { slaberanTemplates?: SlaberanTemplateRecord[] } = {},
 ): BackupPayload {
   const savedFollowUps = loadSavedFollowUps();
   const followUpsByPatient: Record<string, FollowUpEntry[]> = {};
@@ -164,7 +171,7 @@ export function buildBackupPayload(
   }
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     product: "RekamMedisku",
     exportedAt: new Date().toISOString(),
     patients,
@@ -173,13 +180,16 @@ export function buildBackupPayload(
     attachments: undefined,
     rotations: loadRotations(),
     activeRotationId: loadActiveRotationId(),
+    slaberanLocations: loadSlaberanLocations(),
+    slaberanTemplates: options.slaberanTemplates ?? [],
   };
 }
 
 export async function buildBackupPayloadWithAttachments(
   patients: PatientListItem[],
+  slaberanTemplates: SlaberanTemplateRecord[] = [],
 ): Promise<BackupPayload> {
-  const payload = buildBackupPayload(patients);
+  const payload = buildBackupPayload(patients, { slaberanTemplates });
   const attachments = await buildBackupAttachments(
     payload.followUpsByPatient,
     payload.followUpDrafts,
@@ -531,6 +541,129 @@ function isBackupAttachment(value: unknown): value is BackupAttachment {
   );
 }
 
+
+function isSlaberanLocation(value: unknown): value is SlaberanLocation {
+  if (!isRecord(value)) return false;
+
+  const validType =
+    value.type === "floor" ||
+    value.type === "ward" ||
+    value.type === "special";
+
+  return (
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    validType &&
+    typeof value.name === "string" &&
+    value.name.trim().length > 0 &&
+    typeof value.sortOrder === "number" &&
+    Number.isInteger(value.sortOrder) &&
+    typeof value.isActive === "boolean" &&
+    typeof value.createdAt === "string" &&
+    isValidIsoDateTime(value.createdAt) &&
+    typeof value.updatedAt === "string" &&
+    isValidIsoDateTime(value.updatedAt) &&
+    (value.parentId === undefined || typeof value.parentId === "string")
+  );
+}
+
+function isSlaberanTemplateBlock(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+
+  const validType = [
+    "opening",
+    "header",
+    "ward-summary",
+    "patient-list",
+    "special-unit-list",
+    "summary",
+    "divider",
+    "text",
+  ].includes(value.type as string);
+
+  return (
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    validType &&
+    typeof value.label === "string" &&
+    typeof value.enabled === "boolean" &&
+    isRecord(value.config)
+  );
+}
+
+function isSlaberanTemplate(value: unknown): value is SlaberanTemplateRecord {
+  if (!isRecord(value)) return false;
+
+  return (
+    typeof value.id === "string" &&
+    value.id.trim().length > 0 &&
+    typeof value.name === "string" &&
+    value.name.trim().length > 0 &&
+    typeof value.doctor === "string" &&
+    typeof value.specialty === "string" &&
+    typeof value.hospital === "string" &&
+    typeof value.opening === "string" &&
+    typeof value.showEmptyRooms === "boolean" &&
+    Array.isArray(value.blocks) &&
+    value.blocks.every(isSlaberanTemplateBlock) &&
+    isRecord(value.settings) &&
+    typeof value.schemaVersion === "number" &&
+    Number.isInteger(value.schemaVersion) &&
+    value.schemaVersion > 0 &&
+    typeof value.isDefault === "boolean" &&
+    typeof value.createdAt === "string" &&
+    isValidIsoDateTime(value.createdAt) &&
+    typeof value.updatedAt === "string" &&
+    isValidIsoDateTime(value.updatedAt)
+  );
+}
+
+function validateSlaberanData(
+  locationsValue: unknown,
+  templatesValue: unknown,
+): boolean {
+  if (locationsValue !== undefined) {
+    if (!Array.isArray(locationsValue)) return false;
+
+    const ids = new Set<string>();
+    for (const location of locationsValue) {
+      if (!isSlaberanLocation(location) || ids.has(location.id)) {
+        return false;
+      }
+      ids.add(location.id);
+    }
+
+    for (const location of locationsValue) {
+      if (
+        location.parentId !== undefined &&
+        location.parentId !== "" &&
+        !ids.has(location.parentId)
+      ) {
+        return false;
+      }
+    }
+  }
+
+  if (templatesValue !== undefined) {
+    if (!Array.isArray(templatesValue)) return false;
+
+    const ids = new Set<string>();
+    let defaultCount = 0;
+
+    for (const template of templatesValue) {
+      if (!isSlaberanTemplate(template) || ids.has(template.id)) {
+        return false;
+      }
+      ids.add(template.id);
+      if (template.isDefault) defaultCount += 1;
+    }
+
+    if (defaultCount > 1) return false;
+  }
+
+  return true;
+}
+
 function validateAttachments(
   value: unknown,
   followUpsByPatient: Record<string, FollowUpEntry[]>,
@@ -628,7 +761,7 @@ export function parseBackupText(
       return { ok: false, error: "File bukan backup RekamMedisku yang valid." };
     }
 
-    if (parsed.schemaVersion !== 1) {
+    if (parsed.schemaVersion !== 1 && parsed.schemaVersion !== 2) {
       return {
         ok: false,
         error: "Versi backup tidak didukung oleh MVP saat ini.",
@@ -660,6 +793,15 @@ export function parseBackupText(
       return {
         ok: false,
         error: "Struktur data draf atau konteks stase tidak valid.",
+      };
+    }
+
+    if (
+      !validateSlaberanData(parsed.slaberanLocations, parsed.slaberanTemplates)
+    ) {
+      return {
+        ok: false,
+        error: "Struktur data Slaberan pada backup tidak valid.",
       };
     }
 
@@ -739,7 +881,7 @@ export function parseBackupText(
     return {
       ok: true,
       data: {
-        schemaVersion: 1,
+        schemaVersion: parsed.schemaVersion,
         product: "RekamMedisku",
         exportedAt:
           typeof parsed.exportedAt === "string"
@@ -754,6 +896,8 @@ export function parseBackupText(
           typeof parsed.activeRotationId === "string"
             ? parsed.activeRotationId
             : undefined,
+        slaberanLocations: parsed.slaberanLocations,
+        slaberanTemplates: parsed.slaberanTemplates,
       },
     };
   } catch {
@@ -775,6 +919,8 @@ export type RestoreBackupLocalState = {
   clearAllFollowUpDrafts: typeof clearAllFollowUpDrafts;
   loadAllAttachments: typeof loadAllAttachments;
   replaceAllAttachments: typeof replaceAllAttachments;
+  loadSlaberanLocations: typeof loadSlaberanLocations;
+  replaceSlaberanLocations: typeof replaceSlaberanLocations;
 };
 
 const defaultRestoreLocalState: RestoreBackupLocalState = {
@@ -791,6 +937,8 @@ const defaultRestoreLocalState: RestoreBackupLocalState = {
   clearAllFollowUpDrafts,
   loadAllAttachments,
   replaceAllAttachments,
+  loadSlaberanLocations,
+  replaceSlaberanLocations,
 };
 
 export type RestoreBackupOptions = {
@@ -822,6 +970,7 @@ export async function restoreBackupPayload(
   const previousFollowUps = local.loadSavedFollowUps();
   const previousRotations = local.loadRotations();
   const previousActiveRotationId = local.loadActiveRotationId();
+  const previousSlaberanLocations = local.loadSlaberanLocations();
   const previousDrafts: Record<string, FollowUpFormValues> = {};
   const shouldReplaceAttachments = payload.attachments !== undefined;
   const previousAttachments = shouldReplaceAttachments
@@ -870,6 +1019,9 @@ export async function restoreBackupPayload(
     local.replacePatients(payload.patients);
     local.replaceSavedFollowUps(payload.followUpsByPatient);
     local.saveRotations(payload.rotations);
+    if (payload.slaberanLocations !== undefined) {
+      local.replaceSlaberanLocations(payload.slaberanLocations);
+    }
     local.setActiveRotationId(payload.activeRotationId ?? "");
 
     local.clearAllFollowUpDrafts();
@@ -930,6 +1082,9 @@ export async function restoreBackupPayload(
       local.replaceSavedFollowUps(previousFollowUps);
       local.saveRotations(previousRotations);
       local.setActiveRotationId(previousActiveRotationId);
+      if (payload.slaberanLocations !== undefined) {
+        local.replaceSlaberanLocations(previousSlaberanLocations);
+      }
       local.clearAllFollowUpDrafts();
 
       for (const [patientId, draft] of Object.entries(previousDrafts)) {

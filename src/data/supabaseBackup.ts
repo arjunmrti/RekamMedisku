@@ -10,6 +10,7 @@ export class SupabaseRestoreCommittedError extends Error {
   }
 }
 import {
+  flushPendingAttachmentCleanupWithSupabase,
   rollbackBackupAttachmentUploadsWithSupabase,
   uploadBackupAttachmentsWithSupabase,
 } from "./supabaseAttachments";
@@ -123,6 +124,12 @@ export async function restoreWorkspaceBackupWithSupabase(
     followUpsByPatient: payload.followUpsByPatient,
     rotations: payload.rotations,
     activeRotationId: payload.activeRotationId ?? "",
+    ...(payload.slaberanLocations !== undefined
+      ? { slaberanLocations: payload.slaberanLocations }
+      : {}),
+    ...(payload.slaberanTemplates !== undefined
+      ? { slaberanTemplates: payload.slaberanTemplates }
+      : {}),
   };
 
   // Upload binary attachments before replacing the cloud database snapshot.
@@ -155,6 +162,15 @@ export async function restoreWorkspaceBackupWithSupabase(
       validationError instanceof Error
         ? validationError.message
         : "Respons restore workspace dari Supabase tidak valid.",
+    );
+  }
+
+  try {
+    await flushPendingAttachmentCleanupWithSupabase();
+  } catch (cleanupQueueError) {
+    console.warn(
+      "Restore cloud berhasil, tetapi cleanup lampiran lama tertunda dan akan dicoba lagi saat sinkronisasi berikutnya.",
+      cleanupQueueError,
     );
   }
 

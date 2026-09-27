@@ -96,6 +96,48 @@ export async function deleteAttachmentWithSupabase(
 }
 
 
+
+export async function flushPendingAttachmentCleanupWithSupabase(): Promise<number> {
+  const { data, error } = await supabase.rpc(
+    "list_pending_attachment_cleanup",
+  );
+
+  if (error) {
+    throw new Error(
+      "Antrean cleanup lampiran cloud gagal dibaca: " + error.message,
+    );
+  }
+
+  const attachmentIds = Array.isArray(data)
+    ? data.filter(
+        (row): row is { attachment_id: string } =>
+          typeof row === "object" &&
+          row !== null &&
+          typeof (row as { attachment_id?: unknown }).attachment_id ===
+            "string" &&
+          (row as { attachment_id: string }).attachment_id.length > 0,
+      ).map((row) => row.attachment_id)
+    : [];
+
+  if (!attachmentIds.length) return 0;
+
+  await deleteAttachmentsWithSupabase(attachmentIds);
+
+  const { error: acknowledgeError } = await supabase.rpc(
+    "acknowledge_attachment_cleanup",
+    { p_attachment_ids: attachmentIds },
+  );
+
+  if (acknowledgeError) {
+    throw new Error(
+      "Antrean cleanup lampiran cloud gagal dikonfirmasi: " +
+        acknowledgeError.message,
+    );
+  }
+
+  return attachmentIds.length;
+}
+
 export type BackupAttachmentUploadState = {
   newlyUploadedIds: string[];
   replacedAttachments: Array<{
