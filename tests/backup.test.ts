@@ -254,6 +254,40 @@ function withDraft(): BackupPayload {
   };
 }
 
+const slaberanLocation: SlaberanLocation = {
+  id: "floor-test",
+  type: "floor",
+  name: "Lantai 1",
+  sortOrder: 0,
+  isActive: true,
+  createdAt: "2026-09-26T00:00:00.000Z",
+  updatedAt: "2026-09-26T00:00:00.000Z",
+};
+
+const slaberanTemplate: SlaberanTemplateRecord = {
+  id: "template-test",
+  name: "Template Test",
+  doctor: "dr. Uji",
+  specialty: "Neurologi",
+  hospital: "RS Uji",
+  opening: "Mohon izin dok",
+  showEmptyRooms: true,
+  blocks: [
+    {
+      id: "block-opening",
+      type: "opening",
+      label: "Opening",
+      enabled: true,
+      config: {},
+    },
+  ],
+  settings: {},
+  schemaVersion: 1,
+  isDefault: true,
+  createdAt: "2026-09-26T00:00:00.000Z",
+  updatedAt: "2026-09-26T00:00:00.000Z",
+};
+
 test("backup lama tanpa field attachments tetap valid", () => {
   const result = parseBackupText(serializeBackup(basePayload));
 
