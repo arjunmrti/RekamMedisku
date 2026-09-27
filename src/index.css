@@ -81,7 +81,7 @@ select:focus-visible {
   background: rgb(22 119 255 / 0.15);
 }
 
-::-webkit-scrollbar {
+html {\n  overflow-x: hidden;\n}\n\n::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
