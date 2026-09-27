@@ -1,5 +1,6 @@
 import type { BackupPayload } from "../types/backup";
 import { supabase } from "../utils/supabase";
+import { workspaceStorageKey } from "./workspaceStorage";
 
 export class SupabaseRestoreCommittedError extends Error {
   readonly remoteCommitted = true;
@@ -15,11 +16,11 @@ import {
   uploadBackupAttachmentsWithSupabase,
 } from "./supabaseAttachments";
 
-const ROTATION_ID_MAP_KEY = "rekammedisku:supabase-rotation-ids";
-const PATIENT_ID_MAP_KEY = "rekammedisku:supabase-patient-ids";
-const FOLLOW_UP_ID_MAP_KEY = "rekammedisku:supabase-follow-up-ids";
+const ROTATION_ID_MAP_KEY = "supabase-rotation-ids";
+const PATIENT_ID_MAP_KEY = "supabase-patient-ids";
+const FOLLOW_UP_ID_MAP_KEY = "supabase-follow-up-ids";
 const SUPPORTING_EXAM_ID_MAP_KEY =
-  "rekammedisku:supabase-supporting-exam-ids";
+  "supabase-supporting-exam-ids";
 
 type RestoreWorkspaceResult = {
   rotationIds: Record<string, string>;
@@ -67,7 +68,7 @@ function getSupabaseErrorMessage(error: unknown) {
 }
 
 function saveIdMap(key: string, value: Record<string, string>) {
-  window.localStorage.setItem(key, JSON.stringify(value));
+  window.localStorage.setItem(workspaceStorageKey(key), JSON.stringify(value));
 }
 
 function validateRestoreResult(data: unknown): RestoreWorkspaceResult {
