@@ -22,12 +22,9 @@ test("workspace storage key is scoped by authenticated user", () => {
   );
 });
 
-test("workspace storage falls back to isolated anonymous scope without a session", () => {
+test("workspace storage keeps legacy keys outside an authenticated workspace", () => {
   setWorkspaceUserId(null);
 
-  assert.equal(
-    workspaceStorageKey("patients"),
-    "rekammedisku:user:anonymous:patients",
-  );
+  assert.equal(workspaceStorageKey("patients"), "rekammedisku:patients");
   assert.equal(getWorkspaceUserId(), null);
 });
