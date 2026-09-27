@@ -146,7 +146,7 @@ export default function PatientsPage({
 
       const matchesSearch = !query || searchable.includes(query);
       const matchesStatus = status === "Semua" || patient.status === status;
-      const matchesRoom = room === "Semua" || patient.currentLocation?.name || patient.room === room;
+      const matchesRoom =\n        room === "Semua" ||\n        (patient.currentLocation?.name || patient.room) === room;
 
       return matchesSearch && matchesStatus && matchesRoom;
     });
