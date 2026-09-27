@@ -140,7 +140,7 @@ export default function ReportHubPage({
                       {storedFollowUpCount}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-slate-100 bg-slate-50/80 p-3.5">
+                  <div className="min-h-[78px] rounded-xl border border-slate-100 bg-slate-50/80 p-3.5">
                     <p className="text-[10px] font-semibold text-slate-400">
                       Pasien aktif
                     </p>
@@ -187,10 +187,10 @@ export default function ReportHubPage({
                 </div>
 
                 <div className="mt-6">
-                  <h3 className="text-lg font-bold tracking-tight text-slate-900">
+                  <h3 className="text-xl font-bold tracking-tight text-slate-900">
                     Buat Slaberan
                   </h3>
-                  <p className="mt-2 max-w-md text-xs leading-relaxed text-slate-500 sm:text-sm">
+                  <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
                     Generate laporan harian dari template dokter, pasien aktif,
                     lokasi, dan follow-up yang sudah tersimpan.
                   </p>
@@ -205,7 +205,7 @@ export default function ReportHubPage({
                       {activePatients.length}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-blue-100/80 bg-white/80 p-3.5">
+                  <div className="min-h-[78px] rounded-xl border border-blue-100/80 bg-white/80 p-3.5">
                     <p className="text-[10px] font-semibold text-slate-400">
                       Template tersedia
                     </p>
@@ -213,7 +213,7 @@ export default function ReportHubPage({
                       {slaberanStats.templateCount}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-blue-100/80 bg-white/80 p-3.5">
+                  <div className="min-h-[78px] rounded-xl border border-blue-100/80 bg-white/80 p-3.5">
                     <p className="text-[10px] font-semibold text-slate-400">
                       Lokasi aktif
                     </p>
@@ -227,7 +227,7 @@ export default function ReportHubPage({
                   <button
                     type="button"
                     onClick={() => onSelectMode("slaberan")}
-                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
+                    className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/25"
                   >
                     Buka Slaberan
                     <Icon name="arrow" className="h-3.5 w-3.5" />
@@ -242,7 +242,7 @@ export default function ReportHubPage({
               <Icon name="lightbulb" className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-800">
+              <p className="text-sm font-bold text-slate-800">
                 Workflow tetap terpisah
               </p>
               <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
