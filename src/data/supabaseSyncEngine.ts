@@ -2,6 +2,7 @@ import { supabase } from "../utils/supabase";
 import { syncFollowUpsWithSupabase } from "./supabaseFollowUps";
 import { syncSlaberanLocationsWithSupabase } from "./supabaseSlaberanLocations";
 import { syncSlaberanTemplatesWithSupabase } from "./supabaseSlaberanTemplates";
+import { flushPendingAttachmentCleanupWithSupabase } from "./supabaseAttachments";
 
 const WORKSPACE_SYNC_EVENT = "rekammedisku:workspace-synced";
 const REALTIME_WATCHDOG_INTERVAL_MS = 30_000;
@@ -24,6 +25,16 @@ export async function syncWorkspaceWithSupabase(): Promise<void> {
     await syncSlaberanLocationsWithSupabase();
     await syncSlaberanTemplatesWithSupabase();
     await syncFollowUpsWithSupabase();
+
+    try {
+      await flushPendingAttachmentCleanupWithSupabase();
+    } catch (cleanupError) {
+      console.warn(
+        "Workspace sync berhasil, tetapi cleanup attachment cloud tertunda.",
+        cleanupError,
+      );
+    }
+
     notifyWorkspaceSynced();
   })().finally(() => {
     syncInFlight = null;
