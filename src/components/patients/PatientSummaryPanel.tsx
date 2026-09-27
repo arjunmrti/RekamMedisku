@@ -143,7 +143,7 @@ export default function PatientSummaryPanel({
                       : "Belum ada follow-up"}
                   </p>
                   <span className="shrink-0 text-[10px] font-semibold text-[#1677FF]">
-                    {patient.followUpNumber} catatan
+                    {patient.followUpNumber > 0 ? "Terakhir #" + patient.followUpNumber : "Belum ada"}
                   </span>
                 </div>
 
