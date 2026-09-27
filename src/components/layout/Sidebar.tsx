@@ -118,7 +118,7 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
               />
             </div>
             <div>
-              <span className="block text-[9px] font-bold uppercase leading-none tracking-wider text-slate-400">
+              <span className="block text-[10px] font-bold uppercase leading-none tracking-wider text-slate-400">
                 Stase Aktif
               </span>
               <span className="text-xs font-bold tracking-tight text-slate-800">
