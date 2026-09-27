@@ -324,7 +324,6 @@ export default function TopHeader({
             </div>
           ) : null}
         </div>
-        </div>
       </div>
 
       {user ? (
