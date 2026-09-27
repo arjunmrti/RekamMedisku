@@ -38,6 +38,10 @@ CREATE POLICY attachment_cleanup_queue_delete_own
   TO authenticated
   USING (user_id = auth.uid());
 
+GRANT SELECT, INSERT, DELETE
+  ON public.attachment_cleanup_queue
+  TO authenticated;
+
 CREATE OR REPLACE FUNCTION public.enqueue_attachment_cleanup()
 RETURNS trigger
 LANGUAGE plpgsql
