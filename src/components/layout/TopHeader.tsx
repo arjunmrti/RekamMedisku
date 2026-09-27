@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Icon from "../ui/Icon";
 import { useAuth } from "../../hooks/useAuth";
 import { supabase } from "../../utils/supabase";
+import ProfileEditDialog from "../auth/ProfileEditDialog";
 
 type TopHeaderProps = {
   searchValue: string;
@@ -20,6 +21,7 @@ export default function TopHeader({
 }: TopHeaderProps) {
   const { user } = useAuth();
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profileEditorOpen, setProfileEditorOpen] = useState(false);
   const [notificationOpen, setNotificationOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const notificationRef = useRef<HTMLDivElement | null>(null);
@@ -97,7 +99,13 @@ export default function TopHeader({
         ? metadata.name.trim()
         : "";
 
+  const metadataUsername =
+    typeof metadata.username === "string" && metadata.username.trim()
+      ? metadata.username.trim()
+      : "";
+
   const displayName =
+    metadataUsername ||
     metadataName ||
     user?.email?.split("@")[0] ||
     "Pengguna RekamMedisku";
@@ -130,13 +138,13 @@ export default function TopHeader({
           type="button"
           onClick={onMenuClick}
           aria-label="Buka menu navigasi"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 xl:hidden"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-500 transition-colors hover:bg-slate-50 lg:hidden"
         >
           <Icon name="menu" className="h-5 w-5" />
         </button>
 
         {!searchEnabled ? (
-          <div className="min-w-0 flex-1 xl:hidden">
+          <div className="min-w-0 flex-1 lg:hidden">
             <p className="truncate text-sm font-bold text-slate-800 sm:text-base">
               {activeItem}
             </p>
@@ -288,6 +296,20 @@ export default function TopHeader({
                     {signOutError}
                   </div>
                 ) : null}
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    setProfileEditorOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  <Icon name="edit" className="h-4 w-4 text-slate-400" />
+                  Edit Profil
+                </button>
+
                 <button
                   type="button"
                   role="menuitem"
@@ -303,6 +325,14 @@ export default function TopHeader({
           ) : null}
         </div>
       </div>
+
+      {user ? (
+        <ProfileEditDialog
+          user={user}
+          open={profileEditorOpen}
+          onClose={() => setProfileEditorOpen(false)}
+        />
+      ) : null}
     </header>
   );
 }

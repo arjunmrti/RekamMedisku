@@ -7,32 +7,43 @@ function getStorageKey() {
   return workspaceStorageKey(TEMPLATES_KEY);
 }
 
-function readJson<T>(fallback: T): T {
+function readTemplates(): SlaberanTemplateRecord[] {
   try {
     const raw = window.localStorage.getItem(getStorageKey());
-    return raw ? (JSON.parse(raw) as T) : fallback;
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw) as unknown;
+
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.filter(
+      (item): item is SlaberanTemplateRecord =>
+        typeof item === "object" &&
+        item !== null &&
+        typeof (item as SlaberanTemplateRecord).id === "string" &&
+        typeof (item as SlaberanTemplateRecord).name === "string" &&
+        Array.isArray((item as SlaberanTemplateRecord).blocks),
+    );
   } catch {
-    return fallback;
+    return [];
   }
 }
 
 export function loadSlaberanTemplates(): SlaberanTemplateRecord[] {
-  const value = readJson<unknown>([]);
+  return readTemplates();
+}
 
-  if (!Array.isArray(value)) return [];
-
-  return value.filter(
-    (item): item is SlaberanTemplateRecord =>
-      typeof item === "object" &&
-      item !== null &&
-      typeof (item as SlaberanTemplateRecord).id === "string" &&
-      typeof (item as SlaberanTemplateRecord).name === "string" &&
-      typeof (item as SlaberanTemplateRecord).specialty === "string",
+export function saveSlaberanTemplates(
+  templates: SlaberanTemplateRecord[],
+) {
+  window.localStorage.setItem(
+    getStorageKey(),
+    JSON.stringify(templates),
   );
 }
 
 export function replaceSlaberanTemplates(
   templates: SlaberanTemplateRecord[],
 ) {
-  window.localStorage.setItem(getStorageKey(), JSON.stringify(templates));
+  saveSlaberanTemplates(templates);
 }

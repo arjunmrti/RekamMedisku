@@ -61,7 +61,7 @@ export default function PatientProfileHeader({
                 <span className="hidden text-slate-300 sm:inline">•</span>
                 <span className="inline-flex items-center gap-1.5">
                   <Icon name="archive" className="h-3.5 w-3.5 text-slate-400" />
-                  Ruangan {patient.room} · Bed {patient.bed}
+                  Ruangan {patient.currentLocation?.name || patient.room} · Bed {patient.bed}
                 </span>
                 <span className="hidden text-slate-300 sm:inline">•</span>
                 <span className="inline-flex items-center gap-1.5">

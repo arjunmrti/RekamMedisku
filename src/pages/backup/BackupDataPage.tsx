@@ -713,15 +713,15 @@ export default function BackupDataPage({
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div>
                         <p className="text-sm font-bold text-slate-900">{summary.patients}</p>
-                        <p className="text-[9px] font-medium text-slate-400">Pasien</p>
+                        <p className="text-[10px] font-medium text-slate-400">Pasien</p>
                       </div>
                       <div>
                         <p className="text-sm font-bold text-slate-900">{summary.followUps}</p>
-                        <p className="text-[9px] font-medium text-slate-400">Follow-Up</p>
+                        <p className="text-[10px] font-medium text-slate-400">Follow-Up</p>
                       </div>
                       <div>
                         <p className="text-sm font-bold text-slate-900">{summary.drafts}</p>
-                        <p className="text-[9px] font-medium text-slate-400">Draf</p>
+                        <p className="text-[10px] font-medium text-slate-400">Draf</p>
                       </div>
                     </div>
                   </div>

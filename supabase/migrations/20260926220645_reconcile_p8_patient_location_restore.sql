@@ -16,19 +16,32 @@ DECLARE
   follow_up_pair record;
   follow_up_item jsonb;
   exam_item jsonb;
+  location_item jsonb;
+  template_item jsonb;
   remote_rotation_id uuid;
   remote_patient_id uuid;
   remote_follow_up_id uuid;
+  remote_location_id uuid;
+  remote_template_id uuid;
+  current_remote_location_id uuid;
+  admission_remote_location_id uuid;
   active_remote_rotation_id uuid;
+  default_remote_template_id uuid;
+  default_template_local_id text;
   rotation_map jsonb;
   patient_map jsonb;
   follow_up_map jsonb;
   exam_map jsonb;
+  location_map jsonb;
   rotation_count integer := 0;
   patient_count integer := 0;
   follow_up_count integer := 0;
   exam_count integer := 0;
+  slaberan_location_count integer := 0;
+  slaberan_template_count integer := 0;
   follow_up_time text;
+  replace_locations boolean := jsonb_typeof(p_backup->'slaberanLocations') = 'array';
+  replace_templates boolean := jsonb_typeof(p_backup->'slaberanTemplates') = 'array';
 BEGIN
   IF current_user_id IS NULL THEN
     RAISE EXCEPTION 'Sesi RekamMedisku tidak ditemukan.';
@@ -66,6 +79,11 @@ BEGIN
     remote_id uuid NOT NULL
   ) ON COMMIT DROP;
 
+  CREATE TEMP TABLE restore_location_map (
+    local_id text PRIMARY KEY,
+    remote_id uuid NOT NULL
+  ) ON COMMIT DROP;
+
   -- The JSON backup is an authoritative workspace snapshot. Replace all
   -- synced rows for this user inside the same transaction.
   DELETE FROM public.supporting_exams
@@ -79,6 +97,168 @@ BEGIN
 
   DELETE FROM public.rotations
   WHERE user_id = current_user_id;
+
+  IF replace_templates THEN
+    DELETE FROM public.slaberan_templates
+    WHERE user_id = current_user_id;
+  END IF;
+
+  IF replace_locations THEN
+    DELETE FROM public.slaberan_locations
+    WHERE user_id = current_user_id
+      AND parent_id IS NOT NULL;
+
+    DELETE FROM public.slaberan_locations
+    WHERE user_id = current_user_id
+      AND parent_id IS NULL;
+  END IF;
+
+  IF replace_locations THEN
+    FOR location_item IN
+      SELECT value
+      FROM jsonb_array_elements(p_backup->'slaberanLocations')
+      WHERE NULLIF(value->>'parentId', '') IS NULL
+      ORDER BY
+        COALESCE((value->>'sortOrder')::integer, 0),
+        value->>'name'
+    LOOP
+      INSERT INTO public.slaberan_locations (
+        user_id,
+        parent_id,
+        type,
+        name,
+        sort_order,
+        is_active,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        current_user_id,
+        NULL,
+        location_item->>'type',
+        location_item->>'name',
+        COALESCE((location_item->>'sortOrder')::integer, 0),
+        COALESCE((location_item->>'isActive')::boolean, true),
+        COALESCE(NULLIF(location_item->>'createdAt', '')::timestamptz, now()),
+        COALESCE(NULLIF(location_item->>'updatedAt', '')::timestamptz, now())
+      )
+      RETURNING id INTO remote_location_id;
+
+      INSERT INTO restore_location_map(local_id, remote_id)
+      VALUES (location_item->>'id', remote_location_id);
+
+      slaberan_location_count := slaberan_location_count + 1;
+    END LOOP;
+
+    FOR location_item IN
+      SELECT value
+      FROM jsonb_array_elements(p_backup->'slaberanLocations')
+      WHERE NULLIF(value->>'parentId', '') IS NOT NULL
+      ORDER BY
+        COALESCE((value->>'sortOrder')::integer, 0),
+        value->>'name'
+    LOOP
+      SELECT remote_id
+      INTO remote_location_id
+      FROM restore_location_map
+      WHERE local_id = location_item->>'parentId';
+
+      IF remote_location_id IS NULL THEN
+        RAISE EXCEPTION
+          'Lokasi % merujuk ke parent yang tidak ada di backup.',
+          location_item->>'name';
+      END IF;
+
+      INSERT INTO public.slaberan_locations (
+        user_id,
+        parent_id,
+        type,
+        name,
+        sort_order,
+        is_active,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        current_user_id,
+        remote_location_id,
+        location_item->>'type',
+        location_item->>'name',
+        COALESCE((location_item->>'sortOrder')::integer, 0),
+        COALESCE((location_item->>'isActive')::boolean, true),
+        COALESCE(NULLIF(location_item->>'createdAt', '')::timestamptz, now()),
+        COALESCE(NULLIF(location_item->>'updatedAt', '')::timestamptz, now())
+      )
+      RETURNING id INTO remote_location_id;
+
+      INSERT INTO restore_location_map(local_id, remote_id)
+      VALUES (location_item->>'id', remote_location_id);
+
+      slaberan_location_count := slaberan_location_count + 1;
+    END LOOP;
+  END IF;
+
+  IF replace_templates THEN
+    FOR template_item IN
+      SELECT value
+      FROM jsonb_array_elements(p_backup->'slaberanTemplates')
+      ORDER BY value->>'name'
+    LOOP
+      IF COALESCE((template_item->>'isDefault')::boolean, false) THEN
+        IF default_template_local_id IS NOT NULL THEN
+          RAISE EXCEPTION 'Backup memiliki lebih dari satu template Slaberan default.';
+        END IF;
+
+        default_template_local_id := template_item->>'id';
+      END IF;
+
+      INSERT INTO public.slaberan_templates (
+        user_id,
+        name,
+        doctor,
+        specialty,
+        hospital,
+        opening,
+        show_empty_rooms,
+        blocks,
+        settings,
+        schema_version,
+        is_default,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        current_user_id,
+        template_item->>'name',
+        COALESCE(template_item->>'doctor', ''),
+        COALESCE(template_item->>'specialty', ''),
+        COALESCE(template_item->>'hospital', ''),
+        COALESCE(template_item->>'opening', ''),
+        COALESCE((template_item->>'showEmptyRooms')::boolean, true),
+        COALESCE(template_item->'blocks', '[]'::jsonb),
+        COALESCE(template_item->'settings', '{}'::jsonb),
+        COALESCE((template_item->>'schemaVersion')::integer, 1),
+        false,
+        COALESCE(NULLIF(template_item->>'createdAt', '')::timestamptz, now()),
+        COALESCE(NULLIF(template_item->>'updatedAt', '')::timestamptz, now())
+      )
+      RETURNING id INTO remote_template_id;
+
+      slaberan_template_count := slaberan_template_count + 1;
+
+      IF default_template_local_id = template_item->>'id' THEN
+        default_remote_template_id := remote_template_id;
+      END IF;
+    END LOOP;
+
+    IF default_remote_template_id IS NOT NULL THEN
+      UPDATE public.slaberan_templates
+      SET is_default = true,
+          updated_at = now()
+      WHERE id = default_remote_template_id
+        AND user_id = current_user_id;
+    END IF;
+  END IF;
 
   FOR rotation_item IN
     SELECT value
@@ -127,6 +307,35 @@ BEGIN
         patient_item->>'name';
     END IF;
 
+    current_remote_location_id := NULL;
+    admission_remote_location_id := NULL;
+
+    IF NULLIF(patient_item #>> '{currentLocation,locationId}', '') IS NOT NULL THEN
+      SELECT remote_id
+      INTO current_remote_location_id
+      FROM restore_location_map
+      WHERE local_id = patient_item #>> '{currentLocation,locationId}';
+
+      IF replace_locations AND current_remote_location_id IS NULL THEN
+        RAISE EXCEPTION
+          'Lokasi aktif pasien % tidak ditemukan di backup.',
+          patient_item->>'name';
+      END IF;
+    END IF;
+
+    IF NULLIF(patient_item #>> '{admissionLocation,locationId}', '') IS NOT NULL THEN
+      SELECT remote_id
+      INTO admission_remote_location_id
+      FROM restore_location_map
+      WHERE local_id = patient_item #>> '{admissionLocation,locationId}';
+
+      IF replace_locations AND admission_remote_location_id IS NULL THEN
+        RAISE EXCEPTION
+          'Lokasi masuk pasien % tidak ditemukan di backup.',
+          patient_item->>'name';
+      END IF;
+    END IF;
+
     INSERT INTO public.patients (
       user_id,
       rotation_id,
@@ -137,11 +346,13 @@ BEGIN
       room,
       bed,
       doctor,
+      current_location_id,
       current_location_type,
       current_location_name,
       created_at,
       admission_date,
       admission_complaint,
+      admission_location_id,
       admission_location_type,
       admission_location_name,
       status
@@ -156,6 +367,7 @@ BEGIN
       patient_item->>'room',
       patient_item->>'bed',
       patient_item->>'doctor',
+      current_remote_location_id,
       COALESCE(
         NULLIF(patient_item #>> '{currentLocation,type}', ''),
         CASE
@@ -171,6 +383,7 @@ BEGIN
       COALESCE(NULLIF(patient_item->>'createdAt', '')::timestamptz, now()),
       NULLIF(patient_item->>'admissionDate', '')::date,
       NULLIF(patient_item->>'admissionComplaint', ''),
+      admission_remote_location_id,
       NULLIF(patient_item #>> '{admissionLocation,type}', ''),
       NULLIF(patient_item #>> '{admissionLocation,name}', ''),
       patient_item->>'status'
@@ -338,6 +551,10 @@ BEGIN
   FROM restore_follow_up_map;
 
   SELECT COALESCE(jsonb_object_agg(local_id, remote_id::text), '{}'::jsonb)
+  INTO location_map
+  FROM restore_location_map;
+
+  SELECT COALESCE(jsonb_object_agg(local_id, remote_id::text), '{}'::jsonb)
   INTO exam_map
   FROM restore_exam_map;
 
@@ -354,7 +571,10 @@ BEGIN
     'rotationCount', rotation_count,
     'patientCount', patient_count,
     'followUpCount', follow_up_count,
-    'supportingExamCount', exam_count
+    'supportingExamCount', exam_count,
+    'slaberanLocationCount', slaberan_location_count,
+    'slaberanTemplateCount', slaberan_template_count,
+    'slaberanLocationIds', location_map
   );
 END;
 $$;

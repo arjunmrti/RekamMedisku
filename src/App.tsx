@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import DashboardPage from "./pages/dashboard/DashboardPage";
 import PatientProfilePage from "./pages/patient-profile/PatientProfilePage";
 import FollowUpFormPage from "./pages/follow-up/FollowUpFormPage";
-import ReportGeneratorPage, { type ReportMode } from "./pages/reports/ReportGeneratorPage";
+import ReportGeneratorPage from "./pages/reports/ReportGeneratorPage";
+import type { ReportMode } from "./types/report";
 import PatientsPage from "./pages/patients/PatientsPage";
 import BackupDataPage from "./pages/backup/BackupDataPage";
 import RotationManagementPage from "./pages/rotations/RotationManagementPage";
@@ -40,7 +41,11 @@ function App() {
   );
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(() => getInitialPatient());
-  const [reportMode, setReportMode] = useState<ReportMode>("follow-up");
+  const [reportMode, setReportMode] = useState<ReportMode>("hub");
+  const activeRotationId = loadActiveRotation().id;
+  const reportPatients = loadPatients().filter((candidate) =>
+    isActivePatientInRotation(candidate, activeRotationId),
+  );
 
   useEffect(() => {
     if (workspaceSyncVersion === 0) return;
@@ -70,7 +75,7 @@ function App() {
         setActiveItem((currentItem) =>
           currentItem === "Profil Pasien" ||
           currentItem === "Follow-Up Baru" ||
-          currentItem === "Semua Laporan"
+          (currentItem === "Semua Laporan" && reportMode !== "hub")
             ? "Daftar Pasien"
             : currentItem,
         );
@@ -79,7 +84,7 @@ function App() {
 
       return refreshed;
     });
-  }, [workspaceSyncVersion]);
+  }, [workspaceSyncVersion, reportMode]);
   const handleNavigate = (label: string) => {
     if (label === "Pasien") {
       setActiveItem("Daftar Pasien");
@@ -101,36 +106,7 @@ function App() {
       }
 
       if (label === "Semua Laporan") {
-        setReportMode("follow-up");
-        const activeRotation = loadActiveRotation();
-        const patients = loadPatients();
-        const currentPatient =
-          selectedPatient &&
-          selectedPatient.rotationId === activeRotation.id &&
-          selectedPatient.status === "Aktif"
-            ? patients.find(
-                (patient) =>
-                  patient.id === selectedPatient.id &&
-                  patient.rotationId === activeRotation.id &&
-                  patient.status === "Aktif",
-              ) ?? null
-            : null;
-        const nextPatient =
-          currentPatient ??
-          patients.find(
-            (patient) =>
-              patient.rotationId === activeRotation.id &&
-              patient.status === "Aktif",
-          ) ??
-          null;
-
-        if (!nextPatient) {
-          setSelectedPatient(null);
-          setActiveItem("Daftar Pasien");
-          return;
-        }
-
-        setSelectedPatient(nextPatient);
+        setReportMode("hub");
         setActiveItem("Semua Laporan");
         return;
       }
@@ -249,10 +225,35 @@ function App() {
         key={`${selectedPatient?.id ?? "none"}:${reportMode}`}
         {...navigationProps}
         patient={selectedPatient ?? undefined}
+        availablePatients={reportPatients}
         mode={reportMode}
-        onModeChange={setReportMode}
-      />
-    );
+        onPatientChange={(patientId) => {
+          const nextPatient = reportPatients.find(
+            (candidate) => candidate.id === patientId,
+          );
+
+          if (nextPatient) {
+            setSelectedPatient(nextPatient);
+          }
+        }}
+        onModeChange={(nextMode) => {
+          if (nextMode === "follow-up" && !selectedPatient) {
+            const activeRotation = loadActiveRotation();
+            const fallbackPatient =
+              loadPatients().find(
+                (patient) =>
+                  patient.rotationId === activeRotation.id &&
+                  patient.status === "Aktif",
+              ) ?? null;
+
+            if (fallbackPatient) {
+              setSelectedPatient(fallbackPatient);
+            }
+          }
+
+          setReportMode(nextMode);
+        }}
+      />    );
   }
 
   if (activeItem === "Cadangan & Data") {

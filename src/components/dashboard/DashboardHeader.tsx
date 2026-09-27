@@ -44,7 +44,7 @@ export default function DashboardHeader({
             <h1 className="text-[24px] font-bold leading-tight tracking-tight text-slate-900 sm:text-[28px] lg:text-[30px]">
               {getGreeting()}, Muhammad Fadel
             </h1>
-            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-slate-500 shadow-sm">
+            <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-500 shadow-sm">
               Hari ini
             </span>
           </div>
@@ -68,13 +68,13 @@ export default function DashboardHeader({
                 />
               </div>
               <div>
-                <span className="block text-[9px] font-bold uppercase leading-none tracking-wider text-slate-400">
+                <span className="block text-[10px] font-bold uppercase leading-none tracking-wider text-slate-400">
                   Stase Aktif
                 </span>
                 <span className="block text-sm font-bold tracking-tight text-blue-700">
                   {rotation.name}
                 </span>
-                <span className="block text-[10px] font-medium text-slate-400">
+                <span className="block text-[11px] font-medium text-slate-400">
                   {rotation.specialty} · {formatPeriod(rotation.startDate, rotation.endDate)}
                 </span>
               </div>

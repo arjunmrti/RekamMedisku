@@ -23,7 +23,7 @@ export default function PatientListHeader({
           <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
             Stase Aktif · {rotation.name}
           </p>
-          <span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[9px] font-bold text-[#1677FF]">
+          <span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#1677FF]">
             {rotation.specialty}
           </span>
         </div>
@@ -42,7 +42,7 @@ export default function PatientListHeader({
           ].map(([label, value, className]) => (
             <span
               key={label as string}
-              className={"flex items-center justify-center gap-2 rounded-xl border px-2.5 py-2 text-[10px] font-semibold sm:inline-flex sm:justify-start sm:px-3 " + (className as string)}
+              className={"flex items-center justify-center gap-2 rounded-xl border px-2.5 py-2 text-[11px] font-semibold sm:inline-flex sm:justify-start sm:px-3 " + (className as string)}
             >
               <span className="text-base font-bold leading-none text-slate-900">{value as number}</span>
               <span>{label as string}</span>

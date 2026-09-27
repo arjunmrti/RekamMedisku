@@ -33,7 +33,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY INVOKER
 SET search_path = public
-AS $
+AS $slaberan$
 BEGIN
   IF NEW.parent_id IS NOT NULL AND NOT EXISTS (
     SELECT 1
@@ -46,7 +46,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$slaberan$;
 
 DROP TRIGGER IF EXISTS trg_validate_slaberan_location_parent
   ON public.slaberan_locations;
@@ -64,33 +64,33 @@ CREATE POLICY slaberan_locations_select_own
   ON public.slaberan_locations
   FOR SELECT
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_locations_insert_own ON public.slaberan_locations;
 CREATE POLICY slaberan_locations_insert_own
   ON public.slaberan_locations
   FOR INSERT
   TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_locations_update_own ON public.slaberan_locations;
 CREATE POLICY slaberan_locations_update_own
   ON public.slaberan_locations
   FOR UPDATE
   TO authenticated
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
+  USING (user_id = (select auth.uid()))
+  WITH CHECK (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_locations_delete_own ON public.slaberan_locations;
 CREATE POLICY slaberan_locations_delete_own
   ON public.slaberan_locations
   FOR DELETE
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (user_id = (select auth.uid()));
 
--- Preserve existing patient records by creating a flat location record from
--- legacy room data where no explicit location record exists yet. The user can
--- later organize those locations into floors without inventing a historical floor.
+-- Preserve legacy patient locations without violating the P10 hierarchy.
+-- Legacy wards have no historical floor in the old patient model, so they are
+-- grouped under a clearly synthetic floor that the user can reorganize later.
 INSERT INTO public.slaberan_locations (
   user_id,
   parent_id,
@@ -99,14 +99,50 @@ INSERT INTO public.slaberan_locations (
 )
 SELECT DISTINCT
   p.user_id,
-  NULL,
-  CASE
-    WHEN p.current_location_type = 'special' THEN 'special'
-    ELSE 'ward'
-  END,
+  NULL::uuid,
+  'floor',
+  'Lantai Belum Diatur'
+FROM public.patients p
+WHERE p.user_id IS NOT NULL
+  AND COALESCE(p.current_location_type, 'ward') <> 'special'
+  AND btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room)) <> ''
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.slaberan_locations (
+  user_id,
+  parent_id,
+  type,
+  name
+)
+SELECT DISTINCT
+  p.user_id,
+  floor.id,
+  'ward',
+  btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room))
+FROM public.patients p
+JOIN public.slaberan_locations floor
+  ON floor.user_id = p.user_id
+ AND floor.type = 'floor'
+ AND lower(btrim(floor.name)) = lower('Lantai Belum Diatur')
+WHERE p.user_id IS NOT NULL
+  AND COALESCE(p.current_location_type, 'ward') <> 'special'
+  AND btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room)) <> ''
+ON CONFLICT DO NOTHING;
+
+INSERT INTO public.slaberan_locations (
+  user_id,
+  parent_id,
+  type,
+  name
+)
+SELECT DISTINCT
+  p.user_id,
+  NULL::uuid,
+  'special',
   btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room))
 FROM public.patients p
 WHERE p.user_id IS NOT NULL
+  AND p.current_location_type = 'special'
   AND btrim(COALESCE(NULLIF(p.current_location_name, ''), p.room)) <> ''
 ON CONFLICT DO NOTHING;
 
@@ -115,7 +151,7 @@ RETURNS trigger
 LANGUAGE plpgsql
 SECURITY INVOKER
 SET search_path = public
-AS $
+AS $slaberan$
 BEGIN
   IF NEW.current_location_id IS NOT NULL AND NOT EXISTS (
     SELECT 1
@@ -137,7 +173,11 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$slaberan$;
+
+ALTER TABLE public.patients
+  ADD COLUMN IF NOT EXISTS current_location_id uuid,
+  ADD COLUMN IF NOT EXISTS admission_location_id uuid;
 
 DROP TRIGGER IF EXISTS trg_validate_patient_slaberan_locations
   ON public.patients;
@@ -150,10 +190,6 @@ CREATE TRIGGER trg_validate_patient_slaberan_locations
   ON public.patients
   FOR EACH ROW
   EXECUTE FUNCTION public.validate_patient_slaberan_locations();
-
-ALTER TABLE public.patients
-  ADD COLUMN IF NOT EXISTS current_location_id uuid,
-  ADD COLUMN IF NOT EXISTS admission_location_id uuid;
 
 ALTER TABLE public.patients
   DROP CONSTRAINT IF EXISTS patients_current_location_id_fkey;
@@ -234,29 +270,29 @@ CREATE POLICY slaberan_templates_select_own
   ON public.slaberan_templates
   FOR SELECT
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_templates_insert_own ON public.slaberan_templates;
 CREATE POLICY slaberan_templates_insert_own
   ON public.slaberan_templates
   FOR INSERT
   TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_templates_update_own ON public.slaberan_templates;
 CREATE POLICY slaberan_templates_update_own
   ON public.slaberan_templates
   FOR UPDATE
   TO authenticated
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
+  USING (user_id = (select auth.uid()))
+  WITH CHECK (user_id = (select auth.uid()));
 
 DROP POLICY IF EXISTS slaberan_templates_delete_own ON public.slaberan_templates;
 CREATE POLICY slaberan_templates_delete_own
   ON public.slaberan_templates
   FOR DELETE
   TO authenticated
-  USING (user_id = auth.uid());
+  USING (user_id = (select auth.uid()));
 
 GRANT EXECUTE
   ON FUNCTION
