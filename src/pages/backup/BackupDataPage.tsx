@@ -10,6 +10,7 @@ import { loadPatients } from "../../data/localPatients";
 import { restoreWorkspaceBackupWithSupabase } from "../../data/supabaseBackup";
 import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import { loadRotations } from "../../data/localRotations";
+import { syncSlaberanTemplatesWithSupabase } from "../../data/supabaseSlaberanTemplates";
 import type { BackupHistoryEntry, BackupPayload } from "../../types/backup";
 import {
   buildBackupPayload,
@@ -178,7 +179,11 @@ export default function BackupDataPage({
 
     try {
       const currentPatients = loadPatients();
-      const payload = await buildBackupPayloadWithAttachments(currentPatients);
+      const slaberanTemplates = await syncSlaberanTemplatesWithSupabase();
+      const payload = await buildBackupPayloadWithAttachments(
+        currentPatients,
+        slaberanTemplates,
+      );
       const content = serializeBackup(payload);
       const fileName =
         "rekammedisku-backup-" + toLocalIsoDate() + ".json";

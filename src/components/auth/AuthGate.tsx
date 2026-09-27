@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { setWorkspaceUserId } from "../../data/workspaceStorage";
 import LoginPage from "../../pages/auth/LoginPage";
 import {
   startWorkspaceSync,
@@ -55,10 +56,13 @@ function getWorkspaceSyncErrorMessage(error: unknown) {
 
 export default function AuthGate({ children }: AuthGateProps) {
   const { session, loading } = useAuth();
+  setWorkspaceUserId(session?.user.id ?? null);
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workspaceError, setWorkspaceError] = useState("");
 
   useEffect(() => {
+    setWorkspaceUserId(session?.user.id ?? null);
+
     if (!session) {
       setWorkspaceLoading(false);
       setWorkspaceError("");

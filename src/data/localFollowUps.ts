@@ -1,12 +1,13 @@
+import { workspaceStorageKey } from "./workspaceStorage";
 import type { FollowUpEntry } from "../types/followUp";
 import type { FollowUpFormValues } from "../types/followUpForm";
 
-const DRAFT_PREFIX = "rekammedisku:follow-up-draft:";
-const SAVED_KEY = "rekammedisku:follow-ups";
+const DRAFT_PREFIX = "follow-up-draft:";
+const SAVED_KEY = "follow-ups";
 
 function readJson<T>(key: string, fallback: T): T {
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = window.localStorage.getItem(workspaceStorageKey(key));
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
@@ -42,13 +43,13 @@ export function saveFollowUpDraft(
   values: FollowUpFormValues,
 ) {
   window.localStorage.setItem(
-    DRAFT_PREFIX + patientId,
+    workspaceStorageKey(DRAFT_PREFIX + patientId),
     JSON.stringify(values),
   );
 }
 
 export function clearFollowUpDraft(patientId: string) {
-  window.localStorage.removeItem(DRAFT_PREFIX + patientId);
+  window.localStorage.removeItem(workspaceStorageKey(DRAFT_PREFIX + patientId));
 }
 
 export function loadSavedFollowUps(): Record<string, FollowUpEntry[]> {
@@ -83,10 +84,12 @@ export function getOtherPatientFollowUpAttachmentIds(
     }
   }
 
-  for (const key of Object.keys(window.localStorage)) {
-    if (!key.startsWith(DRAFT_PREFIX)) continue;
+  const draftStoragePrefix = workspaceStorageKey(DRAFT_PREFIX);
 
-    const draftPatientId = key.slice(DRAFT_PREFIX.length);
+  for (const key of Object.keys(window.localStorage)) {
+    if (!key.startsWith(draftStoragePrefix)) continue;
+
+    const draftPatientId = key.slice(draftStoragePrefix.length);
     if (draftPatientId === patientId) continue;
 
     for (const attachmentId of getDraftAttachmentIds(draftPatientId)) {
@@ -106,20 +109,21 @@ function restoreStorageValue(key: string, rawValue: string | null) {
 }
 
 export function deleteFollowUpsForPatient(patientId: string): () => void {
-  const draftKey = DRAFT_PREFIX + patientId;
-  const previousSavedFollowUps = window.localStorage.getItem(SAVED_KEY);
+  const draftKey = workspaceStorageKey(DRAFT_PREFIX + patientId);
+  const savedFollowUpsKey = workspaceStorageKey(SAVED_KEY);
+  const previousSavedFollowUps = window.localStorage.getItem(savedFollowUpsKey);
   const previousDraft = window.localStorage.getItem(draftKey);
   const current = getStoredFollowUps();
 
   delete current[patientId];
 
   const rollback = () => {
-    restoreStorageValue(SAVED_KEY, previousSavedFollowUps);
+    restoreStorageValue(savedFollowUpsKey, previousSavedFollowUps);
     restoreStorageValue(draftKey, previousDraft);
   };
 
   try {
-    window.localStorage.setItem(SAVED_KEY, JSON.stringify(current));
+    window.localStorage.setItem(savedFollowUpsKey, JSON.stringify(current));
     window.localStorage.removeItem(draftKey);
   } catch (error) {
     try {
@@ -140,7 +144,7 @@ export function appendSavedFollowUp(
   const current = loadSavedFollowUps();
   const next = [followUp, ...(current[patientId] ?? [])];
   window.localStorage.setItem(
-    SAVED_KEY,
+    workspaceStorageKey(SAVED_KEY),
     JSON.stringify({ ...current, [patientId]: next }),
   );
 }
@@ -148,11 +152,13 @@ export function appendSavedFollowUp(
 export function replaceSavedFollowUps(
   followUpsByPatient: Record<string, FollowUpEntry[]>,
 ) {
-  window.localStorage.setItem(SAVED_KEY, JSON.stringify(followUpsByPatient));
+  window.localStorage.setItem(workspaceStorageKey(SAVED_KEY), JSON.stringify(followUpsByPatient));
 }
 
 export function clearAllFollowUpDrafts() {
+  const draftStoragePrefix = workspaceStorageKey(DRAFT_PREFIX);
+
   Object.keys(window.localStorage)
-    .filter((key) => key.startsWith(DRAFT_PREFIX))
+    .filter((key) => key.startsWith(draftStoragePrefix))
     .forEach((key) => window.localStorage.removeItem(key));
 }

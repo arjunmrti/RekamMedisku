@@ -1,5 +1,6 @@
 import type { BackupPayload } from "../types/backup";
 import { supabase } from "../utils/supabase";
+import { workspaceStorageKey } from "./workspaceStorage";
 
 export class SupabaseRestoreCommittedError extends Error {
   readonly remoteCommitted = true;
@@ -10,15 +11,16 @@ export class SupabaseRestoreCommittedError extends Error {
   }
 }
 import {
+  flushPendingAttachmentCleanupWithSupabase,
   rollbackBackupAttachmentUploadsWithSupabase,
   uploadBackupAttachmentsWithSupabase,
 } from "./supabaseAttachments";
 
-const ROTATION_ID_MAP_KEY = "rekammedisku:supabase-rotation-ids";
-const PATIENT_ID_MAP_KEY = "rekammedisku:supabase-patient-ids";
-const FOLLOW_UP_ID_MAP_KEY = "rekammedisku:supabase-follow-up-ids";
+const ROTATION_ID_MAP_KEY = "supabase-rotation-ids";
+const PATIENT_ID_MAP_KEY = "supabase-patient-ids";
+const FOLLOW_UP_ID_MAP_KEY = "supabase-follow-up-ids";
 const SUPPORTING_EXAM_ID_MAP_KEY =
-  "rekammedisku:supabase-supporting-exam-ids";
+  "supabase-supporting-exam-ids";
 
 type RestoreWorkspaceResult = {
   rotationIds: Record<string, string>;
@@ -66,7 +68,7 @@ function getSupabaseErrorMessage(error: unknown) {
 }
 
 function saveIdMap(key: string, value: Record<string, string>) {
-  window.localStorage.setItem(key, JSON.stringify(value));
+  window.localStorage.setItem(workspaceStorageKey(key), JSON.stringify(value));
 }
 
 function validateRestoreResult(data: unknown): RestoreWorkspaceResult {
@@ -123,6 +125,12 @@ export async function restoreWorkspaceBackupWithSupabase(
     followUpsByPatient: payload.followUpsByPatient,
     rotations: payload.rotations,
     activeRotationId: payload.activeRotationId ?? "",
+    ...(payload.slaberanLocations !== undefined
+      ? { slaberanLocations: payload.slaberanLocations }
+      : {}),
+    ...(payload.slaberanTemplates !== undefined
+      ? { slaberanTemplates: payload.slaberanTemplates }
+      : {}),
   };
 
   // Upload binary attachments before replacing the cloud database snapshot.
@@ -155,6 +163,15 @@ export async function restoreWorkspaceBackupWithSupabase(
       validationError instanceof Error
         ? validationError.message
         : "Respons restore workspace dari Supabase tidak valid.",
+    );
+  }
+
+  try {
+    await flushPendingAttachmentCleanupWithSupabase();
+  } catch (cleanupQueueError) {
+    console.warn(
+      "Restore cloud berhasil, tetapi cleanup lampiran lama tertunda dan akan dicoba lagi saat sinkronisasi berikutnya.",
+      cleanupQueueError,
     );
   }
 

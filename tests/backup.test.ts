@@ -12,6 +12,8 @@ import type { Rotation } from "../src/types/rotation";
 import type { StoredAttachment } from "../src/data/localAttachments";
 import type { PatientListItem } from "../src/types/patient";
 import type { FollowUpEntry } from "../src/types/followUp";
+import type { SlaberanLocation } from "../src/types/slaberanLocation";
+import type { SlaberanTemplateRecord } from "../src/types/slaberanTemplate";
 
 const patient = {
   id: "p-test",
@@ -91,6 +93,7 @@ function createRestoreLocalState(
   )?.id ?? "";
   let drafts: Record<string, FollowUpFormValues> = {};
   let attachments: StoredAttachment[] = [];
+  let slaberanLocations: SlaberanLocation[] = [];
 
   const state: RestoreBackupLocalState = {
     loadPatients: () => patients,
@@ -119,6 +122,10 @@ function createRestoreLocalState(
     loadAllAttachments: async () => attachments,
     replaceAllAttachments: async (value) => {
       attachments = value;
+    },
+    loadSlaberanLocations: () => slaberanLocations,
+    replaceSlaberanLocations: (value) => {
+      slaberanLocations = value;
     },
   };
 
@@ -252,6 +259,40 @@ function withDraft(): BackupPayload {
   };
 }
 
+const slaberanLocation: SlaberanLocation = {
+  id: "floor-test",
+  type: "floor",
+  name: "Lantai 1",
+  sortOrder: 0,
+  isActive: true,
+  createdAt: "2026-09-26T00:00:00.000Z",
+  updatedAt: "2026-09-26T00:00:00.000Z",
+};
+
+const slaberanTemplate: SlaberanTemplateRecord = {
+  id: "template-test",
+  name: "Template Test",
+  doctor: "dr. Uji",
+  specialty: "Neurologi",
+  hospital: "RS Uji",
+  opening: "Mohon izin dok",
+  showEmptyRooms: true,
+  blocks: [
+    {
+      id: "block-opening",
+      type: "opening",
+      label: "Opening",
+      enabled: true,
+      config: {},
+    },
+  ],
+  settings: {},
+  schemaVersion: 1,
+  isDefault: true,
+  createdAt: "2026-09-26T00:00:00.000Z",
+  updatedAt: "2026-09-26T00:00:00.000Z",
+};
+
 test("backup lama tanpa field attachments tetap valid", () => {
   const result = parseBackupText(serializeBackup(basePayload));
 
@@ -259,6 +300,62 @@ test("backup lama tanpa field attachments tetap valid", () => {
   if (!result.ok) return;
 
   assert.equal(result.data.attachments, undefined);
+});
+
+test("backup v2 membawa lokasi dan template Slaberan", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    schemaVersion: 2,
+    slaberanLocations: [slaberanLocation],
+    slaberanTemplates: [slaberanTemplate],
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+
+  assert.equal(result.data.schemaVersion, 2);
+  assert.equal(result.data.slaberanLocations?.[0]?.id, "floor-test");
+  assert.equal(result.data.slaberanTemplates?.[0]?.id, "template-test");
+});
+
+test("backup menolak lokasi Slaberan dengan parent yang tidak ada", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    schemaVersion: 2,
+    slaberanLocations: [
+      {
+        ...slaberanLocation,
+        parentId: "missing-parent",
+      },
+    ],
+    slaberanTemplates: [],
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak lebih dari satu template Slaberan default", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    schemaVersion: 2,
+    slaberanLocations: [],
+    slaberanTemplates: [
+      slaberanTemplate,
+      {
+        ...slaberanTemplate,
+        id: "template-test-2",
+        name: "Template Test 2",
+      },
+    ],
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
 });
 
 test("backup baru membawa attachment IndexedDB yang direferensikan follow-up", () => {
@@ -294,6 +391,73 @@ test("backup ditolak jika attachment yang direferensikan tidak ikut dibawa", () 
 test("backup ditolak jika Base64 attachment tidak valid", () => {
   const payload = withAttachment("att-invalid");
   payload.attachments![0].dataBase64 = "not-base64";
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak follow-up dengan nomor 0", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    followUpsByPatient: {
+      [patient.id]: [
+        {
+          id: "fu-invalid-zero",
+          number: 0,
+          date: "26 September 2026",
+          isoDate: "2026-09-26",
+          time: "09.30",
+          status: "Tersimpan",
+          subjective: "Keluhan",
+          objective: "Objektif",
+          assessment: "Assessment",
+          plan: "Plan",
+          summary: "Ringkasan",
+        },
+      ],
+    },
+  };
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak nomor follow-up duplikat pada pasien yang sama", () => {
+  const payload: BackupPayload = {
+    ...basePayload,
+    followUpsByPatient: {
+      [patient.id]: [
+        {
+          id: "fu-duplicate-1",
+          number: 1,
+          date: "26 September 2026",
+          isoDate: "2026-09-26",
+          time: "09.30",
+          status: "Tersimpan",
+          subjective: "Keluhan pertama",
+          objective: "Objektif",
+          assessment: "Assessment",
+          plan: "Plan",
+          summary: "Ringkasan pertama",
+        },
+        {
+          id: "fu-duplicate-2",
+          number: 1,
+          date: "27 September 2026",
+          isoDate: "2026-09-27",
+          time: "09.30",
+          status: "Tersimpan",
+          subjective: "Keluhan kedua",
+          objective: "Objektif",
+          assessment: "Assessment",
+          plan: "Plan",
+          summary: "Ringkasan kedua",
+        },
+      ],
+    },
+  };
 
   const result = parseBackupText(serializeBackup(payload));
 

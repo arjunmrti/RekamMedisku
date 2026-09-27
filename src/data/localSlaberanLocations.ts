@@ -1,10 +1,11 @@
 import type { SlaberanLocation } from "../types/slaberanLocation";
+import { workspaceStorageKey } from "./workspaceStorage";
 
-const LOCATIONS_KEY = "rekammedisku:slaberan-locations";
+const LOCATIONS_KEY = "slaberan-locations";
 
 function readJson<T>(fallback: T): T {
   try {
-    const raw = window.localStorage.getItem(LOCATIONS_KEY);
+    const raw = window.localStorage.getItem(workspaceStorageKey(LOCATIONS_KEY));
     return raw ? (JSON.parse(raw) as T) : fallback;
   } catch {
     return fallback;
@@ -27,7 +28,7 @@ export function loadSlaberanLocations(): SlaberanLocation[] {
 }
 
 export function saveSlaberanLocations(locations: SlaberanLocation[]) {
-  window.localStorage.setItem(LOCATIONS_KEY, JSON.stringify(locations));
+  window.localStorage.setItem(workspaceStorageKey(LOCATIONS_KEY), JSON.stringify(locations));
 }
 
 export function replaceSlaberanLocations(locations: SlaberanLocation[]) {

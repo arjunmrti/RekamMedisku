@@ -1,11 +1,17 @@
 import type { SlaberanTemplateRecord } from "../types/slaberanTemplate";
+import { workspaceStorageKey } from "./workspaceStorage";
 
-const TEMPLATES_KEY = "rekammedisku:slaberan-templates";
+const TEMPLATES_KEY = "slaberan-templates";
+
+function getStorageKey() {
+  return workspaceStorageKey(TEMPLATES_KEY);
+}
 
 function readTemplates(): SlaberanTemplateRecord[] {
   try {
-    const raw = window.localStorage.getItem(TEMPLATES_KEY);
+    const raw = window.localStorage.getItem(getStorageKey());
     if (!raw) return [];
+
     const parsed = JSON.parse(raw) as unknown;
 
     if (!Array.isArray(parsed)) return [];
@@ -27,8 +33,13 @@ export function loadSlaberanTemplates(): SlaberanTemplateRecord[] {
   return readTemplates();
 }
 
-export function saveSlaberanTemplates(templates: SlaberanTemplateRecord[]) {
-  window.localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+export function saveSlaberanTemplates(
+  templates: SlaberanTemplateRecord[],
+) {
+  window.localStorage.setItem(
+    getStorageKey(),
+    JSON.stringify(templates),
+  );
 }
 
 export function replaceSlaberanTemplates(
