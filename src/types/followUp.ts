@@ -1,3 +1,5 @@
+import type { FollowUpTemplateDefinition } from "./followUpTemplate";
+
 export type FollowUpStatus = "Tersimpan" | "Draf";
 
 export type SupportingExam = {
@@ -28,6 +30,14 @@ export type FollowUpEntry = {
   /** Remote updated_at used for optimistic concurrency control. */
   updatedAt?: string;
   templateType?: "Neurologi" | "Ilmu Penyakit Dalam";
+  /** User-owned follow-up template pinned when this entry was saved. */
+  templateId?: string;
+  /** Immutable user-facing version pinned by this follow-up. */
+  templateVersion?: number;
+  /** Definition schema version of the pinned template snapshot. */
+  templateSchemaVersion?: number;
+  /** Exact template definition used when this follow-up was saved. */
+  templateSnapshot?: FollowUpTemplateDefinition;
   assessmentCodes?: string[];
   planning?: string;
   instruction?: string;
