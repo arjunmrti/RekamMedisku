@@ -57,6 +57,9 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/tests/database/mu104_dynamic_follow_up_answers.test.sql" \
             supabase/tests/database/mu104_dynamic_follow_up_answers.test.sql
 
+          cp "$GITHUB_WORKSPACE/supabase/tests/database/mu105_report_template_engine.test.sql" \
+            supabase/tests/database/mu105_report_template_engine.test.sql
+
       - name: Validate PR migration filenames
         if: github.event_name == 'pull_request'
         shell: bash
@@ -126,6 +129,9 @@ jobs:
 
           cp "$GITHUB_WORKSPACE/supabase/migrations/20260928170000_mu104_dynamic_follow_up_answers.sql" \
             supabase/migrations/20260928170000_mu104_dynamic_follow_up_answers.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260929000000_mu105_report_template_engine.sql" \
+            supabase/migrations/20260929000000_mu105_report_template_engine.sql
 
           cp "$GITHUB_WORKSPACE/supabase/migrations/20260926212923_p3_attachment_storage_sync.sql" \
             supabase/migrations/20260926212923_p3_attachment_storage_sync.sql
