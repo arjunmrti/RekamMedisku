@@ -711,12 +711,12 @@ function FollowUpReportGeneratorPage({
             <ReportSummaryCard
               patient={patient}
               followUp={selectedFollowUp}
-              templateType={templateType}
+              templateName={selectedReportTemplate.name}
               copied={copied}
               hasReport={Boolean(reportText)}
               copyError={copyError}
               onCopy={handleCopy}
-              onRegenerate={() => generateReport()}
+              onRegenerate={generateReport}
             />
           </div>
 
