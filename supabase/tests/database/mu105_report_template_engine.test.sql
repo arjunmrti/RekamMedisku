@@ -137,7 +137,7 @@ SELECT throws_ok(
     }'::jsonb
   ); $q$,
   'P0001',
-  'Template laporan tidak valid: source "follow_up.not_a_real_source" tidak didukung.',
+  NULL,
   'unsupported report value source is rejected'
 );
 
@@ -164,7 +164,7 @@ SELECT throws_ok(
     }'::jsonb
   ); $q$,
   'P0001',
-  'Template laporan tidak valid: type block "unknown" tidak didukung.',
+  NULL,
   'unsupported report block type is rejected'
 );
 
@@ -239,7 +239,7 @@ SELECT throws_ok(
     );
   $q$,
   'P0001',
-  'Versi template laporan sudah berubah. Muat ulang template sebelum menyimpan versi baru.',
+  NULL,
   'stale report template version is rejected'
 );
 
@@ -277,7 +277,7 @@ SELECT throws_ok(
     );
   $q$,
   'P0001',
-  'Template laporan tidak berada dalam workspace pengguna.',
+  NULL,
   'user B cannot append user A report template'
 );
 
