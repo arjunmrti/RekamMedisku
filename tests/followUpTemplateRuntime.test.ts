@@ -1,3 +1,5 @@
+import test from "node:test";
+import assert from "node:assert/strict";
 import {
   createInitialFollowUpTemplateAnswers,
   formatFollowUpTemplateAnswers,
@@ -5,9 +7,6 @@ import {
   validateFollowUpTemplateAnswers,
 } from "../src/utils/followUpTemplateRuntime";
 import type { FollowUpTemplateDefinition } from "../src/types/followUpTemplate";
-import test from "node:test";
-import assert from "node:assert/strict";
-c = c;
 
 function template(): FollowUpTemplateDefinition {
   return {
@@ -17,7 +16,13 @@ function template(): FollowUpTemplateDefinition {
         id: "objective",
         title: "Objective",
         fields: [
-          { id: "bp", label: "Tekanan Darah", type: "text", required: true, unit: "mmHg" },
+          {
+            id: "bp",
+            label: "Tekanan Darah",
+            type: "text",
+            required: true,
+            unit: "mmHg",
+          },
           { id: "pain", label: "NRS", type: "number" },
           {
             id: "finding",
@@ -35,28 +40,59 @@ function template(): FollowUpTemplateDefinition {
   };
 }
 
-test("follow-up template runtime creates defaults, validates, formats, and summarizes answers", () => {
-  it("creates empty values for every stable field id", () => {
-    assert.deepEqual(createInitialFollowUpTemplateAnswers(template()), {
+test("follow-up template runtime creates stable defaults", () => {
+  assert.deepEqual(createInitialFollowUpTemplateAnswers(template()), {
+    bp: "",
+    pain: "",
+    finding: "",
+    stable: false,
+  });
+});
+
+test("follow-up template runtime validates required values", () => {
+  const definition = template();
+
+  assert.deepEqual(
+    validateFollowUpTemplateAnswers(definition, {
       bp: "",
-      pain: "",
+      pain: 3,
       finding: "",
       stable: false,
-    });
+    }),
+    ["Tekanan Darah"],
+  );
 
-  test("validates required values from the template definition", () => {
-    const definition = template();
-    assert.deepEqual(validateFollowUpTemplateAnswers(definition, { bp: "", pain: 3, finding: "", stable: false }), ["Tekanan Darah"]);
-    assert.deepEqual(validateFollowUpTemplateAnswers(definition, { bp: "120/80", pain: 3, finding: "", stable: false }), []);
+  assert.deepEqual(
+    validateFollowUpTemplateAnswers(definition, {
+      bp: "120/80",
+      pain: 3,
+      finding: "",
+      stable: false,
+    }),
+    [],
+  );
+});
+
+test("follow-up template runtime formats answers without specialty branches", () => {
+  const formatted = formatFollowUpTemplateAnswers(template(), {
+    bp: "120/80",
+    pain: 3,
+    finding: "normal",
+    stable: true,
   });
 
-  test("formats answers without hardcoded specialty knowledge", () => {
-    const formatted = formatFollowUpTemplateAnswers(template(), { bp: "120/80", pain: 3, finding: "normal", stable: true });
-    assert.match(formatted, /Tekanan Darah: 120\/80 mmHg/);
-    assert.match(formatted, /Stabil: true/);
-  });
+  assert.match(formatted, /Tekanan Darah: 120\/80 mmHg/);
+  assert.match(formatted, /Stabil: true/);
+});
 
-  test("finds a meaningful answer for fallback summary", () => {
-    assert.equal(getFirstMeaningfulTemplateAnswer(template(), { bp: "", pain: 5, finding: "", stable: false }), "5");
-  });
+test("follow-up template runtime finds a meaningful answer for summary fallback", () => {
+  assert.equal(
+    getFirstMeaningfulTemplateAnswer(template(), {
+      bp: "",
+      pain: 5,
+      finding: "",
+      stable: false,
+    }),
+    "5",
+  );
 });
