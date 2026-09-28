@@ -141,8 +141,8 @@ function openExistingLegacyDatabase(
   const request = window.indexedDB.open(LEGACY_DB_NAME);
   let createdNewDatabase = false;
 
-  request.onupgradeneeded = () => {
-    if (request.oldVersion === 0) {
+  request.onupgradeneeded = (event) => {
+    if (event.oldVersion === 0) {
       createdNewDatabase = true;
       request.transaction?.abort();
     }
