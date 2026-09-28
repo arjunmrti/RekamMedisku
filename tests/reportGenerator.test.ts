@@ -140,6 +140,11 @@ const customDefinition: ReportTemplateDefinition = {
           source: "follow_up.subjective",
         },
         {
+          id: "objective",
+          type: "value",
+          source: "follow_up.objective",
+        },
+        {
           id: "answers",
           type: "template_answers",
           title: "Jawaban Template",
