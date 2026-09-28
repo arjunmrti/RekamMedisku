@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import AssessmentSection from "../../components/follow-up/AssessmentSection";
 import ObjectiveSection from "../../components/follow-up/ObjectiveSection";
+import FollowUpTemplateRenderer from "../../components/follow-up/FollowUpTemplateRenderer";
 import PatientContextCard from "../../components/follow-up/PatientContextCard";
 import PlanSection from "../../components/follow-up/PlanSection";
 import SubjectiveSection from "../../components/follow-up/SubjectiveSection";
@@ -19,13 +20,21 @@ import {
 } from "../../data/supabaseFollowUps";
 import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import { loadActiveRotation } from "../../data/localRotations";
+import { getFollowUpTemplateVersion } from "../../data/followUpTemplates";
 import { updatePatient } from "../../data/localPatients";
 import { derivePatientFollowUpSummary } from "../../data/patientFollowUpSummary";
 import { cleanupUnreferencedAttachments } from "../../data/attachmentReferences";
 import { toLocalIsoDate, toLocalTimeInput } from "../../utils/date";
 import { buildBasicObjectiveLines } from "../../utils/objectiveFormatter";
+import {
+  createInitialFollowUpTemplateAnswers,
+  formatFollowUpTemplateAnswers,
+  getFirstMeaningfulTemplateAnswer,
+  validateFollowUpTemplateAnswers,
+} from "../../utils/followUpTemplateRuntime";
 import type { FollowUpEntry, SupportingExam } from "../../types/followUp";
 import type { FollowUpFormValues } from "../../types/followUpForm";
+import type { FollowUpTemplate } from "../../types/followUpTemplate";
 import type { PatientListItem } from "../../types/patient";
 import Icon from "../../components/ui/Icon";
 
@@ -212,7 +221,7 @@ function countFilled(values: Record<string, unknown>) {
 function buildFollowUpEntry(
   values: FollowUpFormValues,
   number: number,
-  templateType: FollowUpEntry["templateType"],
+  template: FollowUpTemplate,
 ): FollowUpEntry {
   const subjective = [
     "Keluhan Pagi Ini: " + values.subjective.keluhan,
@@ -221,93 +230,30 @@ function buildFollowUpEntry(
     "RPO: " + values.subjective.medicationHistory,
     "Riwayat Alergi: " + values.subjective.allergies,
     "Riwayat Lain-lain: " + values.subjective.otherHistory,
-  ]
-    .filter((item) => !item.endsWith(": "))
-    .join("\n");
+  ].filter((item) => !item.endsWith(": ")).join("\n");
 
-  const gcsValues = [
-    values.neurology.gcsEye,
-    values.neurology.gcsMotor,
-    values.neurology.gcsVerbal,
-  ];
-  const numericGcsValues = gcsValues.map(Number);
-  const gcsTotal =
-    gcsValues.every(Boolean) && numericGcsValues.every(Number.isFinite)
-      ? numericGcsValues.reduce((total, value) => total + value, 0)
-      : null;
-  const gcs = gcsValues.every(Boolean)
-    ? "E" +
-      values.neurology.gcsEye +
-      "/M" +
-      values.neurology.gcsMotor +
-      "/V" +
-      values.neurology.gcsVerbal +
-      (gcsTotal !== null ? " = " + gcsTotal : "")
-    : "";
+  const basicObjective = buildBasicObjectiveLines(values.objective);
+  const templateAnswers = values.templateAnswers ?? createInitialFollowUpTemplateAnswers(template.latestDefinition);
+  const templateObjective = formatFollowUpTemplateAnswers(template.latestDefinition, templateAnswers);
+  const objective = [...basicObjective, templateObjective].filter(Boolean).join("\n");
+  const assessment = values.assessments.filter((item) => item.trim()).join("\n");
 
-  const templateObjective =
-    templateType === "Ilmu Penyakit Dalam"
-      ? [
-          "Keadaan Umum: " + values.internalMedicine.generalCondition,
-          "Kesadaran: " + values.internalMedicine.consciousness,
-          "Kepala & Leher: " + values.internalMedicine.headNeck,
-          "Thoraks: " + values.internalMedicine.thorax,
-          "Abdomen: " + values.internalMedicine.abdomen,
-          "Ekstremitas: " + values.internalMedicine.extremities,
-          "Temuan Sistemik Relevan: " +
-            values.internalMedicine.relevantSystemicFindings,
-        ]
-      : [
-          "Kesadaran: " + values.neurology.consciousness,
-          "GCS E/M/V: " + gcs,
-          "FKL: " + values.neurology.fkl,
-          "N. Cranialis: " + values.neurology.cranialNerve,
-          "Pupil: " + values.neurology.pupil,
-          "Kaku Kuduk: " + values.neurology.neckStiffness,
-          "Brudzinski I & II: " + values.neurology.brudzinski,
-          "Kernig: " + values.neurology.kernig,
-          "Pergerakan: " + values.neurology.movement,
-          "Tonus: " + values.neurology.tone,
-          "Sensorik: " + values.neurology.sensory,
-          "Kekuatan Ekstremitas Superior: " + values.neurology.upperStrength,
-          "Kekuatan Ekstremitas Inferior: " + values.neurology.lowerStrength,
-          "Refleks Fisiologis: " + values.neurology.physiologicReflex,
-          "Refleks Patologis: " + values.neurology.pathologicReflex,
-          "Otonom BAB/BAK: " + values.neurology.autonomic,
-          "Tes Provokasi Saraf: " + values.neurology.provocation,
-        ];
-
-  const objective = [
-    ...buildBasicObjectiveLines(values.objective),
-    ...templateObjective,
-  ].join("\n");
-
-  const assessment = values.assessments
-    .filter((item) => item.trim())
-    .join("\n");
-
-  const supportingExams: SupportingExam[] = values.supportingExams.map(
-    (exam) => ({
-      id: exam.id,
-      name: exam.examType,
-      examType: exam.examType,
-      date: formatDate(exam.date),
-      isoDate: exam.date,
-      result: exam.result,
-      attachmentName: exam.attachmentName,
-      attachmentId: exam.attachmentId,
-      attachmentType: exam.attachmentType,
-      attachmentSize: exam.attachmentSize,
-      icon:
-        exam.examType === "CT Scan"
-          ? "scan"
-          : exam.examType === "Rontgen"
-            ? "image"
-            : exam.examType === "EEG"
-              ? "eeg"
-              : "lab",
-    }),
-  );
+  const supportingExams: SupportingExam[] = values.supportingExams.map((exam) => ({
+    id: exam.id,
+    name: exam.examType,
+    examType: exam.examType,
+    date: formatDate(exam.date),
+    isoDate: exam.date,
+    result: exam.result,
+    attachmentName: exam.attachmentName,
+    attachmentId: exam.attachmentId,
+    attachmentType: exam.attachmentType,
+    attachmentSize: exam.attachmentSize,
+    icon:
+      exam.examType === "CT Scan" ? "scan" :
+      exam.examType === "Rontgen" ? "image" :
+      exam.examType === "EEG" ? "eeg" : "lab",
+  }));
 
   return {
     id: "fu-" + Date.now(),
@@ -316,7 +262,12 @@ function buildFollowUpEntry(
     isoDate: values.followUpDate,
     time: formatTime(values.followUpTime),
     status: "Tersimpan",
-    templateType,
+    templateType: template.name,
+    templateId: template.id,
+    templateVersion: template.latestVersion,
+    templateSchemaVersion: template.latestSchemaVersion,
+    templateSnapshot: template.latestDefinition,
+    templateAnswers,
     assessmentCodes: values.assessmentCodes,
     planning: values.planning,
     instruction: values.instruction,
@@ -326,30 +277,24 @@ function buildFollowUpEntry(
     plan: [
       values.planning ? "P/: " + values.planning : "",
       values.instruction ? "I/: " + values.instruction : "",
-    ]
-      .filter(Boolean)
-      .join("\n"),
-    summary: values.subjective.keluhan || "Follow-up baru tersimpan.",
+    ].filter(Boolean).join("\n"),
+    summary: values.subjective.keluhan || getFirstMeaningfulTemplateAnswer(template.latestDefinition, templateAnswers) || "Follow-up baru tersimpan.",
     supportingExams,
   };
 }
-
 export default function FollowUpFormPage({
   activeItem,
   onNavigate,
   patient,
 }: FollowUpFormPageProps) {
   const activeRotation = loadActiveRotation();
-  const patientMatchesRotation = patient.rotationId === activeRotation.id;
-  const templateAvailable =
-    activeRotation.specialty === "Neurologi" ||
-    activeRotation.specialty === "Ilmu Penyakit Dalam";
-  const templateType: FollowUpEntry["templateType"] =
-    activeRotation.specialty === "Ilmu Penyakit Dalam"
-      ? "Ilmu Penyakit Dalam"
-      : "Neurologi";
-
-  const existingDraft = loadFollowUpDraft(patient.id);
+  const templateId = activeRotation.followUpTemplateId ?? "";
+  const templateVersion = activeRotation.followUpTemplateVersion;
+  const [template, setTemplate] = useState<FollowUpTemplate | null>(null);
+  const [templateLoading, setTemplateLoading] = useState(Boolean(templateId && templateVersion));
+  const [templateLoadError, setTemplateLoadError] = useState("");
+  const [openTemplateSections, setOpenTemplateSections] = useState<Record<string, boolean>>({});
+  const patientMatchesRotation = patient.rotationId === activeRotation.id;  const existingDraft = loadFollowUpDraft(patient.id);
   const draftBelongsToRotation =
     !existingDraft?.rotationId || existingDraft.rotationId === activeRotation.id;
 
@@ -385,65 +330,26 @@ export default function FollowUpFormPage({
 
   const sectionStats = useMemo(() => {
     const subjectiveFilled = countFilled(values.subjective);
-    const templateValues =
-      templateType === "Ilmu Penyakit Dalam"
-        ? values.internalMedicine
-        : Object.fromEntries(
-            Object.entries(values.neurology).filter(
-              ([key]) => key !== "generalCondition",
-            ),
-          );
-    const templateFilled = countFilled(templateValues);
+    const templateAnswers = values.templateAnswers ?? {};
+    const templateFieldCount = template?.latestDefinition.sections.reduce((count, section) => count + section.fields.length, 0) ?? 0;
+    const templateFilled = countFilled(templateAnswers);
     const objectiveFilled = countFilled(values.objective) + templateFilled;
-    const assessmentFilled = values.assessments.filter((item) =>
-      item.trim(),
-    ).length;
-    const planFilled = [values.planning, values.instruction].filter((item) =>
-      item.trim(),
-    ).length;
+    const assessmentFilled = values.assessments.filter((item) => item.trim()).length;
+    const planFilled = [values.planning, values.instruction].filter((item) => item.trim()).length;
     const supportingFilled = values.supportingExams.length > 0 ? 1 : 0;
 
     const stats = {
-      subjective: {
-        filled: subjectiveFilled,
-        total: Object.keys(values.subjective).length,
-      },
-      objective: {
-        filled: objectiveFilled,
-        total:
-          Object.keys(values.objective).length +
-          (templateType === "Ilmu Penyakit Dalam"
-            ? Object.keys(values.internalMedicine).length
-            : Object.keys(values.neurology).filter(
-                (key) => key !== "generalCondition",
-              ).length),
-      },
+      subjective: { filled: subjectiveFilled, total: Object.keys(values.subjective).length },
+      objective: { filled: objectiveFilled, total: Object.keys(values.objective).length + templateFieldCount },
       supportingExams: { filled: supportingFilled, total: 1 },
-      assessment: {
-        filled: assessmentFilled,
-        total: Math.max(1, values.assessments.length),
-      },
+      assessment: { filled: assessmentFilled, total: Math.max(1, values.assessments.length) },
       plan: { filled: planFilled, total: 2 },
     };
 
-    const filled = Object.values(stats).reduce(
-      (sum, stat) => sum + stat.filled,
-      0,
-    );
-    const total = Object.values(stats).reduce(
-      (sum, stat) => sum + stat.total,
-      0,
-    );
-
-    return {
-      stats,
-      filled,
-      total,
-      percent: total ? Math.round((filled / total) * 100) : 0,
-    };
-  }, [templateType, values]);
-
-  const sectionNav: Array<{
+    const filled = Object.values(stats).reduce((sum, stat) => sum + stat.filled, 0);
+    const total = Object.values(stats).reduce((sum, stat) => sum + stat.total, 0);
+    return { stats, filled, total, percent: total ? Math.round((filled / total) * 100) : 0 };
+  }, [template, values]);  const sectionNav: Array<{
     key: SectionKey;
     label: string;
     number: string;
@@ -463,6 +369,54 @@ export default function FollowUpFormPage({
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!templateId || !templateVersion) {
+      setTemplate(null);
+      setTemplateLoading(false);
+      setTemplateLoadError("");
+      setOpenTemplateSections({});
+      setValues((current) => ({ ...current, templateAnswers: undefined, templateId: undefined, templateVersion: undefined, templateSchemaVersion: undefined, templateSnapshot: undefined }));
+      return;
+    }
+
+    setTemplateLoading(true);
+    setTemplateLoadError("");
+
+    const loadTemplate = async () => {
+      try {
+        const nextTemplate = await getFollowUpTemplateVersion(templateId, templateVersion);
+        if (cancelled) return;
+        if (!nextTemplate) throw new Error("Template follow-up yang dipasang pada stase tidak ditemukan.");
+        setTemplate(nextTemplate);
+        setOpenTemplateSections(Object.fromEntries(nextTemplate.latestDefinition.sections.map((section) => [section.id, true])));
+
+        const draft = loadFollowUpDraft(patient.id);
+        if (draft?.rotationId && draft.rotationId !== activeRotation.id) return;
+        const draftMatchesTemplate = draft?.templateId === nextTemplate.id && draft.templateVersion === nextTemplate.latestVersion;
+        setValues((current) => ({
+          ...current,
+          templateId: nextTemplate.id,
+          templateVersion: nextTemplate.latestVersion,
+          templateSchemaVersion: nextTemplate.latestSchemaVersion,
+          templateSnapshot: nextTemplate.latestDefinition,
+          templateAnswers: draftMatchesTemplate && draft?.templateAnswers ? draft.templateAnswers : createInitialFollowUpTemplateAnswers(nextTemplate.latestDefinition),
+        }));
+      } catch (error) {
+        if (!cancelled) {
+          setTemplate(null);
+          setTemplateLoadError(error instanceof Error ? error.message : "Template follow-up gagal dimuat.");
+        }
+      } finally {
+        if (!cancelled) setTemplateLoading(false);
+      }
+    };
+
+    void loadTemplate();
+    return () => { cancelled = true; };
+  }, [activeRotation.id, patient.id, templateId, templateVersion]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -561,6 +515,21 @@ export default function FollowUpFormPage({
       return;
     }
 
+    if (!template) {
+      setErrorMessage(templateLoadError || "Stase aktif belum memiliki template follow-up yang valid.");
+      return;
+    }
+
+    const missingTemplateFields = validateFollowUpTemplateAnswers(
+      template.latestDefinition,
+      values.templateAnswers ?? {},
+    );
+    if (missingTemplateFields.length) {
+      setErrorMessage("Field wajib pada template belum lengkap: " + missingTemplateFields.slice(0, 5).join(", ") + (missingTemplateFields.length > 5 ? " dan lainnya." : "."));
+      setOpenSections((current) => ({ ...current, objective: true }));
+      return;
+    }
+
     if (!values.subjective.keluhan.trim()) {
       setErrorMessage(
         "Keluhan / Perkembangan Hari Ini wajib diisi sebelum follow-up disimpan.",
@@ -588,7 +557,7 @@ export default function FollowUpFormPage({
       previousSaved = loadSavedFollowUps();
       const nextNumber =
         Math.max(0, ...sortedSyncedEntries.map((entry) => entry.number)) + 1;
-      const entry = buildFollowUpEntry(values, nextNumber, templateType);
+      const entry = buildFollowUpEntry(values, nextNumber, template);
       const nextEntries = sortFollowUps([entry, ...sortedSyncedEntries]);
 
       replaceSavedFollowUps({
@@ -871,17 +840,27 @@ export default function FollowUpFormPage({
                   objective={values.objective}
                   neurology={values.neurology}
                   internalMedicine={values.internalMedicine}
-                  templateType={templateType}
-                  onObjectiveChange={(objective) =>
-                    updateValues({ ...values, objective })
-                  }
-                  onNeurologyChange={(neurology) =>
-                    updateValues({ ...values, neurology })
-                  }
-                  onInternalMedicineChange={(internalMedicine) =>
-                    updateValues({ ...values, internalMedicine })
-                  }
+                  templateType="Neurologi"
+                  showTemplateFields={false}
+                  onObjectiveChange={(objective) => updateValues({ ...values, objective })}
+                  onNeurologyChange={(neurology) => updateValues({ ...values, neurology })}
+                  onInternalMedicineChange={(internalMedicine) => updateValues({ ...values, internalMedicine })}
                 />
+                {templateLoading ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-500">Memuat template follow-up...</div>
+                ) : template ? (
+                  <FollowUpTemplateRenderer
+                    definition={template.latestDefinition}
+                    answers={values.templateAnswers ?? {}}
+                    onChange={(templateAnswers) => updateValues({ ...values, templateAnswers })}
+                    openSections={openTemplateSections}
+                    onToggleSection={(sectionId) => setOpenTemplateSections((current) => ({ ...current, [sectionId]: !(current[sectionId] ?? true) }))}
+                  />
+                ) : (
+                  <div role="alert" className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-4 text-xs leading-relaxed text-amber-700">
+                    {templateLoadError || "Stase aktif belum memiliki template follow-up. Atur template dari halaman Stase Saya sebelum membuat follow-up."}
+                  </div>
+                ) />
               </div>
 
               <div
