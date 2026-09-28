@@ -25,6 +25,8 @@ RekamMedisku is a web application for organizing clinical rotations, patient rec
 - Supabase authentication and cloud synchronization
 - Realtime workspace updates
 - Local persistence with localStorage and IndexedDB
+- User-scoped workspace data for multi-user isolation
+- User-owned follow-up and report template foundations
 
 ## Architecture
 
@@ -48,6 +50,25 @@ The application separates UI components, page-level workflows, domain types, loc
 
 The local data layer provides fast client-side access, while Supabase provides authentication, synchronized cloud data, realtime updates, and file storage.
 
+## Multi-User Direction
+
+The current development focus is **multi-user readiness without unnecessary architectural changes**.
+
+The existing architecture is intentionally preserved around:
+
+- Supabase Auth for account and session handling
+- PostgreSQL RLS and `auth.uid()` ownership boundaries
+- Application profile data as the source of report identity
+- User-scoped local persistence
+- User-scoped IndexedDB attachment storage
+- Private Supabase Storage with user-based object paths
+- Immutable historical template snapshots
+- Definition-driven follow-up and report rendering
+- Atomic database operations for critical mutations
+- Realtime sync with watchdog, retry, and reconciliation behavior
+
+The goal is to strengthen tenant isolation, personalization, account lifecycle, storage lifecycle, synchronization reliability, and automated regression coverage for a practical multi-user deployment.
+
 ## Tech Stack
 
 | Area | Technology |
@@ -62,7 +83,8 @@ The local data layer provides fast client-side access, while Supabase provides a
 | Realtime | Supabase Realtime |
 | Storage | Supabase Storage |
 | Local Persistence | localStorage + IndexedDB |
-| Testing | Node.js test runner |
+| Unit / Integration Testing | Node.js test runner |
+| Browser E2E | Playwright |
 | Linting | Oxlint |
 | CI | GitHub Actions |
 
@@ -71,17 +93,22 @@ The local data layer provides fast client-side access, while Supabase provides a
 The project includes:
 
 - Rotation-aware data isolation
+- Tenant-aware local workspace persistence
 - Local-to-cloud synchronization and reconciliation
 - Version-aware patient updates
 - Atomic database operations for critical mutations
 - Attachment lifecycle handling
 - Backup schema and relationship validation
+- Definition-driven follow-up and report templates
+- Historical template snapshot support
 - Automated CI quality checks
 - Responsive desktop, tablet, and mobile layouts
 
-## Quality
+## Quality & Testing
 
-Run the full quality gate:
+### QA
+
+Run the application quality gate:
 
 ```bash
 npm run qa
@@ -95,9 +122,41 @@ npm run test
 npm run build
 ```
 
-GitHub Actions runs these checks for pushes and pull requests targeting `main`.
+### Browser E2E
 
-Manual QA coverage includes rotation isolation, patient lifecycle, follow-ups, attachments, history, reports, backup/restore, responsive behavior, accessibility, and data safety.
+Browser flows use Playwright and the repository configuration at `e2e/playwright.config.ts`.
+
+Run:
+
+```bash
+npx playwright test --config=e2e/playwright.config.ts
+```
+
+Current verified browser coverage includes:
+
+- Full workspace flow
+- Report identity isolation
+- Attachment IndexedDB isolation
+- No-workspace attachment protection
+- User-to-user workspace transition
+
+### Database Tests
+
+Database regression tests use Supabase CLI and pgTAP in an isolated local environment.
+
+```bash
+npx supabase test db
+```
+
+Local database tests require Docker and a reproducible Supabase local database environment.
+
+The database test contract covers tenant isolation, RLS ownership, cross-user relationship protection, template ownership, versioning, and concurrency-sensitive mutations.
+
+### Verification Policy
+
+A check is considered successful only when the test actually executes and produces a verifiable result.
+
+Environment failures, unavailable runners, missing local services, or setup failures are tracked separately from application/test failures.
 
 ## Database
 
@@ -108,6 +167,8 @@ supabase/migrations/
 ```
 
 The migration history covers workspace safety, follow-up integrity, attachment storage, atomic mutations, patient lifecycle handling, and related application features.
+
+Database tests are kept isolated from production data and must not use destructive operations against the remote production project.
 
 ## Project Structure
 
@@ -121,9 +182,11 @@ RekamMedisku/
 │   ├── types/         # Domain types
 │   └── utils/         # Shared utilities
 ├── supabase/
-│   └── migrations/    # Database migrations
+│   ├── migrations/    # Database migrations
+│   └── tests/         # Database / pgTAP tests
+├── e2e/               # Browser E2E tests
 ├── scripts/            # Project scripts
-├── tests/              # Automated tests
+├── tests/              # Automated unit/integration tests
 └── .github/
     └── workflows/      # CI configuration
 ```
@@ -135,6 +198,11 @@ RekamMedisku/
 - Node.js 22+
 - npm
 - Supabase project
+
+For local database testing:
+
+- Docker Desktop
+- WSL 2 on Windows
 
 ### Installation
 
@@ -187,7 +255,7 @@ React + Vite
   +----> Supabase Storage
 ```
 
-Before production release, verify migrations, authentication settings, database policies, storage policies, and production environment variables.
+Before production release, verify migrations, authentication settings, database policies, storage policies, Storage lifecycle behavior, and production environment variables.
 
 ## Data Safety
 
@@ -195,11 +263,24 @@ Use dummy or anonymized data for development and demonstrations.
 
 Backup files should be treated as sensitive data. Production authorization and storage policies should be reviewed before using the application with real clinical information.
 
-## Status
+For multi-user use, tenant isolation must be verified at both the cloud and local-browser layers before broader release.
 
-**Production-oriented MVP — pre-deployment**
+## Current Status
 
-Core application workflows, Supabase integration, database migrations, automated QA, and responsive UI are implemented. Current work is focused on final production verification and deployment.
+**Production-oriented MVP — multi-user hardening / pre-deployment verification**
+
+Current work is focused on:
+
+- Multi-user tenant isolation
+- Application profile and report identity
+- User-owned follow-up/report templates
+- Historical report compatibility
+- Sync and storage consistency
+- Automated Browser E2E
+- Database regression testing with pgTAP
+- Final production QA and deployment verification
+
+The project should not be considered production-ready until the required application, browser, database, and environment verification gates have produced reproducible results.
 
 ## Author
 
