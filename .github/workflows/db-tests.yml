@@ -62,11 +62,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          supabase db start --from-backup /dev/null 2>/dev/null || supabase db start
+          supabase db start
 
-      - name: Reset database from fixture + production tenant migrations
+      - name: Apply fixture + production tenant migrations
         working-directory: .ci/tenant-isolation-supabase
-        run: supabase db reset --no-seed
+        run: supabase migration up --local
 
       - name: Run tenant-boundary pgTAP suite
         working-directory: .ci/tenant-isolation-supabase
