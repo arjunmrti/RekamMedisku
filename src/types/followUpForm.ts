@@ -1,4 +1,7 @@
-import type { FollowUpTemplateDefinition } from "./followUpTemplate";
+import type {
+  FollowUpTemplateAnswers,
+  FollowUpTemplateDefinition,
+} from "./followUpTemplate";
 
 export type SupportingExamForm = {
   id: string;
@@ -54,6 +57,7 @@ export type FollowUpFormValues = {
   templateVersion?: number;
   templateSchemaVersion?: number;
   templateSnapshot?: FollowUpTemplateDefinition;
+  templateAnswers?: FollowUpTemplateAnswers;
   followUpDate: string;
   followUpTime: string;
   subjective: {
