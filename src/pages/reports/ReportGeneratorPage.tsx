@@ -105,6 +105,15 @@ function getFollowUps(
     .sort((a, b) => (b.isoDate + b.time).localeCompare(a.isoDate + a.time));
 }
 
+function normalizeReportTemplateType(
+  value: string | undefined,
+  fallback: ReportTemplateType,
+): ReportTemplateType {
+  return value === "Neurologi" || value === "Ilmu Penyakit Dalam"
+    ? value
+    : fallback;
+}
+
 export default function ReportGeneratorPage({
   activeItem,
   onNavigate,
@@ -226,8 +235,10 @@ function FollowUpReportGeneratorPage({
     [fallbackTemplate, patient?.id, workspaceSyncVersion],
   );
   const initialFollowUp = followUps[0] ?? null;
-  const initialTemplate: ReportTemplateType =
-    initialFollowUp?.templateType ?? "Neurologi";
+  const initialTemplate: ReportTemplateType = normalizeReportTemplateType(
+    initialFollowUp?.templateType,
+    fallbackTemplate,
+  );
 
   const [selectedFollowUpId, setSelectedFollowUpId] = useState(
     initialFollowUp?.id ?? "",
@@ -244,8 +255,10 @@ function FollowUpReportGeneratorPage({
     followUps.find((entry) => entry.id === selectedFollowUpId) ??
     initialFollowUp;
 
-  const sourceTemplate: ReportTemplateType =
-    selectedFollowUp?.templateType ?? "Neurologi";
+  const sourceTemplate: ReportTemplateType = normalizeReportTemplateType(
+    selectedFollowUp?.templateType,
+    fallbackTemplate,
+  );
 
   const activeStep: ReportStep = copied
     ? 6
@@ -279,7 +292,7 @@ function FollowUpReportGeneratorPage({
     const next = followUps.find((entry) => entry.id === id);
     if (!next) return;
 
-    const nextTemplate = next.templateType ?? "Neurologi";
+    const nextTemplate = normalizeReportTemplateType(next.templateType, fallbackTemplate);
     setSelectedFollowUpId(id);
     setTemplateType(nextTemplate);
     setReportText("");
