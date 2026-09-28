@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Icon from "../ui/Icon";
 import {
-  REPORT_TEMPLATE_SOURCES,
   type ReportTemplateBlock,
   type ReportTemplateBlockType,
-  type ReportTemplateDefinition,
   type ReportTemplateSection,
   type ReportTemplateSource,
 } from "../../types/reportTemplate";
