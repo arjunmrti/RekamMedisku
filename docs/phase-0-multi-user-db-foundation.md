@@ -4,7 +4,7 @@
 
 Phase 0 menyiapkan **tenant boundary database** RekamMedisku tanpa membongkar flow aplikasi yang sudah berjalan.
 
-Baseline audit 28 September 2026 menyatakan bahwa fondasi RLS, ownership predicate, private Storage, LocalStorage per-user, optimistic concurrency, dan sync/realtime sudah ada, tetapi kesiapan multi-user masih terganggu oleh profile provisioning yang belum menjadi invariant, identitas aplikasi yang terbelah antara Auth metadata dan \`public.profiles\`, serta belum adanya automated cross-user isolation test. fileciteturn157file0
+Baseline audit 28 September 2026 menyatakan bahwa fondasi RLS, ownership predicate, private Storage, LocalStorage per-user, optimistic concurrency, dan sync/realtime sudah ada, tetapi kesiapan multi-user masih terganggu oleh profile provisioning yang belum menjadi invariant, identitas aplikasi yang terbelah antara Auth metadata dan \`public.profiles\`, serta belum adanya automated cross-user isolation test.
 
 Karena itu phase ini fokus pada **database contract**, bukan redesign frontend.
 
@@ -122,7 +122,7 @@ Supaya risiko migration tetap kecil, Phase 0 **tidak**:
 - mengubah UI profile;
 - menghapus template lama.
 
-Audit sendiri menempatkan binding template, dynamic renderer, report engine, account lifecycle, storage hardening, dan local tenant safety di fase setelah fondasi ini. fileciteturn157file0
+Audit sendiri menempatkan binding template, dynamic renderer, report engine, account lifecycle, storage hardening, dan local tenant safety di fase setelah fondasi ini.
 
 ## Test contract
 
