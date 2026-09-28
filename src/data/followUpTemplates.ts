@@ -189,6 +189,58 @@ export async function getFollowUpTemplate(
   };
 }
 
+
+export async function getFollowUpTemplateVersion(
+  templateId: string,
+  version: number,
+): Promise<FollowUpTemplate | null> {
+  const userId = await getCurrentUserId();
+
+  if (!Number.isInteger(version) || version < 1) {
+    throw new Error("Versi template follow-up tidak valid.");
+  }
+
+  const { data: row, error } = await supabase
+    .from("templates")
+    .select(
+      "id,user_id,type,name,description,metadata,is_archived,created_at,updated_at",
+    )
+    .eq("id", templateId)
+    .eq("user_id", userId)
+    .eq("type", "follow_up")
+    .maybeSingle<TemplateRow>();
+
+  if (error) throw error;
+  if (!row) return null;
+
+  const { data: versionRow, error: versionError } = await supabase
+    .from("template_versions")
+    .select(
+      "id,user_id,template_id,version,schema_version,definition,created_at",
+    )
+    .eq("template_id", templateId)
+    .eq("user_id", userId)
+    .eq("version", version)
+    .maybeSingle<TemplateVersionRow>();
+
+  if (versionError) throw versionError;
+  if (!versionRow) return null;
+
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    description: row.description,
+    metadata: row.metadata ?? {},
+    isArchived: row.is_archived,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    latestVersion: versionRow.version,
+    latestSchemaVersion: versionRow.schema_version,
+    latestDefinition: validateFollowUpTemplateDefinition(versionRow.definition),
+  };
+}
+
 export async function createFollowUpTemplate(input: {
   name: string;
   description?: string;
