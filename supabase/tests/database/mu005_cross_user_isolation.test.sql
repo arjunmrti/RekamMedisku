@@ -447,7 +447,7 @@ SELECT is(
     FROM public.slaberan_templates
     WHERE id = '60000000-0000-0000-0000-0000000000a1'::uuid
   ),
-  'MU005 A Slaberan template',
+  'MU005 A Slaberan',
   'User A Slaberan template remains unchanged after User B mutation attempts'
 );
 
@@ -561,7 +561,7 @@ SELECT throws_ok(
       '20000000-0000-0000-0000-0000000000a2'::uuid
     );
   $test$,
-  '42501',
+  'P0001',
   NULL,
   'User B cannot reference a User A location from its patient workspace'
 );
