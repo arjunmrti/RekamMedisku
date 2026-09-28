@@ -191,7 +191,7 @@ test("MU-004: report memakai identitas dari application profile, bukan identitas
   ).toBeVisible();
 
   await expect(page.getByRole("button", { name: "Generate Laporan" })).toBeEnabled();
-  await page.getByRole("button", { name: "Generate Laporan" }).click();
+  await page.getByRole("button", { name: "Generate Laporan", exact: true }).first().click();
 
   await expect(
     page.getByText(
