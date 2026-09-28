@@ -1,0 +1,66 @@
+name: Database Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phase0-database:
+    name: Phase 0 pgTAP
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.117.0
+
+      - name: Build isolated Phase 0 test project
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf .ci/phase0-supabase
+          mkdir -p .ci/phase0-supabase
+          cd .ci/phase0-supabase
+
+          supabase init
+          mkdir -p supabase/migrations supabase/tests/database
+
+          cp "$GITHUB_WORKSPACE/supabase/tests/fixtures/phase0_legacy_schema.sql" \
+            supabase/migrations/00000000000000_phase0_legacy_fixture.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928_phase0_multi_user_database_foundation.sql" \
+            supabase/migrations/20260928_phase0_multi_user_database_foundation.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/tests/database/phase0_multi_user_foundation.test.sql" \
+            supabase/tests/database/phase0_multi_user_foundation.test.sql
+
+      - name: Start Supabase database
+        working-directory: .ci/phase0-supabase
+        run: supabase db start
+
+      - name: Reset database from fixture + Phase 0 migration
+        working-directory: .ci/phase0-supabase
+        run: supabase db reset --no-seed
+
+      - name: Run Phase 0 pgTAP suite
+        working-directory: .ci/phase0-supabase
+        run: supabase test db
+
+      - name: Stop Supabase
+        if: always()
+        working-directory: .ci/phase0-supabase
+        run: supabase stop
