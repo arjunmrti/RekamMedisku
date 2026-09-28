@@ -158,8 +158,23 @@ SELECT ok(
     FROM pg_constraint c
     WHERE c.conrelid = 'public.patients'::regclass
       AND c.contype = 'f'
-      AND pg_get_constraintdef(c.oid) ILIKE
-        'FOREIGN KEY (rotation_id, user_id) REFERENCES public.rotations(id, user_id)%'
+      AND c.confrelid = 'public.rotations'::regclass
+      AND c.conkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.patients'::regclass
+           AND attname = 'rotation_id'),
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.patients'::regclass
+           AND attname = 'user_id')
+      ]::smallint[]
+      AND c.confkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.rotations'::regclass
+           AND attname = 'id'),
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.rotations'::regclass
+           AND attname = 'user_id')
+      ]::smallint[]
   ),
   'patients keeps composite rotation/user tenant FK'
 );
@@ -170,8 +185,23 @@ SELECT ok(
     FROM pg_constraint c
     WHERE c.conrelid = 'public.follow_ups'::regclass
       AND c.contype = 'f'
-      AND pg_get_constraintdef(c.oid) ILIKE
-        'FOREIGN KEY (patient_id, user_id) REFERENCES public.patients(id, user_id)%'
+      AND c.confrelid = 'public.patients'::regclass
+      AND c.conkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.follow_ups'::regclass
+           AND attname = 'patient_id'),
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.follow_ups'::regclass
+           AND attname = 'user_id')
+      ]::smallint[]
+      AND c.confkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.patients'::regclass
+           AND attname = 'id'),
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.patients'::regclass
+           AND attname = 'user_id')
+      ]::smallint[]
   ),
   'follow_ups keeps composite patient/user tenant FK'
 );
@@ -182,8 +212,23 @@ SELECT ok(
     FROM pg_constraint c
     WHERE c.conrelid = 'public.supporting_exams'::regclass
       AND c.contype = 'f'
-      AND pg_get_constraintdef(c.oid) ILIKE
-        'FOREIGN KEY (follow_up_id, user_id) REFERENCES public.follow_ups(id, user_id)%'
+      AND c.confrelid = 'public.follow_ups'::regclass
+      AND c.conkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.supporting_exams'::regclass
+           AND attname = 'follow_up_id'),
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.supporting_exams'::regclass
+           AND attname = 'user_id')
+      ]::smallint[]
+      AND c.confkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.follow_ups'::regclass
+           AND attname = 'id'),
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.follow_ups'::regclass
+           AND attname = 'user_id')
+      ]::smallint[]
   ),
   'supporting_exams keeps composite follow-up/user tenant FK'
 );
@@ -194,8 +239,23 @@ SELECT ok(
     FROM pg_constraint c
     WHERE c.conrelid = 'public.slaberan_locations'::regclass
       AND c.contype = 'f'
-      AND pg_get_constraintdef(c.oid) ILIKE
-        'FOREIGN KEY (parent_id, user_id) REFERENCES public.slaberan_locations(id, user_id)%'
+      AND c.confrelid = 'public.slaberan_locations'::regclass
+      AND c.conkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.slaberan_locations'::regclass
+           AND attname = 'parent_id'),
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.slaberan_locations'::regclass
+           AND attname = 'user_id')
+      ]::smallint[]
+      AND c.confkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.slaberan_locations'::regclass
+           AND attname = 'id'),
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.slaberan_locations'::regclass
+           AND attname = 'user_id')
+      ]::smallint[]
   ),
   'slaberan_locations keeps composite parent/user tenant FK'
 );
@@ -218,8 +278,17 @@ SELECT ok(
     FROM pg_constraint c
     WHERE c.conrelid = 'public.templates'::regclass
       AND c.contype = 'f'
-      AND pg_get_constraintdef(c.oid) ILIKE
-        'FOREIGN KEY (user_id) REFERENCES public.profiles(id)%'
+      AND c.confrelid = 'public.profiles'::regclass
+      AND c.conkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.templates'::regclass
+           AND attname = 'user_id')
+      ]::smallint[]
+      AND c.confkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.profiles'::regclass
+           AND attname = 'id')
+      ]::smallint[]
   ),
   'templates ownership points to the provisioned application profile'
 );
@@ -230,8 +299,17 @@ SELECT ok(
     FROM pg_constraint c
     WHERE c.conrelid = 'public.template_versions'::regclass
       AND c.contype = 'f'
-      AND pg_get_constraintdef(c.oid) ILIKE
-        'FOREIGN KEY (user_id) REFERENCES public.profiles(id)%'
+      AND c.confrelid = 'public.profiles'::regclass
+      AND c.conkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.template_versions'::regclass
+           AND attname = 'user_id')
+      ]::smallint[]
+      AND c.confkey = ARRAY[
+        (SELECT attnum FROM pg_attribute
+         WHERE attrelid = 'public.profiles'::regclass
+           AND attname = 'id')
+      ]::smallint[]
   ),
   'template_versions ownership points to the provisioned application profile'
 );
