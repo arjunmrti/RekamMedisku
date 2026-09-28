@@ -72,7 +72,8 @@ jobs:
         run: |
           set -euo pipefail
           supabase status -o env > supabase.env
-          grep -E '^(API_URL|ANON_KEY|JWT_SECRET)=' supabase.env >> "$GITHUB_ENV"
+          sed -E 's/^([A-Z_]+)="(.*)"$/\1=\2/' supabase.env \
+            | grep -E '^(API_URL|ANON_KEY|JWT_SECRET)=' >> "$GITHUB_ENV"
           rm -f supabase.env
 
       - name: Run Storage API tenant-boundary test
