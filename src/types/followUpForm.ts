@@ -1,3 +1,5 @@
+import type { FollowUpTemplateDefinition } from "./followUpTemplate";
+
 export type SupportingExamForm = {
   id: string;
   examType: string;
@@ -47,6 +49,11 @@ export type InternalMedicineFormValues = {
 export type FollowUpFormValues = {
   /** Local workspace context for this draft. */
   rotationId?: string;
+  /** Template selected for the draft; persisted with the follow-up at save time. */
+  templateId?: string;
+  templateVersion?: number;
+  templateSchemaVersion?: number;
+  templateSnapshot?: FollowUpTemplateDefinition;
   followUpDate: string;
   followUpTime: string;
   subjective: {

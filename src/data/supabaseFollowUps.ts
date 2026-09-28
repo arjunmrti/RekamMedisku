@@ -4,6 +4,8 @@ import { updatePatient } from "./localPatients";
 import { syncPatientsWithSupabase } from "./supabasePatients";
 import { supabase } from "../utils/supabase";
 import { workspaceStorageKey } from "./workspaceStorage";
+import type { FollowUpTemplateDefinition } from "../types/followUpTemplate";
+import { validateFollowUpTemplateDefinition } from "../utils/followUpTemplate";
 import { derivePatientFollowUpSummary } from "./patientFollowUpSummary";
 import {
   deleteAttachments,
@@ -32,6 +34,10 @@ type FollowUpRow = {
   time: string;
   status: string;
   template_type: string | null;
+  template_id: string | null;
+  template_version: number | null;
+  template_schema_version: number | null;
+  template_snapshot: unknown;
   assessment_codes: string[];
   planning: string | null;
   instruction: string | null;
@@ -167,6 +173,20 @@ function normalizeTemplate(
   return undefined;
 }
 
+function normalizeTemplateSnapshot(
+  value: unknown,
+): FollowUpTemplateDefinition | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  try {
+    return validateFollowUpTemplateDefinition(value);
+  } catch {
+    return undefined;
+  }
+}
+
 function normalizeIcon(value: string): SupportingExam["icon"] {
   return value === "scan" || value === "image" || value === "eeg"
     ? value
@@ -206,6 +226,10 @@ function toFollowUpEntry(
     time: toDisplayTime(row.time),
     status: normalizeStatus(row.status),
     templateType: normalizeTemplate(row.template_type),
+    templateId: row.template_id ?? undefined,
+    templateVersion: row.template_version ?? undefined,
+    templateSchemaVersion: row.template_schema_version ?? undefined,
+    templateSnapshot: normalizeTemplateSnapshot(row.template_snapshot),
     assessmentCodes: row.assessment_codes ?? [],
     planning: row.planning ?? undefined,
     instruction: row.instruction ?? undefined,
@@ -230,6 +254,8 @@ function followUpPayload(entry: FollowUpEntry, remotePatientId: string) {
     time: toDbTime(entry.time),
     status: entry.status,
     template_type: entry.templateType ?? null,
+    template_id: entry.templateId ?? null,
+    template_version: entry.templateVersion ?? null,
     assessment_codes: entry.assessmentCodes ?? [],
     planning: entry.planning ?? null,
     instruction: entry.instruction ?? null,
@@ -590,7 +616,7 @@ async function syncFollowUpsWithSupabaseInternal(): Promise<
   const { data: remoteFollowUps, error: followUpError } = await supabase
     .from("follow_ups")
     .select(
-      "id,user_id,patient_id,number,date,iso_date,time,status,template_type,assessment_codes,planning,instruction,subjective,objective,assessment,plan,summary,created_at,updated_at",
+      "id,user_id,patient_id,number,date,iso_date,time,status,template_type,template_id,template_version,template_schema_version,template_snapshot,assessment_codes,planning,instruction,subjective,objective,assessment,plan,summary,created_at,updated_at",
     )
     .eq("user_id", userId)
     .order("iso_date", { ascending: false })
