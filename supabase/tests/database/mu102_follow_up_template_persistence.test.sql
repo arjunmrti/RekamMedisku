@@ -376,8 +376,8 @@ SELECT throws_ok(
       1
     );
   $test$,
-  '23503',
-  NULL,
+  'P0001',
+  'Template follow-up atau versinya tidak berada dalam workspace pengguna.',
   'User B cannot attach User A template to a follow-up'
 );
 
