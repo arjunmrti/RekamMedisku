@@ -364,7 +364,15 @@ REVOKE ALL ON TABLE public.templates FROM anon, authenticated;
 REVOKE ALL ON TABLE public.template_versions FROM anon, authenticated;
 
 GRANT SELECT, INSERT, UPDATE, DELETE
-  ON TABLE public.templates, public.template_versions
+  ON TABLE public.templates
+  TO authenticated;
+
+-- Template versions are append-only for client/API roles. Editing a template
+-- creates the next version; deleting the parent template may still cascade
+-- through the foreign key. This keeps version history stable without requiring
+-- a trigger that would interfere with cascading deletes.
+GRANT SELECT, INSERT
+  ON TABLE public.template_versions
   TO authenticated;
 
 DROP POLICY IF EXISTS templates_select_own ON public.templates;
@@ -409,21 +417,6 @@ CREATE POLICY template_versions_insert_own
   FOR INSERT
   TO authenticated
   WITH CHECK ((select auth.uid()) = user_id);
-
-DROP POLICY IF EXISTS template_versions_update_own ON public.template_versions;
-CREATE POLICY template_versions_update_own
-  ON public.template_versions
-  FOR UPDATE
-  TO authenticated
-  USING ((select auth.uid()) = user_id)
-  WITH CHECK ((select auth.uid()) = user_id);
-
-DROP POLICY IF EXISTS template_versions_delete_own ON public.template_versions;
-CREATE POLICY template_versions_delete_own
-  ON public.template_versions
-  FOR DELETE
-  TO authenticated
-  USING ((select auth.uid()) = user_id);
 
 DROP TRIGGER IF EXISTS trg_templates_set_updated_at
   ON public.templates;
