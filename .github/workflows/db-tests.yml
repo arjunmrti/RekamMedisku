@@ -48,6 +48,9 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/tests/database/mu101_follow_up_template_engine.test.sql" \
             supabase/tests/database/mu101_follow_up_template_engine.test.sql
 
+          cp "$GITHUB_WORKSPACE/supabase/tests/database/mu102_follow_up_template_persistence.test.sql" \
+            supabase/tests/database/mu102_follow_up_template_persistence.test.sql
+
       - name: Validate PR migration filenames
         if: github.event_name == 'pull_request'
         shell: bash
@@ -105,6 +108,12 @@ jobs:
 
           cp "$GITHUB_WORKSPACE/supabase/migrations/20260928140000_mu101_follow_up_template_engine.sql" \
             supabase/migrations/20260928140000_mu101_follow_up_template_engine.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260927_p4_atomic_follow_up_save.sql" \
+            supabase/migrations/20260927_p4_atomic_follow_up_save.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928150000_mu102_follow_up_template_persistence.sql" \
+            supabase/migrations/20260928150000_mu102_follow_up_template_persistence.sql
 
           cp "$GITHUB_WORKSPACE/supabase/migrations/20260926212923_p3_attachment_storage_sync.sql" \
             supabase/migrations/20260926212923_p3_attachment_storage_sync.sql
