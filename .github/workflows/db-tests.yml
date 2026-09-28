@@ -15,7 +15,7 @@ permissions:
 jobs:
   tenant-isolation:
     name: Tenant isolation pgTAP
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 20
 
     steps:
@@ -60,9 +60,24 @@ jobs:
       - name: Start Supabase database
         working-directory: .ci/tenant-isolation-supabase
         shell: bash
+        env:
+          SUPABASE_INTERNAL_IMAGE_REGISTRY: ghcr.io
         run: |
           set -euo pipefail
-          supabase db start
+          for attempt in 1 2 3; do
+            echo "Starting Supabase database (attempt $attempt/3)..."
+            if supabase db start --debug; then
+              exit 0
+            fi
+            echo "Supabase database start failed."
+            docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' || true
+            if [ "$attempt" -lt 3 ]; then
+              supabase stop --no-backup || true
+              sleep $((attempt * 30))
+            fi
+          done
+          echo "Supabase database could not be started after 3 attempts."
+          exit 1
 
       - name: Apply fixture + production tenant migrations
         working-directory: .ci/tenant-isolation-supabase
