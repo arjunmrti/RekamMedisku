@@ -1,7 +1,7 @@
 -- MU-104 — Definition-driven answer persistence
 CREATE EXTENSION IF NOT EXISTS pgtap;
 BEGIN;
-SELECT plan(8);
+SELECT plan(6);
 
 SELECT has_column('public','follow_ups','answers','follow-up stores dynamic template answers');
 SELECT has_function('public','save_follow_up_with_exams',ARRAY['uuid','timestamptz','jsonb','jsonb'],'atomic follow-up save accepts dynamic answer payloads');
