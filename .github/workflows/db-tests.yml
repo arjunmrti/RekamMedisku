@@ -66,6 +66,18 @@ jobs:
         working-directory: .ci/tenant-isolation-supabase
         run: supabase test db
 
+      - name: Export local Supabase API environment
+        working-directory: .ci/tenant-isolation-supabase
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase status -o env > supabase.env
+          grep -E '^(API_URL|ANON_KEY|JWT_SECRET)=' supabase.env >> "$GITHUB_ENV"
+          rm -f supabase.env
+
+      - name: Run Storage API tenant-boundary test
+        run: node "$GITHUB_WORKSPACE/scripts/mu005-storage-isolation.mjs"
+
       - name: Stop Supabase
         if: always()
         working-directory: .ci/tenant-isolation-supabase
