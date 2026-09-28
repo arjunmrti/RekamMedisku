@@ -266,8 +266,5 @@ export function renderReportTemplate(
     }
   }
 
-  return lines.join("\\n").replace(/
-{3,}/g, "
-
-").trim();
+  return lines.join("\\n").replace(/\\n{3,}/g, "\\n\\n").trim();
 }
