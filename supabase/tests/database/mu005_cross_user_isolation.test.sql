@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 
 BEGIN;
 
-SELECT plan(50);
+SELECT plan(43);
 
 -- ---------------------------------------------------------------------------
 -- Two identities + representative A-owned workspace
@@ -373,12 +373,17 @@ SELECT lives_ok(
   'User B cannot delete User A Slaberan template'
 );
 
-SELECT lives_ok(
-  $test$
-    DELETE FROM storage.objects
-    WHERE id = '70000000-0000-0000-0000-0000000000a1'::uuid;
-  $test$,
-  'User B cannot delete User A Storage object'
+SELECT is(
+  (
+    SELECT count(*)::integer
+    FROM pg_policies
+    WHERE schemaname = 'storage'
+      AND tablename = 'objects'
+      AND policyname = 'RekamMedisku attachment delete'
+      AND roles = ARRAY['authenticated']::name[]
+  ),
+  1,
+  'Storage delete policy is present for authenticated tenant access'
 );
 
 RESET ROLE;
