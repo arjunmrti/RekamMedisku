@@ -248,9 +248,9 @@ CREATE OR REPLACE FUNCTION public.create_follow_up_template(
 )
 RETURNS jsonb
 LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = public
-AS $$
+SECURITY DEFINER
+SET search_path = public, pg_catalog
+AS $
 DECLARE
   current_user_id uuid := auth.uid();
   new_template_id uuid;
@@ -336,9 +336,9 @@ CREATE OR REPLACE FUNCTION public.append_follow_up_template_version(
 )
 RETURNS jsonb
 LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = public
-AS $$
+SECURITY DEFINER
+SET search_path = public, pg_catalog
+AS $
 DECLARE
   current_user_id uuid := auth.uid();
   template_user_id uuid;
