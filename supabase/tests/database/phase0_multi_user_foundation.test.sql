@@ -14,7 +14,7 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 
 BEGIN;
 
-SELECT plan(42);
+SELECT plan(44);
 
 -- ---------------------------------------------------------------------------
 -- Structural contract
@@ -210,6 +210,30 @@ SELECT ok(
         'FOREIGN KEY (id) REFERENCES auth.users(id)%'
   ),
   'profiles keeps auth.users identity FK'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    WHERE c.conrelid = 'public.templates'::regclass
+      AND c.contype = 'f'
+      AND pg_get_constraintdef(c.oid) ILIKE
+        'FOREIGN KEY (user_id) REFERENCES public.profiles(id)%'
+  ),
+  'templates ownership points to the provisioned application profile'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    WHERE c.conrelid = 'public.template_versions'::regclass
+      AND c.contype = 'f'
+      AND pg_get_constraintdef(c.oid) ILIKE
+        'FOREIGN KEY (user_id) REFERENCES public.profiles(id)%'
+  ),
+  'template_versions ownership points to the provisioned application profile'
 );
 
 -- ---------------------------------------------------------------------------
