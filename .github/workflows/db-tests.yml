@@ -48,6 +48,9 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/migrations/20260928140000_mu101_follow_up_template_engine.sql" \
             supabase/migrations/20260928140000_mu101_follow_up_template_engine.sql
 
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260926212923_p3_attachment_storage_sync.sql" \
+            supabase/migrations/20260926212923_p3_attachment_storage_sync.sql
+
           cp "$GITHUB_WORKSPACE/supabase/tests/database/phase0_multi_user_foundation.test.sql" \
             supabase/tests/database/phase0_multi_user_foundation.test.sql
 
