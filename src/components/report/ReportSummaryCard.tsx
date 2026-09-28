@@ -1,12 +1,11 @@
 import type { FollowUpEntry } from "../../types/followUp";
 import type { PatientListItem } from "../../types/patient";
-import type { ReportTemplateType } from "../../types/report";
 import Icon from "../ui/Icon";
 
 type ReportSummaryCardProps = {
   patient: PatientListItem;
   followUp: FollowUpEntry;
-  templateType: ReportTemplateType;
+  templateName: string;
   copied: boolean;
   hasReport: boolean;
   copyError: string;
@@ -17,7 +16,7 @@ type ReportSummaryCardProps = {
 export default function ReportSummaryCard({
   patient,
   followUp,
-  templateType,
+  templateName,
   copied,
   hasReport,
   copyError,
@@ -28,7 +27,7 @@ export default function ReportSummaryCard({
     ["Pasien", patient.name],
     ["RM", patient.rm],
     ["Follow-Up", "#" + followUp.number + " · " + followUp.date],
-    ["Template", templateType],
+    ["Template", templateName],
   ];
 
   return (
@@ -54,7 +53,7 @@ export default function ReportSummaryCard({
 
         <div className="space-y-2.5 pt-4">
           <p className="text-[13px] font-bold text-slate-800">
-            Laporan Follow-Up {templateType}
+            Laporan Follow-Up — {templateName}
           </p>
 
           <div className="space-y-2.5 text-[11px]">
