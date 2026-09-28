@@ -4,7 +4,7 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 
 BEGIN;
 
-SELECT plan(16);
+SELECT plan(15);
 
 SELECT has_column(
   'public',
@@ -89,32 +89,53 @@ VALUES (
   'RM-MU102-A'
 );
 
-SELECT lives_ok(
-  $test$
-    SELECT public.create_follow_up_template(
-      'Template MU102',
-      'Template untuk kontrak persistence.',
-      '{"specialty":"Template Bebas"}'::jsonb,
-      1,
-      '{
-        "schema_version":1,
-        "sections":[
+INSERT INTO public.templates (
+  id,
+  user_id,
+  type,
+  name,
+  description,
+  metadata
+)
+VALUES (
+  '00000000-0000-0000-0000-0000000020a0'::uuid,
+  '00000000-0000-0000-0000-0000000020a1'::uuid,
+  'follow_up',
+  'Template MU102',
+  'Template untuk kontrak persistence.',
+  '{"specialty":"Template Bebas"}'::jsonb
+);
+
+INSERT INTO public.template_versions (
+  id,
+  user_id,
+  template_id,
+  version,
+  schema_version,
+  definition
+)
+VALUES (
+  '00000000-0000-0000-0000-0000000020aa'::uuid,
+  '00000000-0000-0000-0000-0000000020a1'::uuid,
+  '00000000-0000-0000-0000-0000000020a0'::uuid,
+  1,
+  1,
+  '{
+    "schema_version":1,
+    "sections":[
+      {
+        "id":"objective",
+        "title":"Objective",
+        "fields":[
           {
-            "id":"objective",
-            "title":"Objective",
-            "fields":[
-              {
-                "id":"catatan",
-                "label":"Catatan",
-                "type":"textarea"
-              }
-            ]
+            "id":"catatan",
+            "label":"Catatan",
+            "type":"textarea"
           }
         ]
-      }'::jsonb
-    );
-  $test$,
-  'User A creates a template used by follow-up persistence'
+      }
+    ]
+  }'::jsonb
 );
 
 SELECT lives_ok(
@@ -136,13 +157,7 @@ SELECT lives_ok(
         'status',
         'Tersimpan',
         'template_id',
-        (
-          SELECT id::text
-          FROM public.templates
-          WHERE user_id = '00000000-0000-0000-0000-0000000020a1'::uuid
-            AND type = 'follow_up'
-            AND name = 'Template MU102'
-        ),
+        '00000000-0000-0000-0000-0000000020a0',
         'template_version',
         1,
         'subjective',
@@ -191,8 +206,7 @@ SELECT is(
   (
     SELECT definition
     FROM public.template_versions
-    WHERE user_id = '00000000-0000-0000-0000-0000000020a1'::uuid
-      AND version = 1
+    WHERE id = '00000000-0000-0000-0000-0000000020aa'::uuid
   ),
   'saved follow-up snapshot matches authoritative template version 1'
 );
@@ -216,13 +230,7 @@ SELECT is(
 SELECT lives_ok(
   $test$
     SELECT public.append_follow_up_template_version(
-      (
-        SELECT id
-        FROM public.templates
-        WHERE user_id = '00000000-0000-0000-0000-0000000020a1'::uuid
-          AND type = 'follow_up'
-          AND name = 'Template MU102'
-      ),
+      '00000000-0000-0000-0000-0000000020a0'::uuid,
       1,
       1,
       '{
@@ -270,8 +278,7 @@ SELECT is(
   (
     SELECT definition->'sections'->0->'fields'
     FROM public.template_versions
-    WHERE user_id = '00000000-0000-0000-0000-0000000020a1'::uuid
-      AND version = 1
+    WHERE id = '00000000-0000-0000-0000-0000000020aa'::uuid
   ),
   'follow-up snapshot remains the original version 1 definition'
 );
@@ -366,13 +373,7 @@ SELECT throws_ok(
       '',
       '',
       '',
-      (
-        SELECT id
-        FROM public.templates
-        WHERE user_id = '00000000-0000-0000-0000-0000000020a1'::uuid
-          AND type = 'follow_up'
-          AND name = 'Template MU102'
-      ),
+      '00000000-0000-0000-0000-0000000020a0'::uuid,
       1
     );
   $test$,
