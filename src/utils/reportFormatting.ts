@@ -1,5 +1,5 @@
 const REPORT_MONTH_SUFFIX =
-  /\s*[([\{]?\s*(?:\d{4}\s+)?(?:Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)(?:\s+\d{4})?\s*[)\]}]?\s*$/i;
+  /\s*[([{]?\s*(?:\d{4}\s+)?(?:Januari|Februari|Maret|April|Mei|Juni|Juli|Agustus|September|Oktober|November|Desember|Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)(?:\s+\d{4})?\s*[)\]}]?\s*$/i;
 
 export function formatReportDate(date: string) {
   return date || "Tanggal belum tersedia";
