@@ -72,9 +72,17 @@ jobs:
         run: |
           set -euo pipefail
           supabase status -o env > supabase.env
-          sed -E 's/^([A-Z_]+)="(.*)"$/\1=\2/' supabase.env \
-            | grep -E '^(API_URL|ANON_KEY|JWT_SECRET)=' >> "$GITHUB_ENV"
-          rm -f supabase.env
+          awk -F= '
+            $1 ~ /^(API_URL|ANON_KEY|JWT_SECRET)$/ {
+              value = $0
+              sub(/^[^=]*=/, "", value)
+              gsub(/^"|"$/, "", value)
+              print $1 "=" value
+            }
+          ' supabase.env > mu005.env
+          test "$(wc -l < mu005.env)" -eq 3
+          cat mu005.env >> "$GITHUB_ENV"
+          rm -f supabase.env mu005.env
 
       - name: Run Storage API tenant-boundary test
         run: node "$GITHUB_WORKSPACE/scripts/mu005-storage-isolation.mjs"
