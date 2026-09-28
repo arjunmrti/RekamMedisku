@@ -65,7 +65,23 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          supabase start
+          start_ok=false
+          for attempt in 1 2 3; do
+            echo "Starting Supabase (attempt $attempt/3)..."
+            if supabase start; then
+              start_ok=true
+              break
+            fi
+            echo "Supabase start failed; retrying after cleanup..."
+            supabase stop || true
+            sleep $((attempt * 30))
+          done
+
+          if [ "$start_ok" != "true" ]; then
+            echo "Supabase could not be started after 3 attempts."
+            exit 1
+          fi
+
           supabase status -o env > supabase.env
           awk -F= '
             $1 ~ /^(API_URL|ANON_KEY|JWT_SECRET)$/ {
