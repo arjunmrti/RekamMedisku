@@ -152,27 +152,33 @@ function FollowUpReportGeneratorPage({
   onPatientChange,
 }: FollowUpReportGeneratorPageProps) {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
-  const [reportIdentity, setReportIdentity] = useState<ReportIdentity | null>(null);
+  const [reportIdentity, setReportIdentity] = useState<ReportIdentity | null>(
+    null,
+  );
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState("");
-  const loadProfile = () => {
+
+  useEffect(() => {
     let cancelled = false;
 
-    setProfileLoading(true);
-    setProfileError("");
+    const loadProfile = async () => {
+      setProfileLoading(true);
+      setProfileError("");
 
-    void loadApplicationProfile()
-      .then((profile) => {
+      try {
+        const profile = await loadApplicationProfile();
+
         if (cancelled) return;
+
         setReportIdentity({
           name: profile.name,
           studentId: profile.studentId,
           program: profile.program,
           institution: profile.institution,
         });
-      })
-      .catch((error) => {
+      } catch (error) {
         if (cancelled) return;
+
         console.error("Application profile load failed:", error);
         setReportIdentity(null);
         setProfileError(
@@ -180,30 +186,22 @@ function FollowUpReportGeneratorPage({
             ? error.message
             : "Profil aplikasi gagal dimuat.",
         );
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) {
           setProfileLoading(false);
         }
-      });
-
-    return () => {
-      cancelled = true;
+      }
     };
-  };
-
-  useEffect(() => {
-    let cleanup = loadProfile();
 
     const handleProfileUpdated = () => {
-      cleanup?.();
-      cleanup = loadProfile();
+      void loadProfile();
     };
 
+    void loadProfile();
     window.addEventListener(APPLICATION_PROFILE_EVENT, handleProfileUpdated);
 
     return () => {
-      cleanup?.();
+      cancelled = true;
       window.removeEventListener(
         APPLICATION_PROFILE_EVENT,
         handleProfileUpdated,
@@ -258,7 +256,7 @@ function FollowUpReportGeneratorPage({
         : 2;
 
   const generateReport = (nextTemplate: ReportTemplateType = templateType) => {
-    if (!patient || !selectedFollowUp) return;
+    if (!patient || !selectedFollowUp || !reportIdentity) return;
     setReportText(
       buildWhatsAppReport(patient, selectedFollowUp, nextTemplate, {
         rotationName:
@@ -561,7 +559,7 @@ function FollowUpReportGeneratorPage({
                     className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
                   >
                     <Icon name="bolt" className="h-3.5 w-3.5" />
-                    Generate Laporan
+                    {profileLoading ? "Memuat profil..." : "Generate Laporan"}
                   </button>
                 </div>
               </section>
