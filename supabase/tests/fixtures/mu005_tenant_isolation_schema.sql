@@ -346,29 +346,3 @@ GRANT SELECT, INSERT, UPDATE, DELETE
      public.slaberan_templates
   TO authenticated;
 
--- The local Supabase stack ships storage.objects already. Storage policies are
--- intentionally replaced in this isolated test database so the production
--- RekamMedisku Storage migration is the only authorization layer under test.
-DO $$
-DECLARE
-  policy_name text;
-BEGIN
-  FOR policy_name IN
-    SELECT policyname
-    FROM pg_policies
-    WHERE schemaname = 'storage'
-      AND tablename = 'objects'
-  LOOP
-    EXECUTE format(
-      'DROP POLICY IF EXISTS %I ON storage.objects',
-      policy_name
-    );
-  END LOOP;
-END;
-$$;
-
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-
-GRANT SELECT, INSERT, UPDATE, DELETE
-  ON storage.objects
-  TO authenticated;
