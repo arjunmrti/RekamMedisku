@@ -15,23 +15,19 @@ permissions:
 jobs:
   tenant-isolation:
     name: Tenant isolation pgTAP
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Add Git Bash to PATH
-        shell: powershell
-        run: Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\Git\bin'
-
       - name: Install Supabase CLI
-        shell: powershell
+        shell: bash
         run: npm install --no-save --no-package-lock supabase@2.117.0
 
       - name: Verify Supabase CLI
-        shell: powershell
+        shell: bash
         run: npx --no-install supabase --version
 
       - name: Build isolated tenant test project
