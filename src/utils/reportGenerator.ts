@@ -2,6 +2,7 @@ import type { FollowUpEntry } from "../types/followUp";
 import type { PatientListItem } from "../types/patient";
 import type { ReportTemplateType } from "../types/report";
 import type { RotationSpecialty } from "../types/rotation";
+import type { ApplicationProfile } from "../types/profile";
 
 function cleanBlock(value: string) {
   const text = value.trim();
@@ -126,16 +127,45 @@ function getObjectiveWithoutTemplateSection(
     .join("\n");
 }
 
+export type ReportIdentity = Pick<
+  ApplicationProfile,
+  "name" | "studentId" | "program" | "institution"
+>;
+
 type BuildWhatsAppReportOptions = {
   rotationName?: string;
   generatedAt?: Date;
+  reportIdentity: ReportIdentity;
 };
+
+function formatReportIdentity(
+  identity: ReportIdentity,
+  rotationName: string,
+) {
+  const name = identity.name.trim() || "Pengguna RekamMedisku";
+  const details = [
+    identity.studentId?.trim() ? "dengan Stambuk " + identity.studentId.trim() : "",
+    identity.program?.trim() ? identity.program.trim() : "",
+    identity.institution?.trim() ? "dari " + identity.institution.trim() : "",
+  ].filter(Boolean);
+
+  const detailBlock = details.length > 0 ? " " + details.join(" ") : "";
+
+  return (
+    "Perkenalkan saya " +
+    name +
+    detailBlock +
+    " Stase " +
+    rotationName +
+    ". Mohon izin melaporkan follow-up pasien:"
+  );
+}
 
 export function buildWhatsAppReport(
   patient: PatientListItem,
   followUp: FollowUpEntry,
   templateType: ReportTemplateType,
-  options: BuildWhatsAppReportOptions = {},
+  options: BuildWhatsAppReportOptions,
 ) {
   const exams = followUp.supportingExams ?? [];
   const rotationName = options.rotationName?.trim() || templateType;
@@ -204,9 +234,7 @@ export function buildWhatsAppReport(
 
   return [
     "Assalamualaikum warahmatullahi wabarakatuh dok. Tabe dok, mohon izin dok. " +
-      "Perkenalkan saya Muh. Fadel dengan Stambuk 11120252020 MPPD Stase " +
-      rotationName +
-      ". Mohon izin melaporkan follow-up pasien:",
+      formatReportIdentity(options.reportIdentity, rotationName),
     "",
     "Nama: " + patient.name,
     "Umur: " + patient.age + " tahun",
