@@ -55,7 +55,7 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
     setErrorMessage("");
     try {
       if (!name.trim()) throw new Error("Nama template wajib diisi.");
-      const normalizedSections = sections.map((section, sectionIndex) => ({
+      const normalizedSections = sections.map((section) => ({
         ...section,
         id: slugify(section.id, "section-" + (sections.indexOf(section) + 1)),
         title: section.title.trim(),
@@ -96,7 +96,7 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
           </div>
           <div className="flex items-center justify-between gap-3"><div><h3 className="text-sm font-bold text-slate-900">Struktur Template</h3><p className="mt-1 text-[11px] text-slate-400">{sections.length} section · {fieldCount} field</p></div><button type="button" onClick={addSection} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"><Icon name="plus" className="h-4 w-4" />Tambah Section</button></div>
           <div className="space-y-4">
-            {sections.map((section, sectionIndex) => <section key={section.id} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+            {sections.map((section) => <section key={section.id} className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
               <div className="grid grid-cols-[1fr_auto] gap-3">
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <input value={section.id} onChange={(e)=>updateSection(section.id, (s)=>({...s,id:e.target.value}))} className="field-control" aria-label="Section ID" placeholder="section-id" />
