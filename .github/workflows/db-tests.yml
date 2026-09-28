@@ -54,7 +54,7 @@ jobs:
         run: |
           set -euo pipefail
           git fetch origin main --depth=1
-          changed_migrations="$(git diff --name-only origin/main...HEAD -- 'supabase/migrations/*.sql' || true)"
+          changed_migrations="$(git diff --name-only --diff-filter=ACMR origin/main...HEAD -- 'supabase/migrations/*.sql' || true)"
           if [ -z "$changed_migrations" ]; then
             echo "No migration files changed in this PR."
             exit 0
