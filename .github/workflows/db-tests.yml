@@ -48,9 +48,9 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/tests/database/phase0_multi_user_foundation.test.sql" \
             supabase/tests/database/phase0_multi_user_foundation.test.sql
 
-      - name: Start Supabase
+      - name: Start Supabase database
         working-directory: .ci/phase0-supabase
-        run: supabase start
+        run: supabase db start
 
       - name: Reset database from fixture + Phase 0 migration
         working-directory: .ci/phase0-supabase
