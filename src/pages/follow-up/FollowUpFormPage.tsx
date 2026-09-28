@@ -294,7 +294,8 @@ export default function FollowUpFormPage({
   const [templateLoading, setTemplateLoading] = useState(Boolean(templateId && templateVersion));
   const [templateLoadError, setTemplateLoadError] = useState("");
   const [openTemplateSections, setOpenTemplateSections] = useState<Record<string, boolean>>({});
-  const patientMatchesRotation = patient.rotationId === activeRotation.id;  const existingDraft = loadFollowUpDraft(patient.id);
+  const patientMatchesRotation = patient.rotationId === activeRotation.id;
+  const existingDraft = loadFollowUpDraft(patient.id);
   const draftBelongsToRotation =
     !existingDraft?.rotationId || existingDraft.rotationId === activeRotation.id;
 
@@ -349,7 +350,8 @@ export default function FollowUpFormPage({
     const filled = Object.values(stats).reduce((sum, stat) => sum + stat.filled, 0);
     const total = Object.values(stats).reduce((sum, stat) => sum + stat.total, 0);
     return { stats, filled, total, percent: total ? Math.round((filled / total) * 100) : 0 };
-  }, [template, values]);  const sectionNav: Array<{
+  }, [template, values]);
+  const sectionNav: Array<{
     key: SectionKey;
     label: string;
     number: string;
@@ -860,7 +862,7 @@ export default function FollowUpFormPage({
                   <div role="alert" className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-4 text-xs leading-relaxed text-amber-700">
                     {templateLoadError || "Stase aktif belum memiliki template follow-up. Atur template dari halaman Stase Saya sebelum membuat follow-up."}
                   </div>
-                ) />
+                )}
               </div>
 
               <div
@@ -1073,10 +1075,9 @@ export default function FollowUpFormPage({
 
               <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
                 <p className="text-[11px] leading-relaxed text-slate-500">
-                  Template klinis saat ini:{" "}
-                  <strong className="text-slate-700">{templateType}</strong>.
-                  Struktur Follow-Up tetap sama; field tambahan mengikuti
-                  kebutuhan stase.
+                  Template aktif:{" "}
+                  <strong className="text-slate-700">{template?.name ?? "Belum dipilih"}</strong>.
+                  Struktur form dirender dari definition template yang dipasang pada stase.
                 </p>
               </section>
             </div>
