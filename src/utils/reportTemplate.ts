@@ -187,7 +187,11 @@ function normalizeSection(
 
   const section = value as Record<string, unknown>;
   const id = readId(section.id, fieldName + ".id");
-  const title = readNonEmptyString(section.title, fieldName + ".title", 160);
+  const title = readOptionalString(
+    section.title,
+    fieldName + ".title",
+    160,
+  ) ?? "";
   const description = readOptionalString(
     section.description,
     fieldName + ".description",
