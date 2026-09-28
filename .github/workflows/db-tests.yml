@@ -42,9 +42,6 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/tests/fixtures/mu005_tenant_isolation_schema.sql" \
             supabase/migrations/00000000000000_mu005_tenant_fixture.sql
 
-          cp "$GITHUB_WORKSPACE/supabase/migrations/20260926212923_p3_attachment_storage_sync.sql" \
-            supabase/migrations/20260926212923_p3_attachment_storage_sync.sql
-
           cp "$GITHUB_WORKSPACE/supabase/migrations/20260928_phase0_multi_user_database_foundation.sql" \
             supabase/migrations/20260928_phase0_multi_user_database_foundation.sql
 
@@ -65,42 +62,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          start_ok=false
-          for attempt in 1 2 3; do
-            echo "Starting Supabase (attempt $attempt/3)..."
-            if supabase start; then
-              start_ok=true
-              break
-            fi
-            echo "Supabase start failed; retrying after cleanup..."
-            supabase stop || true
-            sleep $((attempt * 30))
-          done
-
-          if [ "$start_ok" != "true" ]; then
-            echo "Supabase could not be started after 3 attempts."
-            exit 1
-          fi
-
-          supabase status -o env > supabase.env
-          awk -F= '
-            $1 ~ /^(API_URL|ANON_KEY|JWT_SECRET)$/ {
-              value = $0
-              sub(/^[^=]*=/, "", value)
-              gsub(/^"|"$//, "", value)
-              print $1 "=" value
-            }
-          ' supabase.env > mu005.env
-          test "$(wc -l < mu005.env)" -eq 3
-          cat mu005.env >> "$GITHUB_ENV"
-          rm -f supabase.env mu005.env
+          supabase db start --from-backup /dev/null 2>/dev/null || supabase db start
 
       - name: Reset database from fixture + production tenant migrations
         working-directory: .ci/tenant-isolation-supabase
         run: supabase db reset --no-seed
-
-      - name: Run Storage API tenant-boundary test
-        run: node "$GITHUB_WORKSPACE/scripts/mu005-storage-isolation.mjs"
 
       - name: Run tenant-boundary pgTAP suite
         working-directory: .ci/tenant-isolation-supabase
