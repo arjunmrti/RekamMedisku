@@ -3,6 +3,7 @@ import AppShell, { type NavigationProps } from "../../components/layout/AppShell
 import RotationCard from "../../components/rotations/RotationCard";
 import RotationFormModal from "../../components/rotations/RotationFormModal";
 import RotationSwitchDialog from "../../components/rotations/RotationSwitchDialog";
+import FollowUpTemplateBuilderModal from "../../components/follow-up/FollowUpTemplateBuilderModal";
 import {
   loadActiveRotation,
   loadRotations,
@@ -12,9 +13,11 @@ import {
   upsertRotationWithSupabase,
 } from "../../data/supabaseRotations";
 import { loadPatients } from "../../data/localPatients";
+import { listFollowUpTemplates } from "../../data/followUpTemplates";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
+import type { FollowUpTemplateSummary } from "../../types/followUpTemplate";
 import Icon from "../../components/ui/Icon";
 
 type RotationManagementPageProps = NavigationProps & {
@@ -72,13 +75,33 @@ export default function RotationManagementPage({
   const [formOpen, setFormOpen] = useState(false);
   const [editingRotation, setEditingRotation] = useState<Rotation | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [followUpTemplates, setFollowUpTemplates] = useState<FollowUpTemplateSummary[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [templateBuilderOpen, setTemplateBuilderOpen] = useState(false);
 
   useEffect(() => {
-    if (workspaceSyncVersion === 0) return;
-
     setRotations(loadRotations());
     setActiveRotation(loadActiveRotation());
     setPatients(loadPatients());
+
+    let cancelled = false;
+    const loadTemplates = async () => {
+      setTemplatesLoading(true);
+      try {
+        const next = await listFollowUpTemplates();
+        if (!cancelled) setFollowUpTemplates(next);
+      } catch (error) {
+        if (!cancelled) {
+          setErrorMessage(error instanceof Error ? error.message : "Template follow-up gagal dimuat.");
+        }
+      } finally {
+        if (!cancelled) setTemplatesLoading(false);
+      }
+    };
+    void loadTemplates();
+    return () => {
+      cancelled = true;
+    };
   }, [workspaceSyncVersion]);
 
   const patientCounts = useMemo(() => {
@@ -210,15 +233,31 @@ export default function RotationManagementPage({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={openCreate}
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => setTemplateBuilderOpen(true)}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  <Icon name="plus" className="h-4 w-4" />
+                  Buat Template
+                </button>
+                <button
+                  type="button"
+                  onClick={openCreate}
                 className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50"
               >
-                <Icon name="plus" className="h-4 w-4" />
-                Tambah Stase
-              </button>
+                  <Icon name="plus" className="h-4 w-4" />
+                  Tambah Stase
+                </button>
+              </div>
             </header>
+
+            {templatesLoading ? (
+              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-[11px] text-slate-500">
+                Memuat template follow-up...
+              </div>
+            ) : null}
 
             {errorMessage ? (
               <div
@@ -401,6 +440,21 @@ export default function RotationManagementPage({
         rotation={editingRotation}
         onClose={() => setFormOpen(false)}
         onSubmit={handleSaveRotation}
+        followUpTemplates={followUpTemplates}
+        onCreateTemplate={() => setTemplateBuilderOpen(true)}
+      />
+
+      <FollowUpTemplateBuilderModal
+        open={templateBuilderOpen}
+        onClose={() => setTemplateBuilderOpen(false)}
+        onCreated={async () => {
+          try {
+            const next = await listFollowUpTemplates();
+            setFollowUpTemplates(next);
+          } catch (error) {
+            setErrorMessage(error instanceof Error ? error.message : "Template baru berhasil dibuat, tetapi daftar template gagal dimuat.");
+          }
+        }}
       />
     </>
   );
