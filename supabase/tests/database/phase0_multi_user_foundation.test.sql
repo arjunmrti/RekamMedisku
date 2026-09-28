@@ -14,7 +14,7 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 
 BEGIN;
 
-SELECT plan(24);
+SELECT plan(38);
 
 -- ---------------------------------------------------------------------------
 -- Structural contract
@@ -64,6 +64,132 @@ SELECT has_column(
   'template_versions',
   'user_id',
   'template_versions.user_id exists'
+);
+
+-- ---------------------------------------------------------------------------
+-- Existing tenant contract regression checks
+-- ---------------------------------------------------------------------------
+SELECT ok(
+  (
+    SELECT c.relrowsecurity
+    FROM pg_class c
+    WHERE c.oid = 'public.profiles'::regclass
+  ),
+  'public.profiles keeps RLS enabled'
+);
+
+SELECT ok(
+  (
+    SELECT c.relrowsecurity
+    FROM pg_class c
+    WHERE c.oid = 'public.rotations'::regclass
+  ),
+  'public.rotations keeps RLS enabled'
+);
+
+SELECT ok(
+  (
+    SELECT c.relrowsecurity
+    FROM pg_class c
+    WHERE c.oid = 'public.patients'::regclass
+  ),
+  'public.patients keeps RLS enabled'
+);
+
+SELECT ok(
+  (
+    SELECT c.relrowsecurity
+    FROM pg_class c
+    WHERE c.oid = 'public.follow_ups'::regclass
+  ),
+  'public.follow_ups keeps RLS enabled'
+);
+
+SELECT ok(
+  (
+    SELECT c.relrowsecurity
+    FROM pg_class c
+    WHERE c.oid = 'public.supporting_exams'::regclass
+  ),
+  'public.supporting_exams keeps RLS enabled'
+);
+
+SELECT ok(
+  (
+    SELECT c.relrowsecurity
+    FROM pg_class c
+    WHERE c.oid = 'public.slaberan_locations'::regclass
+  ),
+  'public.slaberan_locations keeps RLS enabled'
+);
+
+SELECT ok(
+  (
+    SELECT c.relrowsecurity
+    FROM pg_class c
+    WHERE c.oid = 'public.slaberan_templates'::regclass
+  ),
+  'public.slaberan_templates keeps RLS enabled'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    WHERE c.conrelid = 'public.patients'::regclass
+      AND c.contype = 'f'
+      AND pg_get_constraintdef(c.oid) ILIKE
+        'FOREIGN KEY (rotation_id, user_id) REFERENCES public.rotations(id, user_id)%'
+  ),
+  'patients keeps composite rotation/user tenant FK'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    WHERE c.conrelid = 'public.follow_ups'::regclass
+      AND c.contype = 'f'
+      AND pg_get_constraintdef(c.oid) ILIKE
+        'FOREIGN KEY (patient_id, user_id) REFERENCES public.patients(id, user_id)%'
+  ),
+  'follow_ups keeps composite patient/user tenant FK'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    WHERE c.conrelid = 'public.supporting_exams'::regclass
+      AND c.contype = 'f'
+      AND pg_get_constraintdef(c.oid) ILIKE
+        'FOREIGN KEY (follow_up_id, user_id) REFERENCES public.follow_ups(id, user_id)%'
+  ),
+  'supporting_exams keeps composite follow-up/user tenant FK'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    WHERE c.conrelid = 'public.slaberan_locations'::regclass
+      AND c.contype = 'f'
+      AND pg_get_constraintdef(c.oid) ILIKE
+        'FOREIGN KEY (parent_id, user_id) REFERENCES public.slaberan_locations(id, user_id)%'
+  ),
+  'slaberan_locations keeps composite parent/user tenant FK'
+);
+
+SELECT ok(
+  EXISTS (
+    SELECT 1
+    FROM pg_constraint c
+    WHERE c.conrelid = 'public.profiles'::regclass
+      AND c.contype = 'f'
+      AND pg_get_constraintdef(c.oid) ILIKE
+        'FOREIGN KEY (id) REFERENCES auth.users(id)%'
+  ),
+  'profiles keeps auth.users identity FK'
 );
 
 -- ---------------------------------------------------------------------------
