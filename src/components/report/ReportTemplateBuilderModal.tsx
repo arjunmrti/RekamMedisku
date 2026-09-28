@@ -74,79 +74,6 @@ function makeSection(index: number): ReportTemplateSection {
   };
 }
 
-function getBlockFieldOptions(block: ReportTemplateBlock) {
-  if (block.type === "value") {
-    return (
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-[1.5fr_1fr_1fr]">
-        <select
-          value={block.source}
-          onChange={(event) => event.currentTarget.dispatchEvent(
-            new CustomEvent("report-template-source", {
-              bubbles: true,
-              detail: event.currentTarget.value,
-            }),
-          )}
-          className="field-control"
-          aria-label="Sumber block"
-        >
-          {SOURCE_OPTIONS.map((source) => (
-            <option key={source.value} value={source.value}>
-              {source.label}
-            </option>
-          ))}
-        </select>
-        <input
-          value={block.label ?? ""}
-          className="field-control"
-          readOnly
-          placeholder="Label output"
-        />
-        <input
-          value={block.emptyText ?? ""}
-          className="field-control"
-          readOnly
-          placeholder="Teks saat kosong"
-        />
-      </div>
-    );
-  }
-
-  if (block.type === "text") {
-    return (
-      <textarea
-        value={block.text}
-        readOnly
-        rows={2}
-        className="field-control resize-y"
-        aria-label="Teks statis block"
-      />
-    );
-  }
-
-  if (block.type === "template_answers") {
-    return (
-      <input
-        value={block.title ?? ""}
-        readOnly
-        className="field-control"
-        placeholder="Judul jawaban template"
-      />
-    );
-  }
-
-  return (
-    <label className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700">
-      <input
-        type="checkbox"
-        checked={block.includeAttachments !== false}
-        readOnly
-        className="h-4 w-4 rounded border-slate-300"
-      />
-      Sertakan nama lampiran
-    </label>
-  );
-}
-
 export default function ReportTemplateBuilderModal({
   open,
   onClose,
@@ -520,10 +447,6 @@ export default function ReportTemplateBuilderModal({
                         >
                           Hapus
                         </button>
-                      </div>
-
-                      <div className="mt-3">
-                        {getBlockFieldOptions(block)}
                       </div>
 
                       {block.type === "value" ? (
