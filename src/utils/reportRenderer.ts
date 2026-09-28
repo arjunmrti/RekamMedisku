@@ -46,15 +46,15 @@ function getCoreObjective(followUp: FollowUpEntry) {
   if (!formattedTemplate) return objective;
 
   const templateLines = new Set(
-    formattedTemplate.split("\\n").map((line) => line.trim()),
+    formattedTemplate.split("\n").map((line) => line.trim()),
   );
 
   return objective
-    .split("\\n")
+    .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
     .filter((line) => !templateLines.has(line))
-    .join("\\n");
+    .join("\n");
 }
 
 function getSourceValue(
@@ -164,9 +164,9 @@ function renderSupportingExams(
           : "",
       ]
         .filter(Boolean)
-        .join("\\n");
+        .join("\n");
     })
-    .join("\\n");
+    .join("\n");
 }
 
 function renderTemplateAnswers(
@@ -257,7 +257,7 @@ export function renderReportTemplate(
     if (title) lines.push(title);
 
     if (sectionLines.length) {
-      lines.push(sectionLines.join("\\n"));
+      lines.push(sectionLines.join("\n"));
     }
 
     if (title || sectionLines.length) {
@@ -265,5 +265,5 @@ export function renderReportTemplate(
     }
   }
 
-  return lines.join("\\n").replace(/\\n{3,}/g, "\\n\\n").trim();
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
 }
