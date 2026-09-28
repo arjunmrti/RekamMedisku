@@ -26,43 +26,7 @@ jobs:
         run: npm run lint
 
       - name: Test
-        id: test
-        continue-on-error: true
-        run: |
-          set +e
-          npm run test 2>&1 | tee /tmp/rekammedisku-test.log
-          code=${PIPESTATUS[0]}
-          echo "exit_code=${code}" >> "$GITHUB_OUTPUT"
-          exit 0
-
-      - name: Publish test failure diagnostics
-        if: steps.test.outputs.exit_code != '0' && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require("fs");
-            const log = fs.readFileSync("/tmp/rekammedisku-test.log", "utf8");
-            const tail = log.length > 14000 ? log.slice(-14000) : log;
-            const body = [
-              "## MU-105 temporary QA diagnostics",
-              "",
-              "The test step failed on this PR head. This comment is temporary debugging output.",
-              "",
-              "```text",
-              tail,
-              "```",
-            ].join("\\n");
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body,
-            });
-
-      - name: Fail when tests fail
-        if: steps.test.outputs.exit_code != '0'
-        run: exit 1
+        run: npm run test
 
       - name: Build
-        if: steps.test.outputs.exit_code == '0'
         run: npm run build
