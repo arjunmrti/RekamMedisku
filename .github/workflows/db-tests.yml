@@ -23,11 +23,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Supabase CLI
-        shell: pwsh
+        shell: powershell
         run: npm install --no-save --no-package-lock supabase@2.117.0
 
       - name: Verify Supabase CLI
-        shell: pwsh
+        shell: powershell
         run: npx --no-install supabase --version
 
       - name: Build isolated tenant test project
