@@ -6,7 +6,7 @@ import type {
   ReportTemplateSource,
 } from "../types/reportTemplate";
 import { formatFollowUpTemplateAnswers } from "./followUpTemplateRuntime";
-import { formatReportDate, formatReportRotationName } from "./reportGenerator";
+import { formatReportDate, formatReportRotationName } from "./reportFormatting";
 
 export type ReportRenderContext = {
   patient: PatientListItem;
@@ -119,7 +119,7 @@ function getSourceValue(
     case "follow_up.plan":
       return clean(followUp.plan);
     case "follow_up.planning":
-      return clean(followUp.planning);
+      return clean(followUp.planning) || clean(followUp.plan);
     case "follow_up.instruction":
       return clean(followUp.instruction);
     case "follow_up.summary":
@@ -247,10 +247,9 @@ export function renderReportTemplate(
       );
 
       if (block.title?.trim() && rendered) {
-        sectionLines.push(rendered);
-      } else if (rendered) {
-        sectionLines.push(rendered);
+        sectionLines.push(block.title.trim());
       }
+      if (rendered) sectionLines.push(rendered);
     }
 
     const title = section.title.trim();
