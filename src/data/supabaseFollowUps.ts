@@ -4,7 +4,7 @@ import { updatePatient } from "./localPatients";
 import { syncPatientsWithSupabase } from "./supabasePatients";
 import { supabase } from "../utils/supabase";
 import { workspaceStorageKey } from "./workspaceStorage";
-import type { FollowUpTemplateDefinition } from "../types/followUpTemplate";
+import type { FollowUpTemplateAnswers, FollowUpTemplateDefinition } from "../types/followUpTemplate";
 import { validateFollowUpTemplateDefinition } from "../utils/followUpTemplate";
 import { derivePatientFollowUpSummary } from "./patientFollowUpSummary";
 import {
@@ -38,6 +38,7 @@ type FollowUpRow = {
   template_version: number | null;
   template_schema_version: number | null;
   template_snapshot: unknown;
+  answers: unknown;
   assessment_codes: string[];
   planning: string | null;
   instruction: string | null;
@@ -230,6 +231,10 @@ function toFollowUpEntry(
     templateVersion: row.template_version ?? undefined,
     templateSchemaVersion: row.template_schema_version ?? undefined,
     templateSnapshot: normalizeTemplateSnapshot(row.template_snapshot),
+    templateAnswers:
+      row.answers && typeof row.answers === "object" && !Array.isArray(row.answers)
+        ? (row.answers as FollowUpTemplateAnswers)
+        : undefined,
     assessmentCodes: row.assessment_codes ?? [],
     planning: row.planning ?? undefined,
     instruction: row.instruction ?? undefined,
@@ -256,6 +261,7 @@ function followUpPayload(entry: FollowUpEntry, remotePatientId: string) {
     template_type: entry.templateType ?? null,
     template_id: entry.templateId ?? null,
     template_version: entry.templateVersion ?? null,
+    answers: entry.templateAnswers ?? null,
     assessment_codes: entry.assessmentCodes ?? [],
     planning: entry.planning ?? null,
     instruction: entry.instruction ?? null,
@@ -616,7 +622,7 @@ async function syncFollowUpsWithSupabaseInternal(): Promise<
   const { data: remoteFollowUps, error: followUpError } = await supabase
     .from("follow_ups")
     .select(
-      "id,user_id,patient_id,number,date,iso_date,time,status,template_type,template_id,template_version,template_schema_version,template_snapshot,assessment_codes,planning,instruction,subjective,objective,assessment,plan,summary,created_at,updated_at",
+      "id,user_id,patient_id,number,date,iso_date,time,status,template_type,template_id,template_version,template_schema_version,template_snapshot,answers,assessment_codes,planning,instruction,subjective,objective,assessment,plan,summary,created_at,updated_at",
     )
     .eq("user_id", userId)
     .order("iso_date", { ascending: false })
