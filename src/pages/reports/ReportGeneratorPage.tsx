@@ -7,6 +7,7 @@ import ReportPreview from "../../components/report/ReportPreview";
 import ReportStepTracker from "../../components/report/ReportStepTracker";
 import ReportSummaryCard from "../../components/report/ReportSummaryCard";
 import ReportTemplateSelector from "../../components/report/ReportTemplateSelector";
+import ReportTemplateBuilderModal from "../../components/report/ReportTemplateBuilderModal";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
 import { loadActiveRotation, loadRotations } from "../../data/localRotations";
 import { buildWhatsAppReport } from "../../utils/reportGenerator";
@@ -266,6 +267,8 @@ function FollowUpReportGeneratorPage({
     useState<ActiveReportTemplate>(SYSTEM_REPORT_TEMPLATE);
   const [reportTemplateLoading, setReportTemplateLoading] = useState(true);
   const [reportTemplateError, setReportTemplateError] = useState("");
+  const [reportTemplateBuilderOpen, setReportTemplateBuilderOpen] =
+    useState(false);
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
@@ -379,6 +382,40 @@ function FollowUpReportGeneratorPage({
     setEditing(false);
     setCopied(false);
     setCopyError("");
+  };
+
+  const handleReportTemplateCreated = async (templateId: string) => {
+    try {
+      setReportTemplateLoading(true);
+      setReportTemplateError("");
+
+      const summaries = await listReportTemplates();
+      setReportTemplates(summaries);
+
+      const createdTemplate = await getReportTemplateVersion(
+        templateId,
+        1,
+      );
+
+      if (!createdTemplate) {
+        throw new Error("Template laporan baru tidak dapat dimuat.");
+      }
+
+      setSelectedReportTemplate(toActiveReportTemplate(createdTemplate));
+      setReportText("");
+      setGeneratedKey("");
+      setEditing(false);
+      setCopied(false);
+      setCopyError("");
+    } catch (error) {
+      setReportTemplateError(
+        error instanceof Error
+          ? error.message
+          : "Template laporan baru gagal dimuat.",
+      );
+    } finally {
+      setReportTemplateLoading(false);
+    }
   };
 
   const handleReportTemplateChange = async (templateId: string) => {
@@ -648,6 +685,7 @@ function FollowUpReportGeneratorPage({
                 loading={reportTemplateLoading}
                 error={reportTemplateError}
                 onChange={handleReportTemplateChange}
+                onCreateTemplate={() => setReportTemplateBuilderOpen(true)}
               />
 
               <section className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/70 via-white to-white p-4 shadow-[0_8px_30px_-22px_rgba(22,119,255,0.4)] sm:p-5">
@@ -726,6 +764,13 @@ function FollowUpReportGeneratorPage({
             pengguna tetap meninjau, menyalin, lalu mengirim secara manual.
           </section>
         </div>
+      <ReportTemplateBuilderModal
+        open={reportTemplateBuilderOpen}
+        onClose={() => setReportTemplateBuilderOpen(false)}
+        onCreated={(templateId) => {
+          void handleReportTemplateCreated(templateId);
+        }}
+      />
       </main>
     </AppShell>
   );
