@@ -1,7 +1,7 @@
 -- MU-105 — User-owned report template definition and versioning.
 CREATE EXTENSION IF NOT EXISTS pgtap;
 BEGIN;
-SELECT plan(8);
+SELECT plan(11);
 
 SELECT has_function(
   'public',
