@@ -23,26 +23,26 @@ const BLOCK_TYPES: ReportTemplateBlockType[] = [
 ];
 
 const SOURCE_OPTIONS: Array<{ value: ReportTemplateSource; label: string }> = [
-  ["identity.report_introduction", "Pembuka laporan"],
-  ["patient.name", "Nama pasien"],
-  ["patient.age", "Umur"],
-  ["patient.gender", "Jenis kelamin"],
-  ["patient.rm", "Nomor RM"],
-  ["patient.room", "Ruangan"],
-  ["patient.bed", "Bed"],
-  ["patient.doctor", "DPJP"],
-  ["patient.admission_date", "Tanggal masuk"],
-  ["patient.admission_complaint", "Keluhan masuk"],
-  ["rotation.name", "Nama stase/rotasi"],
-  ["follow_up.date", "Tanggal follow-up"],
-  ["follow_up.subjective", "Subjective"],
-  ["follow_up.objective", "Objective"],
-  ["follow_up.assessment", "Assessment"],
-  ["follow_up.plan", "Plan"],
-  ["follow_up.planning", "Planning"],
-  ["follow_up.instruction", "Instruction"],
-  ["follow_up.summary", "Ringkasan"],
-].map(([value, label]) => ({ value, label }));
+  { value: "identity.report_introduction", label: "Pembuka laporan" },
+  { value: "patient.name", label: "Nama pasien" },
+  { value: "patient.age", label: "Umur" },
+  { value: "patient.gender", label: "Jenis kelamin" },
+  { value: "patient.rm", label: "Nomor RM" },
+  { value: "patient.room", label: "Ruangan" },
+  { value: "patient.bed", label: "Bed" },
+  { value: "patient.doctor", label: "DPJP" },
+  { value: "patient.admission_date", label: "Tanggal masuk" },
+  { value: "patient.admission_complaint", label: "Keluhan masuk" },
+  { value: "rotation.name", label: "Nama stase/rotasi" },
+  { value: "follow_up.date", label: "Tanggal follow-up" },
+  { value: "follow_up.subjective", label: "Subjective" },
+  { value: "follow_up.objective", label: "Objective" },
+  { value: "follow_up.assessment", label: "Assessment" },
+  { value: "follow_up.plan", label: "Plan" },
+  { value: "follow_up.planning", label: "Planning" },
+  { value: "follow_up.instruction", label: "Instruction" },
+  { value: "follow_up.summary", label: "Ringkasan" },
+];
 
 function slugify(value: string, fallback: string) {
   const normalized = value
