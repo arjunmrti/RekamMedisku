@@ -63,6 +63,13 @@ const neurologyFollowUp: FollowUpEntry = {
   ],
 };
 
+const reportIdentity = {
+  name: "Dr. Arjuna Murti",
+  studentId: "STB-12345",
+  program: "MPPD",
+  institution: "Universitas Uji",
+};
+
 const internalMedicineFollowUp: FollowUpEntry = {
   id: "fu-interna-1",
   number: 3,
@@ -145,13 +152,14 @@ test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", ()
     "Neurologi",
     {
       rotationName: "Neurologi",
+      reportIdentity,
       generatedAt: new Date(2026, 8, 26, 19, 0),
     },
   );
 
   assert.match(
     report,
-    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Neurologi\. Mohon izin melaporkan follow-up pasien:/,
+    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Dr\. Arjuna Murti dengan Stambuk STB-12345 MPPD dari Universitas Uji Stase Neurologi\. Mohon izin melaporkan follow-up pasien:/,
   );
   assert.match(report, /Stase: Neurologi/);
   assert.match(report, /Tanggal Masuk: 01 September 2026/);
@@ -179,13 +187,14 @@ test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
     "Ilmu Penyakit Dalam",
     {
       rotationName: "Ilmu Penyakit Dalam",
+      reportIdentity,
       generatedAt: new Date(2026, 8, 26, 12, 0),
     },
   );
 
   assert.match(
     report,
-    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Muh\. Fadel dengan Stambuk 11120252020 MPPD Stase Ilmu Penyakit Dalam\. Mohon izin melaporkan follow-up pasien:/,
+    /^Assalamualaikum warahmatullahi wabarakatuh dok\. Tabe dok, mohon izin dok\. Perkenalkan saya Dr\. Arjuna Murti dengan Stambuk STB-12345 MPPD dari Universitas Uji Stase Ilmu Penyakit Dalam\. Mohon izin melaporkan follow-up pasien:/,
   );
   assert.match(report, /Stase: Ilmu Penyakit Dalam/);
   assert.match(report, /Tanggal Masuk: 01 September 2026/);
@@ -199,6 +208,22 @@ test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
   assert.equal(objectiveSection.includes("\nKeadaan Umum: Baik"), false);
   assert.match(report, /- Kesadaran: Compos mentis/);
   assert.match(report, /- Kepala & Leher: Tidak ada kelainan/);
+});
+
+test("identitas laporan berasal dari profile yang diberikan", () => {
+  const report = buildWhatsAppReport(
+    patient,
+    neurologyFollowUp,
+    "Neurologi",
+    { rotationName: "Neurologi", reportIdentity },
+  );
+
+  assert.match(
+    report,
+    /Perkenalkan saya Dr\. Arjuna Murti dengan Stambuk STB-12345 MPPD dari Universitas Uji Stase Neurologi/,
+  );
+  assert.equal(report.includes("Muh. Fadel"), false);
+  assert.equal(report.includes("11120252020"), false);
 });
 
 test("tanggal kosong memakai fallback yang aman", () => {
