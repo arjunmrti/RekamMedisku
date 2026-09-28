@@ -1,10 +1,15 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "../../hooks/useAuth";
-import { setWorkspaceUserId } from "../../data/workspaceStorage";
+import {
+  getWorkspaceUserId,
+  setWorkspaceUserId,
+} from "../../data/workspaceStorage";
 import LoginPage from "../../pages/auth/LoginPage";
 import {
   startWorkspaceSync,
+  stopWorkspaceSync,
   syncWorkspaceWithSupabase,
+  waitForWorkspaceSyncIdle,
 } from "../../data/supabaseSyncEngine";
 
 type AuthGateProps = {
@@ -58,49 +63,58 @@ function getWorkspaceSyncErrorMessage(error: unknown) {
 
 export default function AuthGate({ children }: AuthGateProps) {
   const { session, loading } = useAuth();
-  setWorkspaceUserId(session?.user.id ?? null);
+  const [workspaceUserId, setWorkspaceUserIdState] = useState<string | null>(
+    () => getWorkspaceUserId(),
+  );
   const [workspaceLoading, setWorkspaceLoading] = useState(false);
   const [workspaceError, setWorkspaceError] = useState("");
 
   useEffect(() => {
-    setWorkspaceUserId(session?.user.id ?? null);
-
-    if (!session) {
-      setWorkspaceLoading(false);
-      setWorkspaceError("");
-      return;
-    }
-
+    const nextUserId = session?.user.id ?? null;
     let cancelled = false;
 
-    const authenticatedUserId = session.user.id;
-    let stopWorkspaceSync: (() => void) | null = null;
+    // Stop realtime immediately on every auth transition. Any in-flight
+    // hydration is then drained before the active workspace user changes so
+    // that its local writes cannot land in the next user's namespace.
+    stopWorkspaceSync();
 
-    async function hydrateWorkspace() {
+    async function transitionWorkspace() {
       setWorkspaceLoading(true);
       setWorkspaceError("");
 
-      const hydrationPromise = syncWorkspaceWithSupabase();
+      await waitForWorkspaceSyncIdle();
 
-      // Keep the underlying request handled even when the UI falls back to
-      // local data after the timeout.
-      void hydrationPromise
-        .then(() => {
-          if (!cancelled) {
-            setWorkspaceError("");
-          }
-        })
-        .catch((error) => {
-          console.error("Supabase workspace hydration failed:", error);
+      if (cancelled) return;
 
-          if (!cancelled) {
-            setWorkspaceError(getWorkspaceSyncErrorMessage(error));
-          }
-        });
+      setWorkspaceUserId(nextUserId);
+      setWorkspaceUserIdState(nextUserId);
+
+      if (!nextUserId) {
+        setWorkspaceLoading(false);
+        return;
+      }
 
       let timeoutId: number | null = null;
 
       try {
+        const hydrationPromise = syncWorkspaceWithSupabase(nextUserId);
+
+        // Keep the underlying request handled even when the UI falls back to
+        // local data after the timeout.
+        void hydrationPromise
+          .then(() => {
+            if (!cancelled) {
+              setWorkspaceError("");
+            }
+          })
+          .catch((error) => {
+            console.error("Supabase workspace hydration failed:", error);
+
+            if (!cancelled) {
+              setWorkspaceError(getWorkspaceSyncErrorMessage(error));
+            }
+          });
+
         await Promise.race([
           hydrationPromise,
           new Promise<never>((_, reject) => {
@@ -125,17 +139,17 @@ export default function AuthGate({ children }: AuthGateProps) {
         if (!cancelled) {
           // The realtime/watchdog sync becomes the recovery path even when the
           // initial hydration times out or fails.
-          stopWorkspaceSync = startWorkspaceSync(authenticatedUserId);
+          startWorkspaceSync(nextUserId);
           setWorkspaceLoading(false);
         }
       }
     }
 
-    void hydrateWorkspace();
+    void transitionWorkspace();
 
     return () => {
       cancelled = true;
-      stopWorkspaceSync?.();
+      stopWorkspaceSync();
     };
   }, [session?.user.id]);
 
@@ -150,10 +164,10 @@ export default function AuthGate({ children }: AuthGateProps) {
           <p className="mt-3 text-sm font-medium text-slate-500">
             {loading
               ? "Memuat RekamMedisku..."
-              : "Menyinkronkan data RekamMedisku..."}
+              : "Menyiapkan workspace RekamMedisku..."}
           </p>
           <p className="mt-1 text-xs text-slate-400">
-            Menyiapkan workspace dari Supabase.
+            Menutup sesi lama dan memuat data akun aktif.
           </p>
         </div>
       </main>
@@ -194,7 +208,7 @@ export default function AuthGate({ children }: AuthGateProps) {
           </div>
         </div>
       ) : null}
-      {children}
+      <Fragment key={workspaceUserId ?? "logged-out"}>{children}</Fragment>
     </>
   );
 }
