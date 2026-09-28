@@ -22,10 +22,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: 2.117.0
+      - name: Install Supabase CLI
+        shell: pwsh
+        run: npm install --no-save --no-package-lock supabase@2.117.0
+
+      - name: Verify Supabase CLI
+        shell: pwsh
+        run: npx --no-install supabase --version
 
       - name: Build isolated tenant test project
         shell: bash
@@ -36,7 +39,7 @@ jobs:
           mkdir -p .ci/tenant-isolation-supabase
           cd .ci/tenant-isolation-supabase
 
-          supabase init
+          npx --no-install supabase init
           mkdir -p supabase/migrations supabase/tests/database
 
           cp "$GITHUB_WORKSPACE/supabase/tests/database/phase0_multi_user_foundation.test.sql" \
@@ -92,12 +95,12 @@ jobs:
           set -euo pipefail
           for attempt in 1 2 3; do
             echo "Starting Supabase database (attempt $attempt/3)..."
-            if supabase db start --debug; then
+            if npx --no-install supabase db start --debug; then
               exit 0
             fi
             echo "Supabase database bootstrap failed; retrying..."
             docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' || true
-            supabase stop --no-backup || true
+            npx --no-install supabase stop --no-backup || true
             sleep $((attempt * 30))
           done
           echo "Supabase database could not be bootstrapped after 3 attempts."
@@ -151,13 +154,13 @@ jobs:
 
       - name: Reset database and apply test migrations
         working-directory: .ci/tenant-isolation-supabase
-        run: supabase db reset --no-seed
+        run: npx --no-install supabase db reset --no-seed
 
       - name: Run tenant-boundary pgTAP suite
         working-directory: .ci/tenant-isolation-supabase
-        run: supabase test db
+        run: npx --no-install supabase test db
 
       - name: Stop Supabase
         if: always()
         working-directory: .ci/tenant-isolation-supabase
-        run: supabase stop
+        run: npx --no-install supabase stop
