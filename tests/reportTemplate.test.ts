@@ -98,7 +98,7 @@ test("report template menolak block type yang tidak dikenal", () => {
           },
         ],
       }),
-    /type block harus salah satu dari/,
+    /type harus salah satu dari/,
   );
 });
 
@@ -131,12 +131,12 @@ test("report template menolak section ID duplikat", () => {
           {
             id: "same",
             title: "Satu",
-            blocks: [{ id: "a", type: "text", text: "A" }],
+            blocks: [{ id: "aa", type: "text", text: "A" }],
           },
           {
             id: "same",
             title: "Dua",
-            blocks: [{ id: "b", type: "text", text: "B" }],
+            blocks: [{ id: "bb", type: "text", text: "B" }],
           },
         ],
       }),
