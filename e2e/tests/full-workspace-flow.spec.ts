@@ -275,7 +275,7 @@ test("alur browser utama: login → stase → pasien → follow-up → backup", 
   await page.getByLabel("Start date").fill("2026-09-27");
   await page.getByLabel("End date").fill("2026-10-27");
   await page.getByLabel("Template Follow-Up").waitFor({ state: "visible" });
-  await page.getByLabel("Template Follow-Up").selectOption({ label: /E2E Follow-Up Template/ });
+  await page.getByLabel("Template Follow-Up").selectOption({ label: "E2E Follow-Up Template · v1" });
   await page.getByLabel("Status").selectOption({ label: "Aktif" });
   await page.getByRole("button", { name: "Simpan Stase" }).click();
 
