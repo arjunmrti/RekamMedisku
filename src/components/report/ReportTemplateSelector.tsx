@@ -43,11 +43,8 @@ export default function ReportTemplateSelector({
         <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-5 text-xs text-slate-400">
           Memuat template laporan...
         </div>
-      ) : error ? (
-        <div className="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-4 text-xs leading-relaxed text-rose-700">
-          {error}
-        </div>
       ) : templates.length === 0 ? (
+
         <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/70 px-4 py-5 text-xs text-slate-400">
           Belum ada template laporan yang dapat digunakan.
         </div>
@@ -113,6 +110,11 @@ export default function ReportTemplateSelector({
           })}
         </div>
       )}
+      {error ? (
+        <p className="mt-3 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2 text-[11px] leading-relaxed text-rose-700">
+          {error}
+        </p>
+      ) : null}
     </section>
   );
 }
