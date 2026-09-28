@@ -203,7 +203,7 @@ test("default system report tetap generik dan membaca data template follow-up", 
   assert.match(report, /RM: RM-001/);
   assert.match(report, /Stase: Neurologi/);
   assert.match(report, /Keluhan Masuk: Sakit kepala sejak 3 hari sebelum masuk\./);
-  assert.match(report, /Keluhan / Perkembangan Hari Ini: Sakit kepala berkurang\./);
+  assert.match(report, /Keluhan \/ Perkembangan Hari Ini: Sakit kepala berkurang\./);
   assert.match(report, /O:\nKeadaan Umum: Baik\nTD: 120\/80 mmHg/);
   assert.match(report, /Data Template Follow-Up\nCatatan Klinis\nNyeri: 7\nPerkembangan: Keluhan membaik\./);
   assert.match(report, /A:\nCephalgia membaik\./);
