@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import SlaberanPage from "./SlaberanPage";
 import ReportHubPage from "./ReportHubPage";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
@@ -17,6 +17,11 @@ import type { PatientListItem } from "../../types/patient";
 import type { ReportMode, ReportStep, ReportTemplateType } from "../../types/report";
 import Icon from "../../components/ui/Icon";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
+import {
+  APPLICATION_PROFILE_EVENT,
+  loadApplicationProfile,
+} from "../../data/applicationProfile";
+import type { ReportIdentity } from "../../utils/reportGenerator";
 
 type ReportGeneratorPageProps = NavigationProps & {
   patient?: PatientListItem;
@@ -147,6 +152,65 @@ function FollowUpReportGeneratorPage({
   onPatientChange,
 }: FollowUpReportGeneratorPageProps) {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
+  const [reportIdentity, setReportIdentity] = useState<ReportIdentity | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
+  const loadProfile = () => {
+    let cancelled = false;
+
+    setProfileLoading(true);
+    setProfileError("");
+
+    void loadApplicationProfile()
+      .then((profile) => {
+        if (cancelled) return;
+        setReportIdentity({
+          name: profile.name,
+          studentId: profile.studentId,
+          program: profile.program,
+          institution: profile.institution,
+        });
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        console.error("Application profile load failed:", error);
+        setReportIdentity(null);
+        setProfileError(
+          error instanceof Error
+            ? error.message
+            : "Profil aplikasi gagal dimuat.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setProfileLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  };
+
+  useEffect(() => {
+    let cleanup = loadProfile();
+
+    const handleProfileUpdated = () => {
+      cleanup?.();
+      cleanup = loadProfile();
+    };
+
+    window.addEventListener(APPLICATION_PROFILE_EVENT, handleProfileUpdated);
+
+    return () => {
+      cleanup?.();
+      window.removeEventListener(
+        APPLICATION_PROFILE_EVENT,
+        handleProfileUpdated,
+      );
+    };
+  }, []);
+
   const activeRotation = loadActiveRotation();
   const patientRotation = patient
     ? loadRotations().find((rotation) => rotation.id === patient.rotationId)
@@ -201,6 +265,7 @@ function FollowUpReportGeneratorPage({
           patientRotation?.specialty !== "Lainnya"
             ? patientRotation?.specialty
             : patientRotation?.name,
+        reportIdentity,
       }),
     );
     setTemplateType(nextTemplate);
@@ -479,10 +544,20 @@ function FollowUpReportGeneratorPage({
                       </p>
                     </div>
                   </div>
+                {profileError ? (
+                  <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">
+                    {profileError}
+                  </p>
+                ) : (
+                  <p className="mt-3 text-[10px] text-slate-400">
+                    Identitas laporan diambil dari profil aplikasi akun aktif.
+                  </p>
+                )}
 
                   <button
                     type="button"
                     onClick={() => generateReport()}
+                    disabled={profileLoading || !reportIdentity}
                     className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
                   >
                     <Icon name="bolt" className="h-3.5 w-3.5" />
