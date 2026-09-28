@@ -138,15 +138,14 @@ function openExistingLegacyDatabase(
   resolve: (database: IDBDatabase | null) => void,
   reject: (error: unknown) => void,
 ) {
-  const request = window.indexedDB.open(LEGACY_DB_NAME, DB_VERSION);
+  const request = window.indexedDB.open(LEGACY_DB_NAME);
   let createdNewDatabase = false;
 
   request.onupgradeneeded = () => {
-    createdNewDatabase = request.result.version === DB_VERSION &&
-      request.transaction?.db.version === DB_VERSION &&
-      request.transaction?.mode === "versionchange" &&
-      request.result.objectStoreNames.length === 0;
-    request.transaction?.abort();
+    if (request.oldVersion === 0) {
+      createdNewDatabase = true;
+      request.transaction?.abort();
+    }
   };
 
   request.onsuccess = () => {
@@ -160,14 +159,14 @@ function openExistingLegacyDatabase(
   };
 
   request.onerror = () => {
-    const error = request.error;
-
-    if (createdNewDatabase) {
+    if (createdNewDatabase || request.error?.name === "AbortError") {
       resolve(null);
       return;
     }
 
-    reject(error ?? new Error("Penyimpanan lampiran lama gagal dibaca."));
+    reject(
+      request.error ?? new Error("Penyimpanan lampiran lama gagal dibaca."),
+    );
   };
 }
 
