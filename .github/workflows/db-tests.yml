@@ -56,17 +56,10 @@ jobs:
 
       - name: Start Supabase database
         working-directory: .ci/tenant-isolation-supabase
-        run: supabase db start
-
-      - name: Reset database from fixture + production tenant migrations
-        working-directory: .ci/tenant-isolation-supabase
-        run: supabase db reset --no-seed
-
-      - name: Export local Supabase API environment
-        working-directory: .ci/tenant-isolation-supabase
         shell: bash
         run: |
           set -euo pipefail
+          supabase db start
           supabase status -o env > supabase.env
           awk -F= '
             $1 ~ /^(API_URL|ANON_KEY|JWT_SECRET)$/ {
@@ -79,6 +72,10 @@ jobs:
           test "$(wc -l < mu005.env)" -eq 3
           cat mu005.env >> "$GITHUB_ENV"
           rm -f supabase.env mu005.env
+
+      - name: Reset database from fixture + production tenant migrations
+        working-directory: .ci/tenant-isolation-supabase
+        run: supabase db reset --no-seed
 
       - name: Run Storage API tenant-boundary test
         run: node "$GITHUB_WORKSPACE/scripts/mu005-storage-isolation.mjs"
