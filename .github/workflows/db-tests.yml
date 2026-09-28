@@ -62,10 +62,6 @@ jobs:
         working-directory: .ci/tenant-isolation-supabase
         run: supabase db reset --no-seed
 
-      - name: Run tenant-boundary pgTAP suite
-        working-directory: .ci/tenant-isolation-supabase
-        run: supabase test db
-
       - name: Export local Supabase API environment
         working-directory: .ci/tenant-isolation-supabase
         shell: bash
@@ -86,6 +82,10 @@ jobs:
 
       - name: Run Storage API tenant-boundary test
         run: node "$GITHUB_WORKSPACE/scripts/mu005-storage-isolation.mjs"
+
+      - name: Run tenant-boundary pgTAP suite
+        working-directory: .ci/tenant-isolation-supabase
+        run: supabase test db
 
       - name: Stop Supabase
         if: always()
