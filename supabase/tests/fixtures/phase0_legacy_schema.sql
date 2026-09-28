@@ -10,16 +10,9 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- Supabase's local stack provides the auth schema/roles. This lightweight
--- compatibility implementation makes auth.uid() deterministic in pgTAP when
--- the test switches request.jwt.claim.sub.
-CREATE OR REPLACE FUNCTION auth.uid()
-RETURNS uuid
-LANGUAGE sql
-STABLE
-AS $$
-  SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid;
-$$;
+-- The Supabase local stack supplies the auth schema, auth.users table, roles,
+-- and auth.uid() helper. The fixture intentionally does not modify that
+-- protected schema.
 
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS trigger
