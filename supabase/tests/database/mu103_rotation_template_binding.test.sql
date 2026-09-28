@@ -1,7 +1,7 @@
 -- MU-103 — Rotation -> template binding and tenant safety
 CREATE EXTENSION IF NOT EXISTS pgtap;
 BEGIN;
-SELECT plan(18);
+SELECT plan(13);
 
 SELECT has_column('public','rotations','follow_up_template_id','rotation stores follow-up template ID');
 SELECT has_column('public','rotations','follow_up_template_version','rotation stores follow-up template version');
