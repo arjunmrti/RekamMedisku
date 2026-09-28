@@ -96,7 +96,7 @@ Tidak ada hierarki organization/hospital pada phase ini.
 
 Ada unique constraint pada \`(template_id, version)\`.
 
-**Catatan penting:** Phase 0 belum memaksa row version menjadi immutable secara database. Policy UPDATE/DELETE masih tersedia. Append-only history enforcement masuk saat saved follow-up history benar-benar direlasikan ke version pada fase template workflow.
+**Catatan penting:** Untuk role `authenticated`, `template_versions` bersifat append-only melalui API: client hanya mendapat SELECT/INSERT. Editing template harus membuat versi baru; penghapusan parent template tetap dapat menghapus seluruh versinya melalui foreign key cascade. Enforcement history yang mengikat versi ke saved follow-up masuk pada fase template workflow.
 
 ### 4. RLS
 
