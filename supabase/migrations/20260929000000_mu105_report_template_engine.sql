@@ -142,7 +142,7 @@ BEGIN
 
       block_type := block_item->>'type';
 
-      IF block_type NOT IN (
+      IF block_type IS NULL OR block_type NOT IN (
         'text',
         'value',
         'template_answers',
@@ -168,7 +168,7 @@ BEGIN
       ELSIF block_type = 'value' THEN
         block_source := block_item->>'source';
 
-        IF block_source NOT IN (
+        IF block_source IS NULL OR block_source NOT IN (
           'identity.report_introduction',
           'patient.name',
           'patient.age',
