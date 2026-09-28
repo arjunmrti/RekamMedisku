@@ -270,7 +270,7 @@ SELECT is(
   (
     SELECT definition->'sections'->0->'fields'
     FROM public.template_versions
-    WHERE user_id = '00000000-0000-0000-0000000020a1'::uuid
+    WHERE user_id = '00000000-0000-0000-0000-0000000020a1'::uuid
       AND version = 1
   ),
   'follow-up snapshot remains the original version 1 definition'
@@ -280,7 +280,7 @@ SELECT throws_ok(
   $test$
     UPDATE public.follow_ups
     SET template_version = 2
-    WHERE user_id = '00000000-0000-0000-0000000020a1'::uuid;
+    WHERE user_id = '00000000-0000-0000-0000-0000000020a1'::uuid;
   $test$,
   'P0001',
   'Identitas template follow-up yang sudah tersimpan bersifat immutable.',
@@ -291,7 +291,7 @@ SELECT throws_ok(
   $test$
     UPDATE public.follow_ups
     SET template_snapshot = '{"schema_version":1,"sections":[]}'::jsonb
-    WHERE user_id = '00000000-0000-0000-0000000020a1'::uuid;
+    WHERE user_id = '00000000-0000-0000-0000-0000000020a1'::uuid;
   $test$,
   'P0001',
   'Identitas template follow-up yang sudah tersimpan bersifat immutable.',
