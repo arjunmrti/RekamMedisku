@@ -163,8 +163,8 @@ RETURNS TABLE (
   updated_at timestamptz
 )
 LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = public
+SECURITY DEFINER
+SET search_path = pg_catalog, public
 AS $fn$
 DECLARE
   current_user_id uuid := auth.uid();
@@ -265,8 +265,8 @@ RETURNS TABLE (
   updated_at timestamptz
 )
 LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path = public
+SECURITY DEFINER
+SET search_path = pg_catalog, public
 AS $fn$
 DECLARE
   current_user_id uuid := auth.uid();
