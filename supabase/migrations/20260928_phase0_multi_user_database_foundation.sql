@@ -279,7 +279,7 @@ CREATE TRIGGER rekammedisku_handle_new_user_profile
 CREATE TABLE IF NOT EXISTS public.templates (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL DEFAULT auth.uid()
-    REFERENCES auth.users(id)
+    REFERENCES public.profiles(id)
     ON DELETE CASCADE,
   type text NOT NULL
     CHECK (type IN ('follow_up', 'report')),
@@ -318,7 +318,8 @@ COMMENT ON COLUMN public.templates.metadata IS
 -- ---------------------------------------------------------------------------
 -- A version row carries the same user_id as its parent template. The composite
 -- FK prevents a valid template UUID from being paired with another user's
--- ownership key.
+-- ownership key. Both template levels reference public.profiles so application
+-- data has an explicit dependency on the provisioned tenant identity.
 CREATE TABLE IF NOT EXISTS public.template_versions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL DEFAULT auth.uid()
