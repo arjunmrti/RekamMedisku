@@ -86,9 +86,9 @@ BEGIN
 
     seen_section_ids := array_append(seen_section_ids, section_id);
 
-    IF NULLIF(btrim(section_item->>'title'), '') IS NULL THEN
+    IF length(COALESCE(section_item->>'title', '')) > 160 THEN
       RAISE EXCEPTION
-        'Template laporan tidak valid: title section "%" wajib diisi.',
+        'Template laporan tidak valid: title section "%" terlalu panjang.',
         section_id;
     END IF;
 
