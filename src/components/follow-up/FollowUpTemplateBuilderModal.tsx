@@ -55,9 +55,9 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
     setErrorMessage("");
     try {
       if (!name.trim()) throw new Error("Nama template wajib diisi.");
-      const normalizedSections = sections.map((section, _sectionIndex) => ({
+      const normalizedSections = sections.map((section, sectionIndex) => ({
         ...section,
-        id: slugify(section.id, "section-" + (sectionIndex + 1)),
+        id: slugify(section.id, "section-" + (sections.indexOf(section) + 1)),
         title: section.title.trim(),
         fields: section.fields.map((field, fieldIndex) => ({
           ...field,
