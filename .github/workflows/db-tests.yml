@@ -37,6 +37,7 @@ jobs:
           cd .ci/phase0-supabase
 
           supabase init
+          mkdir -p supabase/migrations supabase/tests/database
 
           cp "$GITHUB_WORKSPACE/supabase/tests/fixtures/phase0_legacy_schema.sql" \
             supabase/migrations/00000000000000_phase0_legacy_fixture.sql
