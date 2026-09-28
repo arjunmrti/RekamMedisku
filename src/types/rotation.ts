@@ -15,6 +15,10 @@ export type Rotation = {
   startDate: string;
   endDate: string;
   status: RotationStatus;
+  followUpTemplateId?: string;
+  followUpTemplateVersion?: number;
+  reportTemplateId?: string;
+  reportTemplateVersion?: number;
   createdAt: string;
   updatedAt: string;
 };
