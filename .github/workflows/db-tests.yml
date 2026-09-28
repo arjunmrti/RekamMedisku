@@ -51,6 +51,12 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/tests/database/mu102_follow_up_template_persistence.test.sql" \
             supabase/tests/database/mu102_follow_up_template_persistence.test.sql
 
+          cp "$GITHUB_WORKSPACE/supabase/tests/database/mu103_rotation_template_binding.test.sql" \
+            supabase/tests/database/mu103_rotation_template_binding.test.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/tests/database/mu104_dynamic_follow_up_answers.test.sql" \
+            supabase/tests/database/mu104_dynamic_follow_up_answers.test.sql
+
       - name: Validate PR migration filenames
         if: github.event_name == 'pull_request'
         shell: bash
@@ -114,6 +120,12 @@ jobs:
 
           cp "$GITHUB_WORKSPACE/supabase/migrations/20260928150000_mu102_follow_up_template_persistence.sql" \
             supabase/migrations/20260928150000_mu102_follow_up_template_persistence.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928160000_mu103_rotation_template_binding.sql" \
+            supabase/migrations/20260928160000_mu103_rotation_template_binding.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928170000_mu104_dynamic_follow_up_answers.sql" \
+            supabase/migrations/20260928170000_mu104_dynamic_follow_up_answers.sql
 
           cp "$GITHUB_WORKSPACE/supabase/migrations/20260926212923_p3_attachment_storage_sync.sql" \
             supabase/migrations/20260926212923_p3_attachment_storage_sync.sql

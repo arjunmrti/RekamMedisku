@@ -13,6 +13,7 @@ type ObjectiveSectionProps = {
   onInternalMedicineChange: (
     value: FollowUpFormValues["internalMedicine"],
   ) => void;
+  showTemplateFields?: boolean;
 };
 
 type ObjectiveField = [
@@ -101,6 +102,7 @@ export default function ObjectiveSection({
   onObjectiveChange,
   onNeurologyChange,
   onInternalMedicineChange,
+  showTemplateFields = true,
 }: ObjectiveSectionProps) {
   return (
     <FormSection
@@ -205,7 +207,7 @@ export default function ObjectiveSection({
           />
         </label>
 
-        {templateType === "Neurologi" ? (
+        {showTemplateFields && templateType === "Neurologi" ? (
           <div className="rounded-2xl border border-blue-100 bg-blue-50/40 p-4">
             <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
               <div>

@@ -4,11 +4,45 @@ const USER_ID = "00000000-0000-4000-8000-000000000001";
 const ROTATION_ID = "00000000-0000-4000-8000-000000000002";
 const PATIENT_ID = "00000000-0000-4000-8000-000000000003";
 const FOLLOW_UP_ID = "00000000-0000-4000-8000-000000000004";
+const TEMPLATE_ID = "00000000-0000-4000-8000-000000000005";
 
 type MockState = {
   rotation: Record<string, unknown> | null;
   patient: Record<string, unknown> | null;
   followUp: Record<string, unknown> | null;
+};
+
+const TEMPLATE_ROW = {
+  id: TEMPLATE_ID,
+  user_id: USER_ID,
+  type: "follow_up",
+  name: "E2E Follow-Up Template",
+  description: "Template untuk alur E2E",
+  metadata: {},
+  is_archived: false,
+  created_at: "2026-09-27T00:00:00.000Z",
+  updated_at: "2026-09-27T00:00:00.000Z",
+};
+
+const TEMPLATE_VERSION_ROW = {
+  id: "00000000-0000-4000-8000-000000000006",
+  user_id: USER_ID,
+  template_id: TEMPLATE_ID,
+  version: 1,
+  schema_version: 1,
+  definition: {
+    schema_version: 1,
+    sections: [
+      {
+        id: "clinical-note",
+        title: "Catatan Klinis",
+        fields: [
+          { id: "progress", label: "Perkembangan", type: "textarea", required: false },
+        ],
+      },
+    ],
+  },
+  created_at: "2026-09-27T00:00:00.000Z",
 };
 
 function nowIso() {
@@ -90,6 +124,14 @@ async function installMockSupabase(page: Page, state: MockState) {
       return json(route, 200, []);
     }
 
+    if (path === "/rest/v1/templates" && method === "GET") {
+      return json(route, 200, [TEMPLATE_ROW]);
+    }
+
+    if (path === "/rest/v1/template_versions" && method === "GET") {
+      return json(route, 200, [TEMPLATE_VERSION_ROW]);
+    }
+
     if (path === "/rest/v1/rotations" && method === "GET") {
       return json(route, 200, state.rotation ? [state.rotation] : []);
     }
@@ -145,6 +187,10 @@ async function installMockSupabase(page: Page, state: MockState) {
         start_date: String(payload.p_start_date ?? "2026-09-27"),
         end_date: String(payload.p_end_date ?? "2026-10-27"),
         status: String(payload.p_status ?? "Aktif"),
+        follow_up_template_id: TEMPLATE_ID,
+        follow_up_template_version: 1,
+        report_template_id: null,
+        report_template_version: null,
         created_at: nowIso(),
         updated_at: nowIso(),
       };
@@ -164,7 +210,12 @@ async function installMockSupabase(page: Page, state: MockState) {
         iso_date: String(followUp.iso_date ?? "2026-09-27"),
         time: String(followUp.time ?? "08:00:00"),
         status: String(followUp.status ?? "Tersimpan"),
-        template_type: String(followUp.template_type ?? "Neurologi"),
+        template_type: String(followUp.template_type ?? "E2E Follow-Up Template"),
+        template_id: TEMPLATE_ID,
+        template_version: 1,
+        template_schema_version: 1,
+        template_snapshot: TEMPLATE_VERSION_ROW.definition,
+        answers: followUp.answers ?? {},
         assessment_codes: Array.isArray(followUp.assessment_codes)
           ? followUp.assessment_codes
           : [],
@@ -223,6 +274,8 @@ test("alur browser utama: login → stase → pasien → follow-up → backup", 
   await page.getByLabel("Specialty").selectOption({ label: "Neurologi" });
   await page.getByLabel("Start date").fill("2026-09-27");
   await page.getByLabel("End date").fill("2026-10-27");
+  await page.getByLabel("Template Follow-Up").waitFor({ state: "visible" });
+  await page.getByLabel("Template Follow-Up").selectOption({ label: "E2E Follow-Up Template · v1" });
   await page.getByLabel("Status").selectOption({ label: "Aktif" });
   await page.getByRole("button", { name: "Simpan Stase" }).click();
 

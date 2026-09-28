@@ -1,10 +1,11 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Icon from "../ui/Icon";
 import type {
   Rotation,
   RotationSpecialty,
   RotationStatus,
 } from "../../types/rotation";
+import type { FollowUpTemplateSummary } from "../../types/followUpTemplate";
 
 type RotationFormModalProps = {
   open: boolean;
@@ -18,7 +19,11 @@ type RotationFormModalProps = {
     startDate: string;
     endDate: string;
     status: RotationStatus;
+    followUpTemplateId?: string;
+    followUpTemplateVersion?: number;
   }) => void | Promise<void>;
+  followUpTemplates: FollowUpTemplateSummary[];
+  onCreateTemplate: () => void;
 };
 
 const specialties: RotationSpecialty[] = [
@@ -37,6 +42,8 @@ export default function RotationFormModal({
   rotation,
   onClose,
   onSubmit,
+  followUpTemplates,
+  onCreateTemplate,
 }: RotationFormModalProps) {
   const [name, setName] = useState(() => rotation?.name ?? "");
   const [specialty, setSpecialty] =
@@ -47,11 +54,45 @@ export default function RotationFormModal({
   const [endDate, setEndDate] = useState(
     () => rotation?.endDate ?? "2026-09-30",
   );
-  const [status, setStatus] = useState<RotationStatus>(
-    () => rotation?.status ?? "Mendatang",
-  );
+  const [status, setStatus] = useState<RotationStatus>(() => rotation?.status ?? "Mendatang");
+  const [followUpTemplateId, setFollowUpTemplateId] = useState<string>(() => rotation?.followUpTemplateId ?? followUpTemplates[0]?.id ?? "");
+  const [followUpTemplateVersion, setFollowUpTemplateVersion] = useState<number | undefined>(() => rotation?.followUpTemplateVersion ?? followUpTemplates[0]?.latestVersion);
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setName(rotation?.name ?? "");
+    setSpecialty(rotation?.specialty ?? "Neurologi");
+    setStartDate(rotation?.startDate ?? "2026-09-01");
+    setEndDate(rotation?.endDate ?? "2026-09-30");
+    setStatus(rotation?.status ?? "Mendatang");
+    const selected = rotation?.followUpTemplateId
+      ? followUpTemplates.find((template) => template.id === rotation.followUpTemplateId)
+      : followUpTemplates[0];
+    setFollowUpTemplateId(selected?.id ?? "");
+    setFollowUpTemplateVersion(
+      rotation?.followUpTemplateVersion ?? selected?.latestVersion,
+    );
+    setErrorMessage("");
+  }, [open, rotation]);
+
+  useEffect(() => {
+    if (!open || rotation?.followUpTemplateId || followUpTemplateId || !followUpTemplates.length) return;
+    const selected = followUpTemplates[0];
+    setFollowUpTemplateId(selected.id);
+    setFollowUpTemplateVersion(selected.latestVersion);
+  }, [followUpTemplateId, followUpTemplates, open, rotation?.followUpTemplateId]);
+
+  useEffect(() => {
+    if (!followUpTemplateId) return;
+    const selected = followUpTemplates.find((template) => template.id === followUpTemplateId);
+    if (selected && (followUpTemplateVersion === undefined || selected.latestVersion < followUpTemplateVersion)) {
+      setFollowUpTemplateVersion(selected.latestVersion);
+    }
+  }, [followUpTemplateId, followUpTemplateVersion, followUpTemplates]);
+
+  const selectedTemplate = followUpTemplates.find((template) => template.id === followUpTemplateId);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -68,6 +109,11 @@ export default function RotationFormModal({
       return;
     }
 
+    if (status === "Aktif" && (!followUpTemplateId || !followUpTemplateVersion)) {
+      setErrorMessage("Stase aktif wajib memiliki template follow-up.");
+      return;
+    }
+
     setErrorMessage("");
     setSubmitting(true);
 
@@ -80,6 +126,8 @@ export default function RotationFormModal({
         startDate,
         endDate,
         status,
+        followUpTemplateId: followUpTemplateId || undefined,
+        followUpTemplateVersion: followUpTemplateVersion || undefined,
       });
 
       onClose();
@@ -189,6 +237,48 @@ export default function RotationFormModal({
               />
             </label>
           </div>
+
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+              Template Follow-Up
+            </span>
+            <div className="flex gap-2">
+              <select
+                value={followUpTemplateId}
+                onChange={(event) => {
+                  const nextId = event.target.value;
+                  const next = followUpTemplates.find((template) => template.id === nextId);
+                  setFollowUpTemplateId(nextId);
+                  setFollowUpTemplateVersion(next?.latestVersion);
+                }}
+                className="field-control min-w-0 flex-1"
+                disabled={followUpTemplates.length === 0}
+              >
+                <option value="">{followUpTemplates.length ? "Pilih template..." : "Belum ada template"}</option>
+                {followUpTemplates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name} · v{template.latestVersion}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={onCreateTemplate}
+                className="shrink-0 rounded-xl border border-slate-200 px-3 text-[11px] font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Buat
+              </button>
+            </div>
+            {selectedTemplate ? (
+              <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">
+                {selectedTemplate.description || "Template user-owned"} · versi {followUpTemplateVersion ?? selectedTemplate.latestVersion}
+              </p>
+            ) : (
+              <p className="mt-1.5 text-[10px] leading-relaxed text-amber-600">
+                {status === "Aktif" ? "Buat atau pilih template sebelum stase dapat diaktifkan." : "Template dapat dipilih nanti sebelum stase digunakan."}
+              </p>
+            )}
+          </label>
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold text-slate-700">

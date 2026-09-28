@@ -82,6 +82,10 @@ export function loadActiveRotation(): Rotation {
       startDate: "",
       endDate: "",
       status: "Mendatang",
+      followUpTemplateId: undefined,
+      followUpTemplateVersion: undefined,
+      reportTemplateId: undefined,
+      reportTemplateVersion: undefined,
       createdAt: "",
       updatedAt: "",
     }
@@ -131,6 +135,10 @@ export function upsertRotation(input: {
   startDate: string;
   endDate: string;
   status: RotationStatus;
+  followUpTemplateId?: string;
+  followUpTemplateVersion?: number;
+  reportTemplateId?: string;
+  reportTemplateVersion?: number;
 }): Rotation[] {
   const rotations = loadRotations();
   const now = new Date().toISOString();
@@ -149,6 +157,10 @@ export function upsertRotation(input: {
     startDate: input.startDate,
     endDate: input.endDate,
     status: input.status,
+    followUpTemplateId: input.followUpTemplateId,
+    followUpTemplateVersion: input.followUpTemplateVersion,
+    reportTemplateId: input.reportTemplateId,
+    reportTemplateVersion: input.reportTemplateVersion,
     createdAt: existing?.createdAt ?? now,
     updatedAt: now,
   };
