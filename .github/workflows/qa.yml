@@ -1,5 +1,7 @@
 name: QA
 
+# CI verification trigger refresh — no application logic change.
+
 on:
   push:
     branches:
