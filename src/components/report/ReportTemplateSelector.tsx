@@ -14,6 +14,7 @@ type ReportTemplateSelectorProps = {
   loading?: boolean;
   error?: string;
   onChange: (templateId: string) => void;
+  onCreateTemplate?: () => void;
 };
 
 export default function ReportTemplateSelector({
@@ -22,10 +23,11 @@ export default function ReportTemplateSelector({
   loading = false,
   error = "",
   onChange,
+  onCreateTemplate,
 }: ReportTemplateSelectorProps) {
   return (
     <section>
-      <div className="mb-3 flex items-end justify-between gap-3">
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="text-sm font-bold tracking-tight text-slate-900">
             Pilih Template Laporan
@@ -34,9 +36,21 @@ export default function ReportTemplateSelector({
             Template menentukan susunan output laporan tanpa mengubah data follow-up.
           </p>
         </div>
-        <span className="hidden rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-500 sm:inline-flex">
-          {templates.length} template
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="hidden rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-500 sm:inline-flex">
+            {templates.length} template
+          </span>
+          {onCreateTemplate ? (
+            <button
+              type="button"
+              onClick={onCreateTemplate}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-[10px] font-semibold text-[#1677FF] transition hover:bg-blue-100"
+            >
+              <Icon name="plus" className="h-3.5 w-3.5" />
+              Buat Template
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {loading ? (
