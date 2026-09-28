@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import type { User } from "@supabase/supabase-js";
 import Icon from "../ui/Icon";
+import { loadApplicationProfile, updateApplicationProfile } from "../../data/applicationProfile";
 import { supabase } from "../../utils/supabase";
 
 type ProfileEditDialogProps = {
@@ -9,27 +10,25 @@ type ProfileEditDialogProps = {
   onClose: () => void;
 };
 
-function getInitialUsername(user: User) {
-  const metadata =
-    user.user_metadata &&
+function getMetadata(user: User) {
+  return user.user_metadata &&
     typeof user.user_metadata === "object" &&
     !Array.isArray(user.user_metadata)
-      ? (user.user_metadata as Record<string, unknown>)
-      : {};
+    ? (user.user_metadata as Record<string, unknown>)
+    : {};
+}
 
-  if (typeof metadata.username === "string" && metadata.username.trim()) {
-    return metadata.username.trim();
+function getMetadataText(user: User, keys: string[]) {
+  const metadata = getMetadata(user);
+
+  for (const key of keys) {
+    const value = metadata[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
   }
 
-  if (typeof metadata.full_name === "string" && metadata.full_name.trim()) {
-    return metadata.full_name.trim().replace(/\s+/g, "_").toLowerCase();
-  }
-
-  if (typeof metadata.name === "string" && metadata.name.trim()) {
-    return metadata.name.trim().replace(/\s+/g, "_").toLowerCase();
-  }
-
-  return user.email?.split("@")[0] ?? "";
+  return "";
 }
 
 function validateUsername(value: string) {
@@ -50,7 +49,12 @@ export default function ProfileEditDialog({
   open,
   onClose,
 }: ProfileEditDialogProps) {
-  const [username, setUsername] = useState(() => getInitialUsername(user));
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [program, setProgram] = useState("");
+  const [institution, setInstitution] = useState("");
+  const [loadingProfile, setLoadingProfile] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [saved, setSaved] = useState(false);
@@ -58,9 +62,46 @@ export default function ProfileEditDialog({
   useEffect(() => {
     if (!open) return;
 
-    setUsername(getInitialUsername(user));
+    let cancelled = false;
+
+    setLoadingProfile(true);
     setErrorMessage("");
     setSaved(false);
+
+    void loadApplicationProfile(user.id)
+      .then((profile) => {
+        if (cancelled) return;
+
+        setName(profile.name);
+        setUsername(
+          profile.username ??
+            getMetadataText(user, ["username"]) ??
+            user.email?.split("@")[0] ??
+            "",
+        );
+        setStudentId(profile.studentId ?? "");
+        setProgram(profile.program ?? "");
+        setInstitution(profile.institution ?? "");
+      })
+      .catch((error) => {
+        if (cancelled) return;
+
+        console.error("Application profile load failed:", error);
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Profil aplikasi gagal dimuat.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingProfile(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [open, user]);
 
   useEffect(() => {
@@ -84,7 +125,7 @@ export default function ProfileEditDialog({
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (saving) return;
+    if (saving || loadingProfile) return;
 
     const normalizedUsername = username.trim();
     const validationError = validateUsername(normalizedUsername);
@@ -95,34 +136,67 @@ export default function ProfileEditDialog({
       return;
     }
 
-    const currentMetadata =
-      user.user_metadata &&
-      typeof user.user_metadata === "object" &&
-      !Array.isArray(user.user_metadata)
-        ? (user.user_metadata as Record<string, unknown>)
-        : {};
+    if (!name.trim()) {
+      setErrorMessage("Nama wajib diisi.");
+      setSaved(false);
+      return;
+    }
 
     setSaving(true);
     setErrorMessage("");
     setSaved(false);
 
-    const { error } = await supabase.auth.updateUser({
-      data: {
-        ...currentMetadata,
-        username: normalizedUsername,
-      },
-    });
+    try {
+      await updateApplicationProfile(
+        {
+          name,
+          username: normalizedUsername,
+          studentId,
+          program,
+          institution,
+        },
+        user.id,
+      );
 
-    if (error) {
-      console.error("Supabase username update failed:", error);
-      setErrorMessage("Username gagal diperbarui. Coba lagi beberapa saat.");
+      const currentMetadata = getMetadata(user);
+
+      // Auth metadata is kept in sync only as a compatibility layer for the
+      // existing header. Report generation reads public.profiles exclusively.
+      const { error: metadataError } = await supabase.auth.updateUser({
+        data: {
+          ...currentMetadata,
+          username: normalizedUsername,
+          full_name: name.trim(),
+          student_id: studentId.trim() || null,
+          program: program.trim() || null,
+          institution: institution.trim() || null,
+        },
+      });
+
+      if (metadataError) {
+        console.warn(
+          "Auth metadata compatibility update failed; application profile remains authoritative.",
+          metadataError,
+        );
+      }
+
+      setName(name.trim());
+      setUsername(normalizedUsername);
+      setStudentId(studentId.trim());
+      setProgram(program.trim());
+      setInstitution(institution.trim());
+      setSaved(true);
+    } catch (error) {
+      console.error("Application profile update failed:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Profil gagal diperbarui. Coba lagi beberapa saat.",
+      );
+      setSaved(false);
+    } finally {
       setSaving(false);
-      return;
     }
-
-    setUsername(normalizedUsername);
-    setSaved(true);
-    setSaving(false);
 
     window.setTimeout(() => {
       onClose();
@@ -141,7 +215,7 @@ export default function ProfileEditDialog({
         }
       }}
     >
-      <section className="max-h-[100dvh] w-full max-w-md overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.38)] sm:max-h-[92dvh] sm:rounded-3xl">
+      <section className="max-h-[100dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl border border-slate-200 bg-white shadow-[0_24px_70px_-28px_rgba(15,23,42,0.38)] sm:max-h-[92dvh] sm:rounded-3xl">
         <div className="sticky top-0 z-10 flex items-start justify-between border-b border-slate-100 bg-slate-50/95 px-5 py-4 backdrop-blur sm:px-6">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
@@ -151,10 +225,10 @@ export default function ProfileEditDialog({
               id="profile-edit-title"
               className="mt-1 text-base font-bold text-slate-900"
             >
-              Edit username
+              Edit profil aplikasi
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              Nama ini akan tampil di header workspace RekamMedisku.
+              Identitas di sini digunakan sebagai sumber resmi untuk report RekamMedisku.
             </p>
           </div>
 
@@ -172,37 +246,124 @@ export default function ProfileEditDialog({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5 p-5 sm:p-6">
-          <div>
-            <label
-              htmlFor="profile-username"
-              className="mb-1.5 block text-xs font-semibold text-slate-700"
-            >
-              Username
-            </label>
-            <div className="relative">
-              <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-slate-400">
-                @
-              </span>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label
+                htmlFor="profile-name"
+                className="mb-1.5 block text-xs font-semibold text-slate-700"
+              >
+                Nama lengkap
+              </label>
               <input
-                id="profile-username"
-                name="username"
-                autoFocus
-                autoComplete="username"
-                value={username}
+                id="profile-name"
+                name="name"
+                autoComplete="name"
+                value={name}
                 onChange={(event) => {
-                  setUsername(event.target.value);
+                  setName(event.target.value);
                   setErrorMessage("");
                   setSaved(false);
                 }}
-                maxLength={30}
-                disabled={saving}
-                placeholder="contoh: juna_med"
-                className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3.5 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-[#1677FF] focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50"
+                disabled={saving || loadingProfile}
+                placeholder="Nama lengkap"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-[#1677FF] focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50"
               />
             </div>
-            <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">
-              3–30 karakter. Huruf, angka, titik, underscore, dan tanda hubung.
-            </p>
+
+            <div>
+              <label
+                htmlFor="profile-username"
+                className="mb-1.5 block text-xs font-semibold text-slate-700"
+              >
+                Username
+              </label>
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-slate-400">
+                  @
+                </span>
+                <input
+                  id="profile-username"
+                  name="username"
+                  autoComplete="username"
+                  value={username}
+                  onChange={(event) => {
+                    setUsername(event.target.value);
+                    setErrorMessage("");
+                    setSaved(false);
+                  }}
+                  maxLength={30}
+                  disabled={saving || loadingProfile}
+                  placeholder="juna_med"
+                  className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3.5 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-[#1677FF] focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="profile-student-id"
+                className="mb-1.5 block text-xs font-semibold text-slate-700"
+              >
+                Stambuk / ID mahasiswa
+              </label>
+              <input
+                id="profile-student-id"
+                name="student_id"
+                value={studentId}
+                onChange={(event) => {
+                  setStudentId(event.target.value);
+                  setErrorMessage("");
+                  setSaved(false);
+                }}
+                disabled={saving || loadingProfile}
+                placeholder="Contoh: 11120252020"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-[#1677FF] focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="profile-program"
+                className="mb-1.5 block text-xs font-semibold text-slate-700"
+              >
+                Program
+              </label>
+              <input
+                id="profile-program"
+                name="program"
+                value={program}
+                onChange={(event) => {
+                  setProgram(event.target.value);
+                  setErrorMessage("");
+                  setSaved(false);
+                }}
+                disabled={saving || loadingProfile}
+                placeholder="Contoh: MPPD"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-[#1677FF] focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="profile-institution"
+                className="mb-1.5 block text-xs font-semibold text-slate-700"
+              >
+                Institusi
+              </label>
+              <input
+                id="profile-institution"
+                name="institution"
+                value={institution}
+                onChange={(event) => {
+                  setInstitution(event.target.value);
+                  setErrorMessage("");
+                  setSaved(false);
+                }}
+                disabled={saving || loadingProfile}
+                placeholder="Contoh: Universitas Hasanuddin"
+                className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-900 outline-none transition placeholder:text-slate-300 focus:border-[#1677FF] focus:ring-4 focus:ring-blue-50 disabled:cursor-not-allowed disabled:bg-slate-50"
+              />
+            </div>
           </div>
 
           <div>
@@ -220,7 +381,7 @@ export default function ProfileEditDialog({
               className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 text-sm font-medium text-slate-500 outline-none"
             />
             <p className="mt-1.5 text-[10px] text-slate-400">
-              Email tetap sama. Fitur ini hanya mengubah username.
+              Email tetap dikelola oleh Supabase Auth.
             </p>
           </div>
 
@@ -239,7 +400,7 @@ export default function ProfileEditDialog({
               className="flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3.5 py-3 text-xs font-semibold text-emerald-700"
             >
               <Icon name="check" className="h-4 w-4" />
-              Username berhasil diperbarui.
+              Profil berhasil diperbarui. Report berikutnya memakai identitas ini.
             </div>
           ) : null}
 
@@ -254,11 +415,15 @@ export default function ProfileEditDialog({
             </button>
             <button
               type="submit"
-              disabled={saving || !username.trim()}
+              disabled={saving || loadingProfile || !name.trim() || !username.trim()}
               className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon name="check" className="h-3.5 w-3.5" />
-              {saving ? "Menyimpan..." : "Simpan perubahan"}
+              {loadingProfile
+                ? "Memuat profil..."
+                : saving
+                  ? "Menyimpan..."
+                  : "Simpan perubahan"}
             </button>
           </div>
         </form>
