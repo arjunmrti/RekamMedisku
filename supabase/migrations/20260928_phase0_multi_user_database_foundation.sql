@@ -323,7 +323,7 @@ COMMENT ON COLUMN public.templates.metadata IS
 CREATE TABLE IF NOT EXISTS public.template_versions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL DEFAULT auth.uid()
-    REFERENCES auth.users(id)
+    REFERENCES public.profiles(id)
     ON DELETE CASCADE,
   template_id uuid NOT NULL,
   version integer NOT NULL CHECK (version > 0),
