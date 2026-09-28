@@ -334,7 +334,7 @@ test("MU-003: logout → user B → user A mereset workspace dan mempertahankan 
   }, { attachmentId });
 
   expect(userABeforeLogout.workspaceUserId).toBe(USER_A);
-  expect(userABeforeLogout.draft).toBe("Draft milik A");
+  expect(userABeforeLogout.draft?.subjective.keluhan).toBe("Draft milik A");
   expect(userABeforeLogout.attachmentText).toBe("A attachment");
 
   await signOut(page, "e2e-a");
@@ -414,6 +414,6 @@ test("MU-003: logout → user B → user A mereset workspace dan mempertahankan 
   }, { attachmentId });
 
   expect(userAAfterRelogin.workspaceUserId).toBe(USER_A);
-  expect(userAAfterRelogin.draft).toBe("Draft milik A");
+  expect(userAAfterRelogin.draft?.subjective.keluhan).toBe("Draft milik A");
   expect(userAAfterRelogin.attachmentText).toBe("A attachment");
 });
