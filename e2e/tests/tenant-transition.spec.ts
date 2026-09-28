@@ -215,7 +215,7 @@ test("MU-003: logout → user B → user A mereset workspace dan mempertahankan 
   await signIn(page, "e2e-a@example.test");
 
   await expect(
-    page.getByRole("heading", { name: "Neurologi A" }),
+    page.getByText("Neurologi A", { exact: true }).first(),
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Daftar Pasien" }).click();
@@ -240,9 +240,66 @@ test("MU-003: logout → user B → user A mereset workspace dan mempertahankan 
     saveFollowUpDraft(
       "00000000-0000-4000-8000-0000000000a4",
       {
-        subjective: "Draft milik A",
+        followUpDate: "2026-09-28",
+        followUpTime: "08:00",
+        subjective: {
+          keluhan: "Draft milik A",
+          riwayatKeluhanSerupa: "",
+          pastHistory: "",
+          medicationHistory: "",
+          allergies: "",
+          otherHistory: "",
+        },
+        objective: {
+          generalCondition: "",
+          systolic: "",
+          diastolic: "",
+          pulse: "",
+          respiratoryRate: "",
+          temperature: "",
+          spo2: "",
+          oxygenVia: "",
+          painNrs: "",
+          physicalFindings: "",
+          supportingExamText: "",
+        },
+        neurology: {
+          generalCondition: "",
+          consciousness: "",
+          gcsEye: "",
+          gcsMotor: "",
+          gcsVerbal: "",
+          fkl: "",
+          cranialNerve: "",
+          pupil: "",
+          neckStiffness: "",
+          brudzinski: "",
+          kernig: "",
+          movement: "",
+          tone: "",
+          sensory: "",
+          upperStrength: "",
+          lowerStrength: "",
+          physiologicReflex: "",
+          pathologicReflex: "",
+          autonomic: "",
+          provocation: "",
+        },
+        internalMedicine: {
+          generalCondition: "",
+          consciousness: "",
+          headNeck: "",
+          thorax: "",
+          abdomen: "",
+          extremities: "",
+          relevantSystemicFindings: "",
+        },
         supportingExams: [],
-      } as never,
+        assessments: [],
+        assessmentCodes: [],
+        planning: "",
+        instruction: "",
+      },
     );
 
     return saveAttachment(
