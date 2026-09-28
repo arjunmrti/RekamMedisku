@@ -10,15 +10,14 @@ const BUCKET = "rekammedisku-attachments";
 const OBJECT_PATH = `${USER_A}/mu005-api-attachment.txt`;
 const OBJECT_BODY = "MU005-A-ATTACHMENT";
 
-function required(name, value): string {
+function required(name, value) {
   if (!value) {
     throw new Error(`${name} is required`);
   }
-
   return value;
 }
 
-function signUserToken(userId): string {
+function signUserToken(userId) {
   const header = Buffer.from(JSON.stringify({ alg: "HS256", typ: "JWT" }))
     .toString("base64url");
 
@@ -43,26 +42,19 @@ function signUserToken(userId): string {
   return `${input}.${signature}`;
 }
 
-function objectUrl(path): string {
+function objectUrl(path) {
   return `${required("API_URL", API_URL)}/storage/v1/object/${BUCKET}/${path
     .split("/")
     .map(encodeURIComponent)
     .join("/")}`;
 }
 
-async function request(
-  label: string,
-  token: string,
-  init,
-) {
+async function request(label, token, init) {
   const response = await fetch(objectUrl(OBJECT_PATH), {
     ...init,
     headers: {
       apikey: required("ANON_KEY", ANON_KEY),
       authorization: `Bearer ${token}`,
-      ...(init.body instanceof Uint8Array
-        ? { "content-type": "text/plain" }
-        : {}),
       ...(init.headers ?? {}),
     },
   });
@@ -75,19 +67,19 @@ async function readText(response) {
   return response.text();
 }
 
-function assertOk(label: string, response) {
+function assertOk(label, response) {
   if (!response.ok) {
     throw new Error(`${label} failed with HTTP ${response.status}`);
   }
 }
 
-function assertDenied(label: string, response) {
+function assertDenied(label, response) {
   if (response.ok) {
     throw new Error(`${label} unexpectedly succeeded with HTTP ${response.status}`);
   }
 }
 
-async function main(): Promise<void> {
+async function main() {
   required("API_URL", API_URL);
   required("ANON_KEY", ANON_KEY);
   required("JWT_SECRET", JWT_SECRET);
