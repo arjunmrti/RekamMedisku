@@ -22,6 +22,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Add Git Bash to PATH
+        shell: powershell
+        run: Add-Content -Path $env:GITHUB_PATH -Value 'C:\\Program Files\\Git\\bin'
+
       - name: Install Supabase CLI
         shell: powershell
         run: npm install --no-save --no-package-lock supabase@2.117.0
