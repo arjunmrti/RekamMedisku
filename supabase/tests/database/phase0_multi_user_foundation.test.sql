@@ -14,7 +14,7 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 
 BEGIN;
 
-SELECT plan(40);
+SELECT plan(42);
 
 -- ---------------------------------------------------------------------------
 -- Structural contract
@@ -64,6 +64,26 @@ SELECT has_column(
   'template_versions',
   'user_id',
   'template_versions.user_id exists'
+);
+
+SELECT is(
+  has_table_privilege(
+    'authenticated',
+    'public.template_versions',
+    'UPDATE'
+  ),
+  false,
+  'authenticated clients cannot update template versions'
+);
+
+SELECT is(
+  has_table_privilege(
+    'authenticated',
+    'public.template_versions',
+    'DELETE'
+  ),
+  false,
+  'authenticated clients cannot delete template versions directly'
 );
 
 -- ---------------------------------------------------------------------------
