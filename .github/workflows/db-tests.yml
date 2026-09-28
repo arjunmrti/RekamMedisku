@@ -48,11 +48,17 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/migrations/20260928_phase0_multi_user_database_foundation.sql" \
             supabase/migrations/20260928_phase0_multi_user_database_foundation.sql
 
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928_mu101_follow_up_template_engine.sql" \
+            supabase/migrations/20260928_mu101_follow_up_template_engine.sql
+
           cp "$GITHUB_WORKSPACE/supabase/tests/database/phase0_multi_user_foundation.test.sql" \
             supabase/tests/database/phase0_multi_user_foundation.test.sql
 
           cp "$GITHUB_WORKSPACE/supabase/tests/database/mu005_cross_user_isolation.test.sql" \
             supabase/tests/database/mu005_cross_user_isolation.test.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/tests/database/mu101_follow_up_template_engine.test.sql" \
+            supabase/tests/database/mu101_follow_up_template_engine.test.sql
 
       - name: Start Supabase database
         working-directory: .ci/tenant-isolation-supabase
@@ -65,7 +71,7 @@ jobs:
             $1 ~ /^(API_URL|ANON_KEY|JWT_SECRET)$/ {
               value = $0
               sub(/^[^=]*=/, "", value)
-              gsub(/^"|"$/, "", value)
+              gsub(/^"|"$//, "", value)
               print $1 "=" value
             }
           ' supabase.env > mu005.env
