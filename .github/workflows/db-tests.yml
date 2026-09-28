@@ -60,6 +60,29 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/tests/database/mu101_follow_up_template_engine.test.sql" \
             supabase/tests/database/mu101_follow_up_template_engine.test.sql
 
+      - name: Validate PR migration filenames
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=1
+          changed_migrations="$(git diff --name-only origin/main...HEAD -- 'supabase/migrations/*.sql' || true)"
+          if [ -z "$changed_migrations" ]; then
+            echo "No migration files changed in this PR."
+            exit 0
+          fi
+
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            name="$(basename "$file")"
+            version="${name%%_*}"
+            if [[ ! "$version" =~ ^[0-9]{14}$ ]]; then
+              echo "Invalid migration filename: $file"
+              echo "New migration files must start with a 14-digit timestamp (YYYYMMDDHHMMSS)."
+              exit 1
+            fi
+          done <<< "$changed_migrations"
+
       - name: Start Supabase database
         working-directory: .ci/tenant-isolation-supabase
         shell: bash
@@ -72,19 +95,48 @@ jobs:
             if supabase db start --debug; then
               exit 0
             fi
-            echo "Supabase database start failed."
+            echo "Supabase database bootstrap failed; retrying..."
             docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' || true
-            if [ "$attempt" -lt 3 ]; then
-              supabase stop --no-backup || true
-              sleep $((attempt * 30))
-            fi
+            supabase stop --no-backup || true
+            sleep $((attempt * 30))
           done
-          echo "Supabase database could not be started after 3 attempts."
+          echo "Supabase database could not be bootstrapped after 3 attempts."
           exit 1
 
-      - name: Apply fixture + production tenant migrations
+      - name: Install database test migrations
         working-directory: .ci/tenant-isolation-supabase
-        run: supabase migration up --local
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cp "$GITHUB_WORKSPACE/supabase/tests/fixtures/mu005_tenant_isolation_schema.sql" \
+            supabase/migrations/00000000000000_mu005_tenant_fixture.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928_phase0_multi_user_database_foundation.sql" \
+            supabase/migrations/20260928_phase0_multi_user_database_foundation.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928140000_mu101_follow_up_template_engine.sql" \
+            supabase/migrations/20260928140000_mu101_follow_up_template_engine.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260926212923_p3_attachment_storage_sync.sql" \
+            supabase/migrations/20260926212923_p3_attachment_storage_sync.sql
+
+          declare -A seen_versions=()
+          for file in supabase/migrations/*.sql; do
+            name="$(basename "$file")"
+            version="${name%%_*}"
+            if [[ -n "${seen_versions[$version]:-}" ]]; then
+              echo "Duplicate migration version detected: $version"
+              echo "  - ${seen_versions[$version]}"
+              echo "  - $file"
+              exit 1
+            fi
+            seen_versions[$version]="$file"
+          done
+
+      - name: Reset database and apply test migrations
+        working-directory: .ci/tenant-isolation-supabase
+        run: supabase db reset --no-seed
 
       - name: Run tenant-boundary pgTAP suite
         working-directory: .ci/tenant-isolation-supabase
