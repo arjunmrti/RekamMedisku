@@ -249,7 +249,7 @@ CREATE OR REPLACE FUNCTION public.create_follow_up_template(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_catalog
+SET search_path = pg_catalog
 AS $
 DECLARE
   current_user_id uuid := auth.uid();
@@ -337,7 +337,7 @@ CREATE OR REPLACE FUNCTION public.append_follow_up_template_version(
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_catalog
+SET search_path = pg_catalog
 AS $
 DECLARE
   current_user_id uuid := auth.uid();
