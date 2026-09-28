@@ -24,7 +24,7 @@ jobs:
 
       - name: Add Git Bash to PATH
         shell: powershell
-        run: Add-Content -Path $env:GITHUB_PATH -Value 'C:\\Program Files\\Git\\bin'
+        run: Add-Content -Path $env:GITHUB_PATH -Value 'C:\Program Files\Git\bin'
 
       - name: Install Supabase CLI
         shell: powershell
