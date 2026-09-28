@@ -14,7 +14,7 @@ CREATE EXTENSION IF NOT EXISTS pgtap;
 
 BEGIN;
 
-SELECT plan(38);
+SELECT plan(40);
 
 -- ---------------------------------------------------------------------------
 -- Structural contract
