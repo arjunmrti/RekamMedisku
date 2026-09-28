@@ -13,8 +13,8 @@ permissions:
   contents: read
 
 jobs:
-  phase0-database:
-    name: Phase 0 pgTAP
+  tenant-isolation:
+    name: Tenant isolation pgTAP
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -27,20 +27,23 @@ jobs:
         with:
           version: 2.117.0
 
-      - name: Build isolated Phase 0 test project
+      - name: Build isolated tenant test project
         shell: bash
         run: |
           set -euo pipefail
 
-          rm -rf .ci/phase0-supabase
-          mkdir -p .ci/phase0-supabase
-          cd .ci/phase0-supabase
+          rm -rf .ci/tenant-isolation-supabase
+          mkdir -p .ci/tenant-isolation-supabase
+          cd .ci/tenant-isolation-supabase
 
           supabase init
           mkdir -p supabase/migrations supabase/tests/database
 
-          cp "$GITHUB_WORKSPACE/supabase/tests/fixtures/phase0_legacy_schema.sql" \
-            supabase/migrations/00000000000000_phase0_legacy_fixture.sql
+          cp "$GITHUB_WORKSPACE/supabase/tests/fixtures/mu005_tenant_isolation_schema.sql" \
+            supabase/migrations/00000000000000_mu005_tenant_fixture.sql
+
+          cp "$GITHUB_WORKSPACE/supabase/migrations/20260926212923_p3_attachment_storage_sync.sql" \
+            supabase/migrations/20260926212923_p3_attachment_storage_sync.sql
 
           cp "$GITHUB_WORKSPACE/supabase/migrations/20260928_phase0_multi_user_database_foundation.sql" \
             supabase/migrations/20260928_phase0_multi_user_database_foundation.sql
@@ -48,19 +51,22 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/tests/database/phase0_multi_user_foundation.test.sql" \
             supabase/tests/database/phase0_multi_user_foundation.test.sql
 
+          cp "$GITHUB_WORKSPACE/supabase/tests/database/mu005_cross_user_isolation.test.sql" \
+            supabase/tests/database/mu005_cross_user_isolation.test.sql
+
       - name: Start Supabase database
-        working-directory: .ci/phase0-supabase
+        working-directory: .ci/tenant-isolation-supabase
         run: supabase db start
 
-      - name: Reset database from fixture + Phase 0 migration
-        working-directory: .ci/phase0-supabase
+      - name: Reset database from fixture + production tenant migrations
+        working-directory: .ci/tenant-isolation-supabase
         run: supabase db reset --no-seed
 
-      - name: Run Phase 0 pgTAP suite
-        working-directory: .ci/phase0-supabase
+      - name: Run tenant-boundary pgTAP suite
+        working-directory: .ci/tenant-isolation-supabase
         run: supabase test db
 
       - name: Stop Supabase
         if: always()
-        working-directory: .ci/phase0-supabase
+        working-directory: .ci/tenant-isolation-supabase
         run: supabase stop
