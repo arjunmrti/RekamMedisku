@@ -250,7 +250,7 @@ RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = pg_catalog
-AS $
+AS $fn$
 DECLARE
   current_user_id uuid := auth.uid();
   new_template_id uuid;
@@ -318,7 +318,7 @@ BEGIN
     'schemaVersion', p_schema_version
   );
 END;
-$$;
+$fn$;
 
 REVOKE ALL ON FUNCTION public.create_follow_up_template(
   text,text,jsonb,integer,jsonb
@@ -338,7 +338,7 @@ RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = pg_catalog
-AS $
+AS $fn$
 DECLARE
   current_user_id uuid := auth.uid();
   template_user_id uuid;
@@ -411,7 +411,7 @@ BEGIN
     'schemaVersion', p_schema_version
   );
 END;
-$$;
+$fn$;
 
 REVOKE ALL ON FUNCTION public.append_follow_up_template_version(
   uuid,integer,integer,jsonb
