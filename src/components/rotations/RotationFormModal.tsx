@@ -67,13 +67,8 @@ export default function RotationFormModal({
     setStartDate(rotation?.startDate ?? "2026-09-01");
     setEndDate(rotation?.endDate ?? "2026-09-30");
     setStatus(rotation?.status ?? "Mendatang");
-    const selected = rotation?.followUpTemplateId
-      ? followUpTemplates.find((template) => template.id === rotation.followUpTemplateId)
-      : followUpTemplates[0];
-    setFollowUpTemplateId(selected?.id ?? "");
-    setFollowUpTemplateVersion(
-      rotation?.followUpTemplateVersion ?? selected?.latestVersion,
-    );
+    setFollowUpTemplateId(rotation?.followUpTemplateId ?? "");
+    setFollowUpTemplateVersion(rotation?.followUpTemplateVersion);
     setErrorMessage("");
   }, [open, rotation]);
 
