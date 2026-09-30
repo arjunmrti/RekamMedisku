@@ -1,7 +1,7 @@
 -- MU-108 — Section 11 cloud backup restore binding contract.
 CREATE EXTENSION IF NOT EXISTS pgtap;
 BEGIN;
-SELECT plan(10);
+SELECT plan(12);
 
 SELECT has_function(
   'public',
