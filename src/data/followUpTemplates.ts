@@ -321,6 +321,33 @@ export async function setFollowUpTemplateArchived(
   if (error) throw error;
 }
 
+
+export async function duplicateFollowUpTemplate(input: {
+  templateId: string;
+  name?: string;
+  description?: string;
+}) {
+  const source = await getFollowUpTemplate(input.templateId);
+
+  if (!source) {
+    throw new Error("Template follow-up yang akan diduplikasi tidak ditemukan.");
+  }
+
+  if (source.isArchived) {
+    throw new Error("Template yang sudah diarsipkan tidak dapat diduplikasi.");
+  }
+
+  return createFollowUpTemplate({
+    name: input.name?.trim() || source.name + " — Salinan",
+    description:
+      input.description?.trim() ||
+      source.description ||
+      "Salinan template follow-up pribadi.",
+    metadata: source.metadata,
+    definition: source.latestDefinition,
+  });
+}
+
 export async function getLatestFollowUpTemplateForSpecialty(
   specialty: string,
 ) {
