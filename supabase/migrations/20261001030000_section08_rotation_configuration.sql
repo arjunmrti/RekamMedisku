@@ -22,13 +22,6 @@ END;
 $$;
 
 ALTER TABLE public.rotations
-  DROP CONSTRAINT IF EXISTS rotations_slaberan_template_reference_check;
-
-ALTER TABLE public.rotations
-  ADD CONSTRAINT rotations_slaberan_template_reference_check
-  CHECK (slaberan_template_id IS NULL OR slaberan_template_id IS NOT NULL);
-
-ALTER TABLE public.rotations
   DROP CONSTRAINT IF EXISTS rotations_slaberan_template_user_fkey;
 
 ALTER TABLE public.rotations
