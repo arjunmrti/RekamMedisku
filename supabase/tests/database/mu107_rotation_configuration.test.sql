@@ -1,7 +1,7 @@
 -- MU-107 — Section 08 rotation configuration binding.
 CREATE EXTENSION IF NOT EXISTS pgtap;
 BEGIN;
-SELECT plan(12);
+SELECT plan(9);
 
 SELECT has_column('public','rotations','slaberan_template_id','rotation stores Slaberan template ID');
 SELECT has_index('public','rotations','rotations_one_active_per_user_idx','rotation enforces one active row per user');
