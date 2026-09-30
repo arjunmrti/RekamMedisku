@@ -25,7 +25,10 @@ Typed Answers
 | number | numeric input | number or null |
 | select | select | string; empty string means not selected |
 | multiselect | checkbox list | string[] |
+| radio | radio group | string; empty string means not selected |
 | checkbox | checkbox | boolean |
+| date | date input | string; empty string means not selected |
+| time | time input | string; empty string means not selected |
 
 The empty numeric value is represented as `null`, not an empty string.
 
