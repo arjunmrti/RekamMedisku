@@ -1174,7 +1174,7 @@ export default function FollowUpFormPage({
 
                 const result = await appendFollowUpTemplateVersion({
                   templateId,
-                  expectedVersion: templateVersion,
+                  expectedVersion: values.templateVersion ?? templateVersion,
                   definition: normalizedDefinition,
                 });
 
