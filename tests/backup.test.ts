@@ -14,10 +14,6 @@ import type { PatientListItem } from "../src/types/patient";
 import type { FollowUpEntry } from "../src/types/followUp";
 import type { SlaberanLocation } from "../src/types/slaberanLocation";
 import type { SlaberanTemplateRecord } from "../src/types/slaberanTemplate";
-import {
-  loadSlaberanTemplates,
-  replaceSlaberanTemplates,
-} from "../src/data/localSlaberanTemplates";
 
 const patient = {
   id: "p-test",
