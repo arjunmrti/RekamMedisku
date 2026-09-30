@@ -999,6 +999,106 @@ const defaultRestoreLocalState: RestoreBackupLocalState = {
   replaceSlaberanTemplates,
 };
 
+function getStringMap(
+  value: unknown,
+  key: string,
+): Record<string, string> | null {
+  if (!isRecord(value)) return null;
+
+  const candidate = value[key];
+  if (!isRecord(candidate)) return null;
+
+  const entries = Object.entries(candidate);
+  if (
+    !entries.every(
+      ([localId, remoteId]) =>
+        localId.trim().length > 0 &&
+        typeof remoteId === "string" &&
+        remoteId.trim().length > 0,
+    )
+  ) {
+    return null;
+  }
+
+  return Object.fromEntries(
+    entries.map(([localId, remoteId]) => [localId, remoteId as string]),
+  );
+}
+
+function remapCommittedSlaberanIds(
+  local: RestoreBackupLocalState,
+  payload: BackupPayload,
+  persistResult: unknown,
+) {
+  const templateIds = getStringMap(
+    persistResult,
+    "slaberanTemplateIds",
+  );
+  const locationIds = getStringMap(
+    persistResult,
+    "slaberanLocationIds",
+  );
+
+  if (templateIds && payload.slaberanTemplates !== undefined) {
+    local.replaceSlaberanTemplates(
+      payload.slaberanTemplates.map((template) => ({
+        ...template,
+        id: templateIds[template.id] ?? template.id,
+      })),
+    );
+  }
+
+  if (locationIds && payload.slaberanLocations !== undefined) {
+    const mapLocationId = (id: string | undefined) =>
+      id ? locationIds[id] ?? id : id;
+
+    local.replaceSlaberanLocations(
+      payload.slaberanLocations.map((location) => ({
+        ...location,
+        id: mapLocationId(location.id) ?? location.id,
+        parentId: mapLocationId(location.parentId),
+      })),
+    );
+  }
+
+  if (templateIds || locationIds) {
+    const remappedPatients = payload.patients.map((patient) => ({
+      ...patient,
+      currentLocation: patient.currentLocation
+        ? {
+            ...patient.currentLocation,
+            locationId: locationIds?.[patient.currentLocation.locationId ?? ""] ??
+              patient.currentLocation.locationId,
+          }
+        : patient.currentLocation,
+      admissionLocation: patient.admissionLocation
+        ? {
+            ...patient.admissionLocation,
+            locationId:
+              locationIds?.[patient.admissionLocation.locationId ?? ""] ??
+              patient.admissionLocation.locationId,
+          }
+        : patient.admissionLocation,
+    }));
+
+    if (locationIds) {
+      local.replacePatients(remappedPatients);
+    }
+
+    if (templateIds) {
+      local.saveRotations(
+        payload.rotations?.map((rotation) => ({
+          ...rotation,
+          slaberanTemplateId: rotation.slaberanTemplateId
+            ? templateIds[rotation.slaberanTemplateId] ??
+              rotation.slaberanTemplateId
+            : rotation.slaberanTemplateId,
+        })) ?? payload.rotations ?? [],
+      );
+    }
+  }
+}
+
 export type RestoreBackupOptions = {
   persistRemote: (payload: BackupPayload) => Promise<unknown>;
   syncRemote: () => Promise<unknown>;
@@ -1095,8 +1195,13 @@ export async function restoreBackupPayload(
     }
 
     // Replace the synced cloud snapshot only after the local snapshot is ready.
-    await options.persistRemote(payload);
+    const persistResult = await options.persistRemote(payload);
     remoteRestored = true;
+
+    // The cloud restore generates new Slaberan IDs. Reconcile those IDs into
+    // the local snapshot immediately so a partial restore remains usable even
+    // when the follow-up authoritative sync is temporarily unavailable.
+    remapCommittedSlaberanIds(local, payload, persistResult);
 
     // Reconcile from the authoritative cloud snapshot. A failure here means
     // the cloud restore already committed, so the restored local snapshot must
