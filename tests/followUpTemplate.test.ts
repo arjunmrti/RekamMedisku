@@ -36,6 +36,25 @@ test("follow-up template accepts controlled field types", () => {
             rows: 4,
           },
           {
+            id: "choice",
+            label: "Pilihan",
+            type: "radio",
+            options: [
+              { value: "one", label: "Satu" },
+              { value: "two", label: "Dua" },
+            ],
+          },
+          {
+            id: "visit_date",
+            label: "Tanggal",
+            type: "date",
+          },
+          {
+            id: "visit_time",
+            label: "Waktu",
+            type: "time",
+          },
+          {
             id: "flag",
             label: "Flag",
             type: "checkbox",
@@ -45,7 +64,7 @@ test("follow-up template accepts controlled field types", () => {
     ],
   });
 
-  assert.equal(definition.sections[0].fields.length, 4);
+  assert.equal(definition.sections[0].fields.length, 7);
 });
 
 test("follow-up template rejects unknown field types", () => {
