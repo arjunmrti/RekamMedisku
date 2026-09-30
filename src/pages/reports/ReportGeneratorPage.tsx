@@ -219,12 +219,14 @@ function FollowUpReportGeneratorPage({
   }, []);
 
   const activeRotation = loadActiveRotation();
-  const patientRotation = patient
-    ? loadRotations().find((rotation) => rotation.id === patient.rotationId)
-    : undefined;
   const patientMatchesRotation = Boolean(
     patient && patient.rotationId === activeRotation.id,
   );
+  const patientRotation = patientMatchesRotation
+    ? activeRotation
+    : patient
+      ? loadRotations().find((rotation) => rotation.id === patient.rotationId)
+      : undefined;
   const reportTemplate = getReportTemplateForSpecialty(
     patientRotation?.specialty,
   );
