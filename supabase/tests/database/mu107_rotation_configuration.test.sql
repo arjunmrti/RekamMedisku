@@ -12,6 +12,18 @@ INSERT INTO auth.users (id,email,raw_user_meta_data) VALUES
 ('00000000-0000-0000-0000-0000000070a1','mu107-a@test.invalid','{"full_name":"MU107 A"}'::jsonb),
 ('00000000-0000-0000-0000-0000000070b2','mu107-b@test.invalid','{"full_name":"MU107 B"}'::jsonb);
 
+INSERT INTO public.templates (id,user_id,type,name,description) VALUES
+('00000000-0000-0000-0000-0000000070d4',
+ '00000000-0000-0000-0000-0000000070a1'::uuid,
+ 'follow_up','MU107 Follow-Up A','A');
+
+INSERT INTO public.template_versions (id,user_id,template_id,version,schema_version,definition) VALUES
+('00000000-0000-0000-0000-0000000070d5',
+ '00000000-0000-0000-0000-0000000070a1'::uuid,
+ '00000000-0000-0000-0000-0000000070d4'::uuid,
+ 1,1,
+ '{"schema_version":1,"sections":[{"id":"objective","title":"Objective","fields":[{"id":"note","label":"Note","type":"text"}]}]}'::jsonb);
+
 INSERT INTO public.slaberan_templates (
   id,user_id,name,doctor,specialty,hospital,opening,show_empty_rooms,blocks,settings,schema_version,is_default
 ) VALUES (
@@ -26,7 +38,7 @@ SET LOCAL "request.jwt.claim.sub" = '00000000-0000-0000-0000-0000000070a1';
 SELECT lives_ok(
   $q$ SELECT * FROM public.upsert_rotation_with_activation(
     NULL,NULL,'MU107 Aktif','Lainnya',CURRENT_DATE,CURRENT_DATE+30,'Aktif',
-    NULL,NULL,NULL,NULL,'00000000-0000-0000-0000-0000000070c3'::uuid
+    '00000000-0000-0000-0000-0000000070d4'::uuid,1,NULL,NULL,'00000000-0000-0000-0000-0000000070c3'::uuid
   ); $q$,
   'User A can save a rotation bound to its Slaberan template'
 );
@@ -37,6 +49,8 @@ SELECT is(
   '00000000-0000-0000-0000-0000000070c3'::uuid,
   'rotation persists the Slaberan binding'
 );
+
+SET LOCAL ROLE postgres;
 
 SELECT throws_ok(
   $q$ INSERT INTO public.rotations (
@@ -50,6 +64,7 @@ SELECT throws_ok(
   'database invariant blocks a second active rotation for the same user'
 );
 
+SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claim.sub" = '00000000-0000-0000-0000-0000000070b2';
 
 SELECT throws_ok(
