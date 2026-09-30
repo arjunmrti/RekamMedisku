@@ -117,6 +117,109 @@ test("follow-up template rejects options on non-select fields", () => {
   );
 });
 
+test("template optional properties are normalized and preserved", () => {
+  const definition = validateFollowUpTemplateDefinition({
+    schema_version: 1,
+    sections: [
+      {
+        id: "objective",
+        title: "Objective",
+        description: "Pemeriksaan objektif pasien.",
+        fields: [
+          {
+            id: "blood_pressure",
+            label: "Tekanan Darah",
+            type: "number",
+            placeholder: "120",
+            helpText: "Masukkan nilai sistolik.",
+            unit: "mmHg",
+            rows: 1,
+          },
+        ],
+      },
+    ],
+  });
+
+  const field = definition.sections[0].fields[0];
+  assert.equal(definition.sections[0].description, "Pemeriksaan objektif pasien.");
+  assert.equal(field.placeholder, "120");
+  assert.equal(field.helpText, "Masukkan nilai sistolik.");
+  assert.equal(field.unit, "mmHg");
+  assert.equal(field.rows, 1);
+});
+
+test("template rejects invalid rows", () => {
+  assert.throws(
+    () =>
+      validateFollowUpTemplateDefinition({
+        schema_version: 1,
+        sections: [
+          {
+            id: "objective",
+            title: "Objective",
+            fields: [
+              {
+                id: "notes",
+                label: "Catatan",
+                type: "textarea",
+                rows: 13,
+              },
+            ],
+          },
+        ],
+      }),
+    /rows harus berupa integer 1-12/,
+  );
+});
+
+test("template rejects non-boolean required values", () => {
+  assert.throws(
+    () =>
+      validateFollowUpTemplateDefinition({
+        schema_version: 1,
+        sections: [
+          {
+            id: "objective",
+            title: "Objective",
+            fields: [
+              {
+                id: "notes",
+                label: "Catatan",
+                type: "text",
+                required: "yes",
+              },
+            ],
+          },
+        ],
+      }),
+    /required.*boolean/,
+  );
+});
+
+test("template rejects required checkbox fields", () => {
+  assert.throws(
+    () =>
+      validateFollowUpTemplateDefinition({
+        schema_version: 1,
+        sections: [
+          {
+            id: "objective",
+            title: "Objective",
+            fields: [
+              {
+                id: "flag",
+                label: "Flag",
+                type: "checkbox",
+                required: true,
+              },
+            ],
+          },
+        ],
+      }),
+    /required tidak didukung untuk checkbox/,
+  );
+});
+
 test("empty starter definition is valid and has a stable schema version", () => {
   const definition = createEmptyTemplateDefinition();
 
