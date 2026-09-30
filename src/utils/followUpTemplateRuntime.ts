@@ -24,6 +24,10 @@ function isEmptyAnswer(value: TemplateValue) {
       : value === null || value === undefined;
 }
 
+function isDisplayEmptyAnswer(value: TemplateValue) {
+  return isEmptyAnswer(value) || value === false;
+}
+
 function readFieldLabel(field: FollowUpTemplateField) {
   return 'Field "' + field.label + '"';
 }
@@ -175,7 +179,7 @@ export function formatFollowUpTemplateAnswers(
       const lines = section.fields.flatMap((field) => {
         const value = answers[field.id];
 
-        if (isEmptyAnswer(value)) return [];
+        if (isDisplayEmptyAnswer(value)) return [];
 
         const optionLabels = new Map(
           (field.options ?? []).map((option) => [option.value, option.label]),
@@ -208,7 +212,7 @@ export function getFirstMeaningfulTemplateAnswer(
     for (const field of section.fields) {
       const value = answers[field.id];
 
-      if (isEmptyAnswer(value)) continue;
+      if (isDisplayEmptyAnswer(value)) continue;
 
       if (Array.isArray(value)) {
         const labels = new Map(
@@ -224,7 +228,9 @@ export function getFirstMeaningfulTemplateAnswer(
         return label;
       }
 
-      return String(value);
+      return field.type === "checkbox" && value === true
+        ? field.label
+        : String(value);
     }
   }
 
