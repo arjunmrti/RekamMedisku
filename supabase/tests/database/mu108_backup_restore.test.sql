@@ -168,8 +168,7 @@ SELECT ok(
 
 SELECT ok(
   (
-    SELECT slaberan_template_id <>
-      'slaberan-local'::uuid
+    SELECT slaberan_template_id::text <> 'slaberan-local'
     FROM public.rotations
     WHERE name = 'MU108 Aktif'
   ),
