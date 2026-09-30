@@ -188,7 +188,7 @@ export function formatFollowUpTemplateAnswers(
 
         const rendered = Array.isArray(value)
           ? value.map((item) => optionLabels.get(item) ?? item).join(", ")
-          : field.type === "select"
+          : field.type === "select" || field.type === "radio"
             ? optionLabels.get(String(value)) ?? String(value)
             : String(value);
 
