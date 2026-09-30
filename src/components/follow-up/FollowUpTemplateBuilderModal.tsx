@@ -11,7 +11,7 @@ type Props = {
   onCreated: (templateId: string) => void;
 };
 
-const fieldTypes: FollowUpTemplateFieldType[] = ["text","textarea","number","select","multiselect","checkbox"];
+const fieldTypes: FollowUpTemplateFieldType[] = ["text","textarea","number","select","multiselect","radio","checkbox","date","time"];
 
 function slugify(value: string, fallback: string) {
   const normalized = value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50);
@@ -85,7 +85,7 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
           ...field,
           id: slugify(field.id, "field-" + (fieldIndex + 1)),
           label: field.label.trim(),
-          ...(field.type === "select" || field.type === "multiselect" ? {
+          ...(field.type === "select" || field.type === "multiselect" || field.type === "radio" ? {
             options: (field.options ?? []).map((option) => ({ value: slugify(option.value, "option"), label: option.label.trim() })).filter((option) => option.label && option.value),
           } : { options: undefined }),
         })),
@@ -159,7 +159,7 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
                     <input value={field.unit ?? ""} onChange={(e)=>updateSection(section.id,(s)=>({...s,fields:s.fields.map(f=>f.id===field.id?{...f,unit:e.target.value}:f)}))} className="field-control" placeholder="Unit, mis. mmHg" />
                     <label className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700"><input type="checkbox" checked={Boolean(field.required)} onChange={(e)=>updateSection(section.id,(s)=>({...s,fields:s.fields.map(f=>f.id===field.id?{...f,required:e.target.checked}:f)}))} className="h-4 w-4 rounded border-slate-300 text-[#1677FF] focus:ring-[#1677FF]" />Wajib diisi</label>
                   </div>
-                  {(field.type==="select" || field.type==="multiselect") ? <input value={(field.options ?? []).map((option)=>option.label).join(", ")} onChange={(e)=>{ const labels=e.target.value.split(",").map((item)=>item.trim()).filter(Boolean); updateSection(section.id,(s)=>({...s,fields:s.fields.map(f=>f.id===field.id?{...f,options:labels.map((label)=>({label,value:slugify(label,"option")}))}:f)})); }} className="field-control mt-3" placeholder="Opsi, pisahkan dengan koma" /> : null}
+                  {(field.type==="select" || field.type==="multiselect" || field.type==="radio") ? <input value={(field.options ?? []).map((option)=>option.label).join(", ")} onChange={(e)=>{ const labels=e.target.value.split(",").map((item)=>item.trim()).filter(Boolean); updateSection(section.id,(s)=>({...s,fields:s.fields.map(f=>f.id===field.id?{...f,options:labels.map((label)=>({label,value:slugify(label,"option")}))}:f)})); }} className="field-control mt-3" placeholder="Opsi, pisahkan dengan koma" /> : null}
                 </div>)}
                 <button type="button" onClick={()=>addField(section.id)} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-white"><Icon name="plus" className="h-4 w-4" />Tambah Field</button>
               </div>
