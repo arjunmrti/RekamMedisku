@@ -441,8 +441,12 @@ function isRotation(value: unknown): value is Rotation {
     templateVersion: unknown,
   ) =>
     (templateId === undefined && templateVersion === undefined) ||
-    (isOptionalTemplateId(templateId) &&
-      isOptionalTemplateVersion(templateVersion));
+    (
+      isOptionalTemplateId(templateId) &&
+      templateId !== undefined &&
+      isOptionalTemplateVersion(templateVersion) &&
+      templateVersion !== undefined
+    );
 
   const specialties = [
     "Neurologi",
@@ -910,7 +914,15 @@ export function parseBackupText(
         }
       }
 
-      if (parsed.slaberanTemplates !== undefined) {
+      if (parsed.rotations.some((rotation) => rotation.slaberanTemplateId !== undefined)) {
+        if (parsed.slaberanTemplates === undefined) {
+          return {
+            ok: false,
+            error:
+              "Backup memiliki binding template Slaberan tetapi catalog template tidak tersedia.",
+          };
+        }
+
         const slaberanTemplateIds = new Set(
           parsed.slaberanTemplates.map((template) => template.id),
         );
@@ -1006,7 +1018,13 @@ function getStringMap(
   if (!isRecord(value)) return null;
 
   const candidate = value[key];
-  if (!isRecord(candidate)) return null;
+  if (
+    typeof candidate !== "object" ||
+    candidate === null ||
+    Array.isArray(candidate)
+  ) {
+    return null;
+  }
 
   const entries = Object.entries(candidate);
   if (
