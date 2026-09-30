@@ -18,7 +18,6 @@ function textarea(
   id: string,
   label: string,
   placeholder?: string,
-  required = false,
 ): FollowUpTemplateField {
   return {
     id,
@@ -26,7 +25,6 @@ function textarea(
     type: "textarea",
     rows: 3,
     ...(placeholder ? { placeholder } : {}),
-    ...(required ? { required: true } : {}),
   };
 }
 
@@ -34,14 +32,12 @@ function text(
   id: string,
   label: string,
   placeholder?: string,
-  required = false,
 ): FollowUpTemplateField {
   return {
     id,
     label,
     type: "text",
     ...(placeholder ? { placeholder } : {}),
-    ...(required ? { required: true } : {}),
   };
 }
 
@@ -58,14 +54,12 @@ function select(
   id: string,
   label: string,
   options: Array<{ value: string; label: string }>,
-  required = false,
 ): FollowUpTemplateField {
   return {
     id,
     label,
     type: "select",
     options,
-    ...(required ? { required: true } : {}),
   };
 }
 
@@ -73,21 +67,10 @@ const neurologyDefinition: FollowUpTemplateDefinition = {
   schema_version: 1,
   sections: [
     {
-      id: "subjective",
-      title: "Subjective",
-      fields: [
-        textarea("chief_complaint", "Keluhan / Perkembangan Hari Ini", "Catat perubahan kondisi pasien.", true),
-        textarea("similar_history", "Riwayat Keluhan Serupa"),
-        textarea("past_history", "Riwayat Penyakit Dahulu"),
-        textarea("medication_history", "Riwayat Pengobatan"),
-        textarea("allergy_history", "Riwayat Alergi"),
-        textarea("other_history", "Riwayat Lain-lain"),
-      ],
-    },
-    {
       id: "objective",
       title: "Objective",
-      description: "Pemeriksaan dasar dan pemeriksaan neurologis. Template ini hanya titik awal dan dapat diubah oleh pengguna.",
+      description:
+        "Contoh struktur pemeriksaan neurologis. Ini hanya titik awal dan dapat diubah sesuai kebutuhan Anda.",
       fields: [
         text("general_condition", "Keadaan Umum (KU)", "Catat keadaan umum pasien."),
         number("systolic", "TD Sistol", "mmHg"),
@@ -137,19 +120,6 @@ const neurologyDefinition: FollowUpTemplateDefinition = {
         textarea("nerve_provocation", "Tes Provokasi Saraf"),
       ],
     },
-    {
-      id: "assessment",
-      title: "Assessment",
-      fields: [textarea("assessment", "Assessment / Diagnosis Kerja")],
-    },
-    {
-      id: "plan",
-      title: "Plan",
-      fields: [
-        textarea("planning", "Planning"),
-        textarea("instruction", "Instruction"),
-      ],
-    },
   ],
 };
 
@@ -157,21 +127,10 @@ const internalMedicineDefinition: FollowUpTemplateDefinition = {
   schema_version: 1,
   sections: [
     {
-      id: "subjective",
-      title: "Subjective",
-      fields: [
-        textarea("chief_complaint", "Keluhan / Perkembangan Hari Ini", "Catat perubahan kondisi pasien.", true),
-        textarea("similar_history", "Riwayat Keluhan Serupa"),
-        textarea("past_history", "Riwayat Penyakit Dahulu"),
-        textarea("medication_history", "Riwayat Pengobatan"),
-        textarea("allergy_history", "Riwayat Alergi"),
-        textarea("other_history", "Riwayat Lain-lain"),
-      ],
-    },
-    {
       id: "objective",
       title: "Objective",
-      description: "Pemeriksaan dasar dan temuan sistemik. Template ini hanya titik awal dan dapat diubah oleh pengguna.",
+      description:
+        "Contoh struktur pemeriksaan sistemik. Ini hanya titik awal dan dapat diubah sesuai kebutuhan Anda.",
       fields: [
         text("general_condition", "Keadaan Umum (KU)", "Catat keadaan umum pasien."),
         number("systolic", "TD Sistol", "mmHg"),
@@ -191,27 +150,15 @@ const internalMedicineDefinition: FollowUpTemplateDefinition = {
         textarea("systemic_findings", "Temuan Sistemik Relevan"),
       ],
     },
-    {
-      id: "assessment",
-      title: "Assessment",
-      fields: [textarea("assessment", "Assessment / Diagnosis Kerja")],
-    },
-    {
-      id: "plan",
-      title: "Plan",
-      fields: [
-        textarea("planning", "Planning"),
-        textarea("instruction", "Instruction"),
-      ],
-    },
   ],
 };
 
 export const STARTER_FOLLOW_UP_TEMPLATES: StarterFollowUpTemplate[] = [
   {
     id: "starter-neurology",
-    name: "Neurologi — Contoh",
-    description: "Contoh format Follow-Up dengan pemeriksaan neurologis. Gunakan sebagai titik awal dan sesuaikan dengan kebutuhan Anda.",
+    name: "Neurologi — Pemeriksaan Objective",
+    description:
+      "Contoh struktur Objective untuk Neurologi. Salin lalu sesuaikan dengan kebutuhan pemeriksaan Anda.",
     metadata: {
       specialty: "Neurologi",
       source: "starter",
@@ -220,8 +167,9 @@ export const STARTER_FOLLOW_UP_TEMPLATES: StarterFollowUpTemplate[] = [
   },
   {
     id: "starter-internal-medicine",
-    name: "Ilmu Penyakit Dalam — Contoh",
-    description: "Contoh format Follow-Up dengan pemeriksaan sistemik. Gunakan sebagai titik awal dan sesuaikan dengan kebutuhan Anda.",
+    name: "Ilmu Penyakit Dalam — Pemeriksaan Objective",
+    description:
+      "Contoh struktur Objective untuk Ilmu Penyakit Dalam. Salin lalu sesuaikan dengan kebutuhan pemeriksaan Anda.",
     metadata: {
       specialty: "Ilmu Penyakit Dalam",
       source: "starter",
