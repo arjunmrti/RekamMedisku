@@ -27,6 +27,7 @@ type RestoreWorkspaceResult = {
   patientIds: Record<string, string>;
   followUpIds: Record<string, string>;
   supportingExamIds: Record<string, string>;
+  slaberanTemplateIds: Record<string, string>;
   activeRotationId: string | null;
   rotationCount: number;
   patientCount: number;
@@ -83,6 +84,7 @@ function validateRestoreResult(data: unknown): RestoreWorkspaceResult {
     !isStringMap(result.patientIds) ||
     !isStringMap(result.followUpIds) ||
     !isStringMap(result.supportingExamIds) ||
+    !isStringMap(result.slaberanTemplateIds) ||
     (result.activeRotationId !== null &&
       typeof result.activeRotationId !== "string")
   ) {
@@ -94,6 +96,7 @@ function validateRestoreResult(data: unknown): RestoreWorkspaceResult {
     patientIds: result.patientIds,
     followUpIds: result.followUpIds,
     supportingExamIds: result.supportingExamIds,
+    slaberanTemplateIds: result.slaberanTemplateIds,
     activeRotationId: result.activeRotationId ?? null,
     rotationCount:
       typeof result.rotationCount === "number" ? result.rotationCount : 0,
