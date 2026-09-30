@@ -39,13 +39,15 @@ SELECT is(
 );
 
 SELECT throws_ok(
-  $q$ SELECT * FROM public.upsert_rotation_with_activation(
-    NULL,NULL,'MU107 Duplicate Active','Lainnya',CURRENT_DATE,CURRENT_DATE+30,'Aktif',
-    NULL,NULL,NULL,NULL,NULL
+  $q$ INSERT INTO public.rotations (
+    user_id,name,specialty,start_date,end_date,status
+  ) VALUES (
+    '00000000-0000-0000-0000-0000000070a1'::uuid,
+    'MU107 Duplicate Active','Lainnya',CURRENT_DATE,CURRENT_DATE+30,'Aktif'
   ); $q$,
-  'P0001',
-  'Template follow-up stase harus diisi lengkap.',
-  'active rotation still requires Follow-Up template'
+  '23505',
+  NULL,
+  'database invariant blocks a second active rotation for the same user'
 );
 
 SET LOCAL "request.jwt.claim.sub" = '00000000-0000-0000-0000-0000000070b2';
