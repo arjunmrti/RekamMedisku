@@ -95,7 +95,8 @@ export function validateFollowUpTemplateAnswerShape(
           }
           break;
 
-        case "select": {
+        case "select":
+        case "radio": {
           if (value !== null && typeof value !== "string") {
             errors.push(readFieldLabel(field) + " harus berupa satu pilihan.");
             break;
@@ -221,7 +222,7 @@ export function getFirstMeaningfulTemplateAnswer(
         return value.map((item) => labels.get(item) ?? item).join(", ");
       }
 
-      if (field.type === "select") {
+      if (field.type === "select" || field.type === "radio") {
         const label =
           (field.options ?? []).find((option) => option.value === value)?.label ??
           String(value);
