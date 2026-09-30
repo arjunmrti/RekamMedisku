@@ -19,6 +19,7 @@ export type Rotation = {
   followUpTemplateVersion?: number;
   reportTemplateId?: string;
   reportTemplateVersion?: number;
+  slaberanTemplateId?: string;
   createdAt: string;
   updatedAt: string;
 };

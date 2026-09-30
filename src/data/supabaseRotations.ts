@@ -26,6 +26,7 @@ type RotationRow = {
   follow_up_template_version: number | null;
   report_template_id: string | null;
   report_template_version: number | null;
+  slaberan_template_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -103,6 +104,7 @@ function toRotation(row: RotationRow, localId: string): Rotation {
     followUpTemplateVersion: row.follow_up_template_version ?? undefined,
     reportTemplateId: row.report_template_id ?? undefined,
     reportTemplateVersion: row.report_template_version ?? undefined,
+    slaberanTemplateId: row.slaberan_template_id ?? undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -160,7 +162,7 @@ export async function syncRotationsWithSupabase(): Promise<Rotation[]> {
   const { data: remoteRows, error } = await supabase
     .from("rotations")
     .select(
-      "id,user_id,name,specialty,start_date,end_date,status,follow_up_template_id,follow_up_template_version,report_template_id,report_template_version,created_at,updated_at",
+      "id,user_id,name,specialty,start_date,end_date,status,follow_up_template_id,follow_up_template_version,report_template_id,report_template_version,slaberan_template_id,created_at,updated_at",
     )
     .eq("user_id", userId)
     .order("start_date", { ascending: false })
@@ -253,6 +255,7 @@ export async function upsertRotationWithSupabase(input: {
   followUpTemplateVersion?: number;
   reportTemplateId?: string;
   reportTemplateVersion?: number;
+  slaberanTemplateId?: string;
 }): Promise<Rotation[]> {
   const previousRotations = loadRotations();
   const previousActiveId = loadActiveRotationId();
@@ -294,6 +297,7 @@ export async function upsertRotationWithSupabase(input: {
         p_follow_up_template_version: nextRotation.followUpTemplateVersion ?? null,
         p_report_template_id: nextRotation.reportTemplateId ?? null,
         p_report_template_version: nextRotation.reportTemplateVersion ?? null,
+        p_slaberan_template_id: nextRotation.slaberanTemplateId ?? null,
       },
     );
 
@@ -439,6 +443,7 @@ export async function activateRotationWithSupabase(
             follow_up_template_version: target.followUpTemplateVersion ?? null,
             report_template_id: target.reportTemplateId ?? null,
             report_template_version: target.reportTemplateVersion ?? null,
+            slaberan_template_id: target.slaberanTemplateId ?? null,
           },
           rotationId,
         ),
