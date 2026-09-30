@@ -23,6 +23,7 @@ type RotationFormModalProps = {
     status: RotationStatus;
     followUpTemplateId?: string;
     followUpTemplateVersion?: number;
+    slaberanTemplateId?: string;
   }) => void | Promise<void>;
   followUpTemplates: FollowUpTemplateSummary[];
   onCreateTemplate: () => void;

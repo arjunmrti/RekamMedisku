@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS pgtap;
 
 BEGIN;
-SELECT plan(8);
+SELECT plan(7);
 
 SELECT has_function(
   'public',
@@ -39,14 +39,19 @@ VALUES (
 );
 
 INSERT INTO public.patients (
-  id,user_id,rotation_id,name,rm
+  id,user_id,rotation_id,name,age,gender,rm,room,bed,doctor
 )
 VALUES (
   '00000000-0000-0000-0000-0000000060c3',
   '00000000-0000-0000-0000-0000000060a1'::uuid,
   '00000000-0000-0000-0000-0000000060b2'::uuid,
   'Pasien MU106',
-  'RM-MU106'
+  30,
+  'Laki-laki',
+  'RM-MU106',
+  'Ward A',
+  '1',
+  'Dokter MU106'
 );
 
 INSERT INTO public.templates (
