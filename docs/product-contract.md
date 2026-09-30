@@ -208,7 +208,7 @@ IDs must remain unique within the relevant template definition.
 
 ## 9. Supported MVP field types
 
-The first renderer contract remains intentionally small:
+The first renderer contract supports:
 
 ```text
 text
@@ -216,10 +216,17 @@ textarea
 number
 select
 multiselect
+radio
 checkbox
+date
+time
 ```
 
-Date, time, radio, repeatable groups, conditional logic, calculated fields, and other advanced controls are not part of the first implementation contract unless they are explicitly added through a new contract version.
+A Section is a structural container, not an answer-bearing field type.
+
+Repeatable groups, conditional logic, calculated fields, and other advanced controls
+are not part of schema_version=1 unless explicitly added through a new contract
+version.
 
 The current repository already uses the controlled field catalog above; the first migration should extend that foundation rather than introduce an unrelated schema.
 
@@ -354,7 +361,9 @@ Neurologi
 
 The system must not collapse a rotation into exactly one permanent template.
 
-The binding model must preserve the selected template/version for the context that created the Follow-Up.
+The binding pins the selected template version for that rotation/context. Creating a
+new template version does not silently replace an existing rotation binding; the
+user explicitly switches the binding when they want the new version to apply.
 
 ## 15. Starter template contract
 
