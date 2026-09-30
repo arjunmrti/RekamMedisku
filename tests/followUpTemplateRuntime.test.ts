@@ -214,6 +214,9 @@ test("formatter omits false checkbox values", () => {
     pain: 3,
     finding: "normal",
     flags: [],
+    severity: "",
+    visit_date: "",
+    visit_time: "",
     stable: false,
   });
 
@@ -225,9 +228,9 @@ test("follow-up template runtime finds a meaningful display label", () => {
     getFirstMeaningfulTemplateAnswer(template(), {
       bp: "",
       pain: null,
-      finding: "",
+      finding: "abnormal",
       flags: [],
-      severity: "severe",
+      severity: "",
       visit_date: "",
       visit_time: "",
       stable: false,
