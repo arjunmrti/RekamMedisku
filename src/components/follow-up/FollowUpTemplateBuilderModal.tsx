@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Icon from "../ui/Icon";
 import type { FollowUpTemplateDefinition, FollowUpTemplateField, FollowUpTemplateFieldType, FollowUpTemplateSection } from "../../types/followUpTemplate";
 import { createFollowUpTemplate } from "../../data/followUpTemplates";
-import { validateFollowUpTemplateDefinition } from "../../utils/followUpTemplate";
+import { cloneFollowUpTemplateDefinition, validateFollowUpTemplateDefinition } from "../../utils/followUpTemplate";
+import { STARTER_FOLLOW_UP_TEMPLATES } from "../../data/starterFollowUpTemplates";
 
 type Props = {
   open: boolean;
@@ -29,6 +30,7 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [sections, setSections] = useState<FollowUpTemplateSection[]>([makeSection(0)]);
+  const [starterId, setStarterId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -37,11 +39,31 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
     setName("");
     setDescription("");
     setSections([makeSection(0)]);
+    setStarterId("");
     setErrorMessage("");
     setSubmitting(false);
   }, [open]);
 
   const fieldCount = useMemo(() => sections.reduce((sum, section) => sum + section.fields.length, 0), [sections]);
+
+  const handleStarterChange = (nextStarterId: string) => {
+    setStarterId(nextStarterId);
+    setErrorMessage("");
+
+    if (!nextStarterId) {
+      setName("");
+      setDescription("");
+      setSections([makeSection(0)]);
+      return;
+    }
+
+    const starter = STARTER_FOLLOW_UP_TEMPLATES.find((item) => item.id === nextStarterId);
+    if (!starter) return;
+
+    setName(starter.name);
+    setDescription(starter.description);
+    setSections(cloneFollowUpTemplateDefinition(starter.definition).sections);
+  };
 
   const updateSection = (sectionId: string, updater: (section: FollowUpTemplateSection) => FollowUpTemplateSection) => setSections((current) => current.map((section) => section.id === sectionId ? updater(section) : section));
   const addSection = () => setSections((current) => [...current, makeSection(current.length)]);
@@ -90,6 +112,25 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
           <button type="button" onClick={onClose} aria-label="Tutup" className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50">×</button>
         </div>
         <form onSubmit={handleSubmit} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-slate-900">Mulai dari template contoh</h3>
+                <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-slate-500">
+                  Pilih format awal yang sudah tersedia, lalu sesuaikan dengan cara kerja Anda. Template contoh akan disalin menjadi template pribadi.
+                </p>
+              </div>
+              <label className="w-full sm:w-72">
+                <span className="sr-only">Template awal</span>
+                <select value={starterId} onChange={(event) => handleStarterChange(event.target.value)} className="field-control bg-white">
+                  <option value="">Template kosong</option>
+                  {STARTER_FOLLOW_UP_TEMPLATES.map((starter) => (
+                    <option key={starter.id} value={starter.id}>{starter.name}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="block"><span className="mb-1.5 block text-xs font-semibold text-slate-700">Nama template</span><input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Contoh: Follow-Up Harian" className="field-control" required /></label>
             <label className="block"><span className="mb-1.5 block text-xs font-semibold text-slate-700">Deskripsi</span><input value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="Konteks penggunaan template" className="field-control" /></label>
