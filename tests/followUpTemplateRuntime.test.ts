@@ -4,7 +4,9 @@ import {
   createInitialFollowUpTemplateAnswers,
   formatFollowUpTemplateAnswers,
   getFirstMeaningfulTemplateAnswer,
+  normalizeFollowUpTemplateAnswers,
   validateFollowUpTemplateAnswers,
+  validateFollowUpTemplateAnswerShape,
 } from "../src/utils/followUpTemplateRuntime";
 import type { FollowUpTemplateDefinition } from "../src/types/followUpTemplate";
 
@@ -33,6 +35,26 @@ function template(): FollowUpTemplateDefinition {
               { value: "abnormal", label: "Abnormal" },
             ],
           },
+          {
+            id: "flags",
+            label: "Tanda",
+            type: "multiselect",
+            options: [
+              { value: "red", label: "Merah" },
+              { value: "yellow", label: "Kuning" },
+            ],
+          },
+          {
+            id: "severity",
+            label: "Derajat",
+            type: "radio",
+            options: [
+              { value: "mild", label: "Ringan" },
+              { value: "severe", label: "Berat" },
+            ],
+          },
+          { id: "visit_date", label: "Tanggal", type: "date" },
+          { id: "visit_time", label: "Waktu", type: "time" },
           { id: "stable", label: "Stabil", type: "checkbox" },
         ],
       },
@@ -40,11 +62,15 @@ function template(): FollowUpTemplateDefinition {
   };
 }
 
-test("follow-up template runtime creates stable defaults", () => {
+test("follow-up template runtime creates type-safe empty defaults", () => {
   assert.deepEqual(createInitialFollowUpTemplateAnswers(template()), {
     bp: "",
-    pain: "",
+    pain: null,
     finding: "",
+    flags: [],
+    severity: "",
+    visit_date: "",
+    visit_time: "",
     stable: false,
   });
 });
@@ -57,6 +83,10 @@ test("follow-up template runtime validates required values", () => {
       bp: "",
       pain: 3,
       finding: "",
+      flags: [],
+      severity: "",
+      visit_date: "",
+      visit_time: "",
       stable: false,
     }),
     ["Tekanan Darah"],
@@ -67,32 +97,144 @@ test("follow-up template runtime validates required values", () => {
       bp: "120/80",
       pain: 3,
       finding: "",
+      flags: [],
+      severity: "",
+      visit_date: "",
+      visit_time: "",
       stable: false,
     }),
     [],
   );
 });
 
-test("follow-up template runtime formats answers without specialty branches", () => {
+test("renderer answer contract accepts the value type for each field", () => {
+  assert.deepEqual(
+    validateFollowUpTemplateAnswerShape(template(), {
+      bp: "120/80",
+      pain: 3,
+      finding: "normal",
+      flags: ["red"],
+      severity: "mild",
+      visit_date: "2026-09-30",
+      visit_time: "19:30",
+      stable: true,
+    }),
+    [],
+  );
+});
+
+test("renderer answer contract rejects invalid number and select values", () => {
+  assert.deepEqual(
+    validateFollowUpTemplateAnswerShape(template(), {
+      bp: "120/80",
+      pain: "3" as never,
+      finding: "unknown",
+      flags: [],
+      severity: "unknown",
+      visit_date: "2026-09-30",
+      visit_time: "19:30",
+      stable: true,
+    }),
+    [
+      "Field \"NRS\" harus berupa angka.",
+      "Field \"Temuan\" memiliki pilihan yang tidak tersedia.",
+    ],
+  );
+});
+
+test("renderer answer contract rejects invalid multiselect and checkbox values", () => {
+  assert.deepEqual(
+    validateFollowUpTemplateAnswerShape(template(), {
+      bp: "120/80",
+      pain: null,
+      finding: "",
+      flags: ["red", "red"],
+      severity: "",
+      visit_date: "2026-09-30",
+      visit_time: "19:30",
+      stable: "yes" as never,
+    }),
+    [
+      "Field \"Tanda\" memiliki pilihan duplikat.",
+      "Field \"Stabil\" harus berupa pilihan ya/tidak.",
+    ],
+  );
+});
+
+test("runtime normalization converts an empty number to null", () => {
+  assert.deepEqual(
+    normalizeFollowUpTemplateAnswers(template(), {
+      bp: "",
+      pain: "" as never,
+      finding: "",
+      flags: [],
+      severity: "",
+      visit_date: "",
+      visit_time: "",
+      stable: false,
+    }),
+    {
+      bp: "",
+      pain: null,
+      finding: "",
+      flags: [],
+      severity: "",
+      visit_date: "",
+      visit_time: "",
+      stable: false,
+    },
+  );
+});
+
+test("follow-up template runtime formats labels instead of internal option values", () => {
   const formatted = formatFollowUpTemplateAnswers(template(), {
     bp: "120/80",
     pain: 3,
     finding: "normal",
+    flags: ["red", "yellow"],
+    severity: "severe",
+    visit_date: "2026-09-30",
+    visit_time: "19:30",
     stable: true,
   });
 
   assert.match(formatted, /Tekanan Darah: 120\/80 mmHg/);
+  assert.match(formatted, /Temuan: Normal/);
+  assert.match(formatted, /Tanda: Merah, Kuning/);
+  assert.match(formatted, /Derajat: Berat/);
+  assert.match(formatted, /Tanggal: 2026-09-30/);
+  assert.match(formatted, /Waktu: 19:30/);
   assert.match(formatted, /Stabil: true/);
 });
 
-test("follow-up template runtime finds a meaningful answer for summary fallback", () => {
+
+test("formatter omits false checkbox values", () => {
+  const formatted = formatFollowUpTemplateAnswers(template(), {
+    bp: "120/80",
+    pain: 3,
+    finding: "normal",
+    flags: [],
+    severity: "",
+    visit_date: "",
+    visit_time: "",
+    stable: false,
+  });
+
+  assert.doesNotMatch(formatted, /Stabil: false/);
+});
+
+test("follow-up template runtime finds a meaningful display label", () => {
   assert.equal(
     getFirstMeaningfulTemplateAnswer(template(), {
       bp: "",
-      pain: 5,
-      finding: "",
+      pain: null,
+      finding: "abnormal",
+      flags: [],
+      severity: "",
+      visit_date: "",
+      visit_time: "",
       stable: false,
     }),
-    "5",
+    "Abnormal",
   );
 });

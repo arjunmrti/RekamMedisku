@@ -36,6 +36,25 @@ test("follow-up template accepts controlled field types", () => {
             rows: 4,
           },
           {
+            id: "choice",
+            label: "Pilihan",
+            type: "radio",
+            options: [
+              { value: "one", label: "Satu" },
+              { value: "two", label: "Dua" },
+            ],
+          },
+          {
+            id: "visit_date",
+            label: "Tanggal",
+            type: "date",
+          },
+          {
+            id: "visit_time",
+            label: "Waktu",
+            type: "time",
+          },
+          {
             id: "flag",
             label: "Flag",
             type: "checkbox",
@@ -45,7 +64,7 @@ test("follow-up template accepts controlled field types", () => {
     ],
   });
 
-  assert.equal(definition.sections[0].fields.length, 4);
+  assert.equal(definition.sections[0].fields.length, 7);
 });
 
 test("follow-up template rejects unknown field types", () => {
@@ -114,6 +133,109 @@ test("follow-up template rejects options on non-select fields", () => {
         ],
       }),
     /options hanya boleh/,
+  );
+});
+
+test("template optional properties are normalized and preserved", () => {
+  const definition = validateFollowUpTemplateDefinition({
+    schema_version: 1,
+    sections: [
+      {
+        id: "objective",
+        title: "Objective",
+        description: "Pemeriksaan objektif pasien.",
+        fields: [
+          {
+            id: "blood_pressure",
+            label: "Tekanan Darah",
+            type: "number",
+            placeholder: "120",
+            helpText: "Masukkan nilai sistolik.",
+            unit: "mmHg",
+            rows: 1,
+          },
+        ],
+      },
+    ],
+  });
+
+  const field = definition.sections[0].fields[0];
+  assert.equal(definition.sections[0].description, "Pemeriksaan objektif pasien.");
+  assert.equal(field.placeholder, "120");
+  assert.equal(field.helpText, "Masukkan nilai sistolik.");
+  assert.equal(field.unit, "mmHg");
+  assert.equal(field.rows, 1);
+});
+
+test("template rejects invalid rows", () => {
+  assert.throws(
+    () =>
+      validateFollowUpTemplateDefinition({
+        schema_version: 1,
+        sections: [
+          {
+            id: "objective",
+            title: "Objective",
+            fields: [
+              {
+                id: "notes",
+                label: "Catatan",
+                type: "textarea",
+                rows: 13,
+              },
+            ],
+          },
+        ],
+      }),
+    /rows harus berupa integer 1-12/,
+  );
+});
+
+test("template rejects non-boolean required values", () => {
+  assert.throws(
+    () =>
+      validateFollowUpTemplateDefinition({
+        schema_version: 1,
+        sections: [
+          {
+            id: "objective",
+            title: "Objective",
+            fields: [
+              {
+                id: "notes",
+                label: "Catatan",
+                type: "text",
+                required: "yes",
+              },
+            ],
+          },
+        ],
+      }),
+    /required.*boolean/,
+  );
+});
+
+test("template rejects required checkbox fields", () => {
+  assert.throws(
+    () =>
+      validateFollowUpTemplateDefinition({
+        schema_version: 1,
+        sections: [
+          {
+            id: "objective",
+            title: "Objective",
+            fields: [
+              {
+                id: "flag",
+                label: "Flag",
+                type: "checkbox",
+                required: true,
+              },
+            ],
+          },
+        ],
+      }),
+    /required tidak didukung untuk checkbox/,
   );
 });
 

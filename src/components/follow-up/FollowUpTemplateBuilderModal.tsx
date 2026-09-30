@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Icon from "../ui/Icon";
 import type { FollowUpTemplateDefinition, FollowUpTemplateField, FollowUpTemplateFieldType, FollowUpTemplateSection } from "../../types/followUpTemplate";
 import { createFollowUpTemplate } from "../../data/followUpTemplates";
-import { validateFollowUpTemplateDefinition } from "../../utils/followUpTemplate";
+import { cloneFollowUpTemplateDefinition, validateFollowUpTemplateDefinition } from "../../utils/followUpTemplate";
+import { STARTER_FOLLOW_UP_TEMPLATES } from "../../data/starterFollowUpTemplates";
 
 type Props = {
   open: boolean;
@@ -10,7 +11,7 @@ type Props = {
   onCreated: (templateId: string) => void;
 };
 
-const fieldTypes: FollowUpTemplateFieldType[] = ["text","textarea","number","select","multiselect","checkbox"];
+const fieldTypes: FollowUpTemplateFieldType[] = ["text","textarea","number","select","multiselect","radio","checkbox","date","time"];
 
 function slugify(value: string, fallback: string) {
   const normalized = value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 50);
@@ -29,6 +30,7 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [sections, setSections] = useState<FollowUpTemplateSection[]>([makeSection(0)]);
+  const [starterId, setStarterId] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -37,11 +39,31 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
     setName("");
     setDescription("");
     setSections([makeSection(0)]);
+    setStarterId("");
     setErrorMessage("");
     setSubmitting(false);
   }, [open]);
 
   const fieldCount = useMemo(() => sections.reduce((sum, section) => sum + section.fields.length, 0), [sections]);
+
+  const handleStarterChange = (nextStarterId: string) => {
+    setStarterId(nextStarterId);
+    setErrorMessage("");
+
+    if (!nextStarterId) {
+      setName("");
+      setDescription("");
+      setSections([makeSection(0)]);
+      return;
+    }
+
+    const starter = STARTER_FOLLOW_UP_TEMPLATES.find((item) => item.id === nextStarterId);
+    if (!starter) return;
+
+    setName(starter.name);
+    setDescription(starter.description);
+    setSections(cloneFollowUpTemplateDefinition(starter.definition).sections);
+  };
 
   const updateSection = (sectionId: string, updater: (section: FollowUpTemplateSection) => FollowUpTemplateSection) => setSections((current) => current.map((section) => section.id === sectionId ? updater(section) : section));
   const addSection = () => setSections((current) => [...current, makeSection(current.length)]);
@@ -63,7 +85,7 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
           ...field,
           id: slugify(field.id, "field-" + (fieldIndex + 1)),
           label: field.label.trim(),
-          ...(field.type === "select" || field.type === "multiselect" ? {
+          ...(field.type === "select" || field.type === "multiselect" || field.type === "radio" ? {
             options: (field.options ?? []).map((option) => ({ value: slugify(option.value, "option"), label: option.label.trim() })).filter((option) => option.label && option.value),
           } : { options: undefined }),
         })),
@@ -90,6 +112,25 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
           <button type="button" onClick={onClose} aria-label="Tutup" className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50">×</button>
         </div>
         <form onSubmit={handleSubmit} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
+          <div className="rounded-2xl border border-blue-100 bg-blue-50/50 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div className="min-w-0">
+                <h3 className="text-sm font-bold text-slate-900">Mulai dari template contoh</h3>
+                <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-slate-500">
+                  Pilih format awal yang sudah tersedia, lalu sesuaikan dengan cara kerja Anda. Template contoh akan disalin menjadi template pribadi.
+                </p>
+              </div>
+              <label className="w-full sm:w-72">
+                <span className="sr-only">Template awal</span>
+                <select value={starterId} onChange={(event) => handleStarterChange(event.target.value)} className="field-control bg-white">
+                  <option value="">Template kosong</option>
+                  {STARTER_FOLLOW_UP_TEMPLATES.map((starter) => (
+                    <option key={starter.id} value={starter.id}>{starter.name}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="block"><span className="mb-1.5 block text-xs font-semibold text-slate-700">Nama template</span><input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Contoh: Follow-Up Harian" className="field-control" required /></label>
             <label className="block"><span className="mb-1.5 block text-xs font-semibold text-slate-700">Deskripsi</span><input value={description} onChange={(e)=>setDescription(e.target.value)} placeholder="Konteks penggunaan template" className="field-control" /></label>
@@ -118,7 +159,7 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
                     <input value={field.unit ?? ""} onChange={(e)=>updateSection(section.id,(s)=>({...s,fields:s.fields.map(f=>f.id===field.id?{...f,unit:e.target.value}:f)}))} className="field-control" placeholder="Unit, mis. mmHg" />
                     <label className="flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700"><input type="checkbox" checked={Boolean(field.required)} onChange={(e)=>updateSection(section.id,(s)=>({...s,fields:s.fields.map(f=>f.id===field.id?{...f,required:e.target.checked}:f)}))} className="h-4 w-4 rounded border-slate-300 text-[#1677FF] focus:ring-[#1677FF]" />Wajib diisi</label>
                   </div>
-                  {(field.type==="select" || field.type==="multiselect") ? <input value={(field.options ?? []).map((option)=>option.label).join(", ")} onChange={(e)=>{ const labels=e.target.value.split(",").map((item)=>item.trim()).filter(Boolean); updateSection(section.id,(s)=>({...s,fields:s.fields.map(f=>f.id===field.id?{...f,options:labels.map((label)=>({label,value:slugify(label,"option")}))}:f)})); }} className="field-control mt-3" placeholder="Opsi, pisahkan dengan koma" /> : null}
+                  {(field.type==="select" || field.type==="multiselect" || field.type==="radio") ? <input value={(field.options ?? []).map((option)=>option.label).join(", ")} onChange={(e)=>{ const labels=e.target.value.split(",").map((item)=>item.trim()).filter(Boolean); updateSection(section.id,(s)=>({...s,fields:s.fields.map(f=>f.id===field.id?{...f,options:labels.map((label)=>({label,value:slugify(label,"option")}))}:f)})); }} className="field-control mt-3" placeholder="Opsi, pisahkan dengan koma" /> : null}
                 </div>)}
                 <button type="button" onClick={()=>addField(section.id)} className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-dashed border-slate-300 px-3.5 py-2 text-xs font-semibold text-slate-600 hover:bg-white"><Icon name="plus" className="h-4 w-4" />Tambah Field</button>
               </div>

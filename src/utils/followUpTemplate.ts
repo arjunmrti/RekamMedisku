@@ -120,8 +120,16 @@ function normalizeField(value: unknown, fieldName: string): FollowUpTemplateFiel
   }
 
   const normalizedType = type as FollowUpTemplateFieldType;
-  const required =
-    field.required === undefined ? undefined : Boolean(field.required);
+
+  let required: boolean | undefined;
+  if (field.required !== undefined) {
+    if (typeof field.required !== "boolean") {
+      fail(fieldName + ".required harus berupa boolean.");
+    }
+
+    required = field.required;
+  }
+
   const placeholder = readOptionalString(
     field.placeholder,
     fieldName + ".placeholder",
@@ -149,10 +157,10 @@ function normalizeField(value: unknown, fieldName: string): FollowUpTemplateFiel
   }
 
   let options: FollowUpTemplateOption[] | undefined;
-  if (normalizedType === "select" || normalizedType === "multiselect") {
+  if (normalizedType === "select" || normalizedType === "multiselect" || normalizedType === "radio") {
     options = readOptions(field.options, fieldName + ".options");
   } else if (field.options !== undefined) {
-    fail(fieldName + ".options hanya boleh digunakan pada select/multiselect.");
+    fail(fieldName + ".options hanya boleh digunakan pada select/multiselect/radio.");
   }
 
   if (normalizedType === "checkbox" && field.required === true) {

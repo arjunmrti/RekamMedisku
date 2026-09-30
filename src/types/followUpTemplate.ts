@@ -6,7 +6,10 @@ export const FOLLOW_UP_TEMPLATE_FIELD_TYPES = [
   "number",
   "select",
   "multiselect",
+  "radio",
   "checkbox",
+  "date",
+  "time",
 ] as const;
 
 export type FollowUpTemplateFieldType =

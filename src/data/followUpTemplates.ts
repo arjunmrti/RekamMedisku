@@ -305,6 +305,46 @@ export async function appendFollowUpTemplateVersion(input: {
   return result;
 }
 
+export async function updateFollowUpTemplate(input: {
+  templateId: string;
+  name: string;
+  description?: string;
+  metadata?: FollowUpTemplateMetadata;
+}) {
+  const userId = await getCurrentUserId();
+
+  const name = input.name.trim();
+  if (!name) throw new Error("Nama template follow-up wajib diisi.");
+
+  const metadata = validateFollowUpTemplateMetadata(input.metadata);
+
+  const { error } = await supabase
+    .from("templates")
+    .update({
+      name,
+      description: input.description?.trim() ?? "",
+      metadata,
+    })
+    .eq("id", input.templateId)
+    .eq("user_id", userId)
+    .eq("type", "follow_up");
+
+  if (error) throw error;
+}
+
+export async function deleteFollowUpTemplate(templateId: string) {
+  const userId = await getCurrentUserId();
+
+  const { error } = await supabase
+    .from("templates")
+    .delete()
+    .eq("id", templateId)
+    .eq("user_id", userId)
+    .eq("type", "follow_up");
+
+  if (error) throw error;
+}
+
 export async function setFollowUpTemplateArchived(
   templateId: string,
   archived: boolean,
@@ -319,6 +359,33 @@ export async function setFollowUpTemplateArchived(
     .eq("type", "follow_up");
 
   if (error) throw error;
+}
+
+
+export async function duplicateFollowUpTemplate(input: {
+  templateId: string;
+  name?: string;
+  description?: string;
+}) {
+  const source = await getFollowUpTemplate(input.templateId);
+
+  if (!source) {
+    throw new Error("Template follow-up yang akan diduplikasi tidak ditemukan.");
+  }
+
+  if (source.isArchived) {
+    throw new Error("Template yang sudah diarsipkan tidak dapat diduplikasi.");
+  }
+
+  return createFollowUpTemplate({
+    name: input.name?.trim() || source.name + " — Salinan",
+    description:
+      input.description?.trim() ||
+      source.description ||
+      "Salinan template follow-up pribadi.",
+    metadata: source.metadata,
+    definition: source.latestDefinition,
+  });
 }
 
 export async function getLatestFollowUpTemplateForSpecialty(
