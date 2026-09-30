@@ -75,7 +75,7 @@ export default function RotationFormModal({
       rotation?.followUpTemplateVersion ?? selected?.latestVersion,
     );
     setErrorMessage("");
-  }, [open, rotation]);
+  }, [followUpTemplates, open, rotation]);
 
   useEffect(() => {
     if (!open || rotation?.followUpTemplateId || followUpTemplateId || !followUpTemplates.length) return;

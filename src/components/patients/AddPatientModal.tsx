@@ -122,7 +122,15 @@ export default function AddPatientModal({
     setAdmissionLocationType(admissionLocation?.type ?? "");
     setAdmissionLocationId(admissionLocation?.locationId ?? "");
     setAdmissionLocationName(admissionLocation?.name ?? "");
-  }, [open, patient?.id]);
+  }, [
+    open,
+    patient?.admissionDate,
+    patient?.admissionLocation,
+    patient?.bed,
+    patient?.currentLocation,
+    patient?.id,
+    patient?.room,
+  ]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
