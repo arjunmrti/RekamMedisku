@@ -81,6 +81,8 @@ export function validateFollowUpTemplateAnswerShape(
       switch (field.type) {
         case "text":
         case "textarea":
+        case "date":
+        case "time":
           if (value !== null && typeof value !== "string") {
             errors.push(readFieldLabel(field) + " harus berupa teks.");
           }
