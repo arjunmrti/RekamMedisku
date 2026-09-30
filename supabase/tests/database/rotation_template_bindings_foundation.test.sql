@@ -1,7 +1,7 @@
 -- SECTION 03 — Rotation template binding foundation
 CREATE EXTENSION IF NOT EXISTS pgtap;
 BEGIN;
-SELECT plan(13);
+SELECT plan(14);
 
 SELECT has_table(
   'public',
