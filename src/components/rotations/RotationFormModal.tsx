@@ -58,6 +58,7 @@ export default function RotationFormModal({
   const [followUpTemplateId, setFollowUpTemplateId] = useState<string>(() => rotation?.followUpTemplateId ?? followUpTemplates[0]?.id ?? "");
   const [followUpTemplateVersion, setFollowUpTemplateVersion] = useState<number | undefined>(() => rotation?.followUpTemplateVersion ?? followUpTemplates[0]?.latestVersion);
   const [errorMessage, setErrorMessage] = useState("");
+  const [slaberanTemplateId, setSlaberanTemplateId] = useState<string>(() => rotation?.slaberanTemplateId ?? "");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -69,6 +70,7 @@ export default function RotationFormModal({
     setStatus(rotation?.status ?? "Mendatang");
     setFollowUpTemplateId(rotation?.followUpTemplateId ?? "");
     setFollowUpTemplateVersion(rotation?.followUpTemplateVersion);
+    setSlaberanTemplateId(rotation?.slaberanTemplateId ?? "");
     setErrorMessage("");
   }, [open, rotation]);
 
@@ -123,6 +125,7 @@ export default function RotationFormModal({
         status,
         followUpTemplateId: followUpTemplateId || undefined,
         followUpTemplateVersion: followUpTemplateVersion || undefined,
+        slaberanTemplateId: slaberanTemplateId || undefined,
       });
 
       onClose();
@@ -273,6 +276,21 @@ export default function RotationFormModal({
                 {status === "Aktif" ? "Buat atau pilih template sebelum stase dapat diaktifkan." : "Template dapat dipilih nanti sebelum stase digunakan."}
               </p>
             )}
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+              Template Slaberan
+            </span>
+            <input
+              value={slaberanTemplateId}
+              onChange={(event) => setSlaberanTemplateId(event.target.value)}
+              placeholder="ID template Slaberan (opsional)"
+              className="field-control"
+            />
+            <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">
+              Pilih template dari konfigurasi Slaberan. ID ini akan divalidasi sebagai milik workspace akun.
+            </p>
           </label>
 
           <label className="block">
