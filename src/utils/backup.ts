@@ -22,6 +22,10 @@ import {
   loadSlaberanLocations,
   replaceSlaberanLocations,
 } from "../data/localSlaberanLocations";
+import {
+  loadSlaberanTemplates,
+  replaceSlaberanTemplates,
+} from "../data/localSlaberanTemplates";
 import type {
   BackupAttachment,
   BackupPayload,
@@ -422,6 +426,24 @@ function normalizePatient(value: unknown): PatientListItem | null {
 function isRotation(value: unknown): value is Rotation {
   if (!isRecord(value)) return false;
 
+  const isOptionalTemplateId = (item: unknown) =>
+    item === undefined ||
+    (typeof item === "string" && item.trim().length > 0);
+
+  const isOptionalTemplateVersion = (item: unknown) =>
+    item === undefined ||
+    (typeof item === "number" &&
+      Number.isInteger(item) &&
+      item > 0);
+
+  const hasValidTemplateBinding = (
+    templateId: unknown,
+    templateVersion: unknown,
+  ) =>
+    (templateId === undefined && templateVersion === undefined) ||
+    (isOptionalTemplateId(templateId) &&
+      isOptionalTemplateVersion(templateVersion));
+
   const specialties = [
     "Neurologi",
     "Ilmu Penyakit Dalam",
@@ -453,7 +475,16 @@ function isRotation(value: unknown): value is Rotation {
     specialties.includes(value.specialty as string) &&
     validDates &&
     validTimestamps &&
-    statuses.includes(value.status as string)
+    statuses.includes(value.status as string) &&
+    hasValidTemplateBinding(
+      value.followUpTemplateId,
+      value.followUpTemplateVersion,
+    ) &&
+    hasValidTemplateBinding(
+      value.reportTemplateId,
+      value.reportTemplateVersion,
+    ) &&
+    isOptionalTemplateId(value.slaberanTemplateId)
   );
 }
 
@@ -870,12 +901,31 @@ export function parseBackupText(
         };
       }
 
-      for (const patient of patients) {
+        for (const patient of patients) {
         if (!rotationIds.has(patient.rotationId)) {
           return {
             ok: false,
             error: "Ada pasien yang merujuk ke stase yang tidak ada di backup.",
           };
+        }
+      }
+
+      if (parsed.slaberanTemplates !== undefined) {
+        const slaberanTemplateIds = new Set(
+          parsed.slaberanTemplates.map((template) => template.id),
+        );
+
+        for (const rotation of parsed.rotations) {
+          if (
+            rotation.slaberanTemplateId !== undefined &&
+            !slaberanTemplateIds.has(rotation.slaberanTemplateId)
+          ) {
+            return {
+              ok: false,
+              error:
+                "Ada stase yang merujuk ke template Slaberan yang tidak ada di backup.",
+            };
+          }
         }
       }
 
@@ -925,6 +975,8 @@ export type RestoreBackupLocalState = {
   replaceAllAttachments: typeof replaceAllAttachments;
   loadSlaberanLocations: typeof loadSlaberanLocations;
   replaceSlaberanLocations: typeof replaceSlaberanLocations;
+  loadSlaberanTemplates: typeof loadSlaberanTemplates;
+  replaceSlaberanTemplates: typeof replaceSlaberanTemplates;
 };
 
 const defaultRestoreLocalState: RestoreBackupLocalState = {
@@ -943,6 +995,8 @@ const defaultRestoreLocalState: RestoreBackupLocalState = {
   replaceAllAttachments,
   loadSlaberanLocations,
   replaceSlaberanLocations,
+  loadSlaberanTemplates,
+  replaceSlaberanTemplates,
 };
 
 export type RestoreBackupOptions = {
@@ -975,6 +1029,7 @@ export async function restoreBackupPayload(
   const previousRotations = local.loadRotations();
   const previousActiveRotationId = local.loadActiveRotationId();
   const previousSlaberanLocations = local.loadSlaberanLocations();
+  const previousSlaberanTemplates = local.loadSlaberanTemplates();
   const previousDrafts: Record<string, FollowUpFormValues> = {};
   const shouldReplaceAttachments = payload.attachments !== undefined;
   const previousAttachments = shouldReplaceAttachments
@@ -1026,6 +1081,11 @@ export async function restoreBackupPayload(
     if (payload.slaberanLocations !== undefined) {
       local.replaceSlaberanLocations(payload.slaberanLocations);
     }
+
+    if (payload.slaberanTemplates !== undefined) {
+      local.replaceSlaberanTemplates(payload.slaberanTemplates);
+    }
+
     local.setActiveRotationId(payload.activeRotationId ?? "");
 
     local.clearAllFollowUpDrafts();
@@ -1089,6 +1149,11 @@ export async function restoreBackupPayload(
       if (payload.slaberanLocations !== undefined) {
         local.replaceSlaberanLocations(previousSlaberanLocations);
       }
+
+      if (payload.slaberanTemplates !== undefined) {
+        local.replaceSlaberanTemplates(previousSlaberanTemplates);
+      }
+
       local.clearAllFollowUpDrafts();
 
       for (const [patientId, draft] of Object.entries(previousDrafts)) {
