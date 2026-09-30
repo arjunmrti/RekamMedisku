@@ -120,8 +120,16 @@ function normalizeField(value: unknown, fieldName: string): FollowUpTemplateFiel
   }
 
   const normalizedType = type as FollowUpTemplateFieldType;
-  const required =
-    field.required === undefined ? undefined : Boolean(field.required);
+
+  let required: boolean | undefined;
+  if (field.required !== undefined) {
+    if (typeof field.required !== "boolean") {
+      fail(fieldName + ".required harus berupa boolean.");
+    }
+
+    required = field.required;
+  }
+
   const placeholder = readOptionalString(
     field.placeholder,
     fieldName + ".placeholder",
