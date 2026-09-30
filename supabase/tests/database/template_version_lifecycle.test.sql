@@ -50,7 +50,7 @@ SELECT ok(
 SELECT ok(
   has_function_privilege(
     'authenticated',
-    'public.append_follow_up_template_version(uuid,integer,jsonb,jsonb)',
+    'public.append_follow_up_template_version(uuid,integer,integer,jsonb)',
     'EXECUTE'
   ),
   'authenticated can append versions through the canonical RPC'
