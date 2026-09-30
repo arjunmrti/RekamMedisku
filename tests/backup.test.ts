@@ -693,6 +693,77 @@ test("restore mempertahankan local baru ketika cloud sudah sukses tetapi sync ga
   assert.equal(snapshot.activeRotationId, validRotation.id);
 });
 
+test("restore meremap ID Slaberan lokal setelah cloud commit", async () => {
+  const payload = withRotations({
+    ...basePayload,
+    schemaVersion: 2,
+    patients: [
+      {
+        ...patient,
+        currentLocation: {
+          locationId: "location-local",
+          type: "ward",
+          name: "Bangsal",
+          bed: "1",
+        },
+        admissionLocation: {
+          locationId: "location-local",
+          type: "ward",
+          name: "Bangsal",
+        },
+      },
+    ],
+    rotations: [
+      {
+        ...validRotation,
+        slaberanTemplateId: "template-local",
+      },
+    ],
+    slaberanLocations: [
+      {
+        ...slaberanLocation,
+        id: "location-local",
+      },
+    ],
+    slaberanTemplates: [
+      {
+        ...slaberanTemplate,
+        id: "template-local",
+      },
+    ],
+  });
+
+  const { state } = createRestoreLocalState();
+
+  const result = await restoreBackupPayload(payload, {
+    localState: state,
+    persistRemote: async () => ({
+      slaberanTemplateIds: {
+        "template-local": "template-remote",
+      },
+      slaberanLocationIds: {
+        "location-local": "location-remote",
+      },
+    }),
+    syncRemote: async () => {
+      throw new Error("sync tertunda");
+    },
+  });
+
+  assert.equal(result.syncStatus, "partial");
+  assert.equal(state.loadSlaberanTemplates()[0]?.id, "template-remote");
+  assert.equal(state.loadSlaberanLocations()[0]?.id, "location-remote");
+  assert.equal(state.loadRotations()[0]?.slaberanTemplateId, "template-remote");
+  assert.equal(
+    state.loadPatients()[0]?.currentLocation?.locationId,
+    "location-remote",
+  );
+  assert.equal(
+    state.loadPatients()[0]?.admissionLocation?.locationId,
+    "location-remote",
+  );
+});
+
 test("restore tidak rollback local jika cloud sudah commit tetapi persist mengembalikan error committed", async () => {
   const payload = withRotations({
     ...basePayload,
