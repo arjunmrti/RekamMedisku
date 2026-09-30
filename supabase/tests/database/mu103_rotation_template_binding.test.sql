@@ -6,7 +6,7 @@ SELECT plan(13);
 SELECT has_column('public','rotations','follow_up_template_id','rotation stores follow-up template ID');
 SELECT has_column('public','rotations','follow_up_template_version','rotation stores follow-up template version');
 SELECT has_column('public','rotations','report_template_id','rotation stores report template ID');
-SELECT has_function('public','upsert_rotation_with_activation',ARRAY['uuid','timestamptz','text','text','date','date','text','uuid','integer','uuid','integer'],'rotation upsert RPC accepts template bindings');
+SELECT has_function('public','upsert_rotation_with_activation',ARRAY['uuid','timestamptz','text','text','date','date','text','uuid','integer','uuid','integer','uuid'],'rotation upsert RPC accepts template bindings');
 SELECT has_function('public','activate_rotation',ARRAY['uuid'],'activation RPC remains available');
 
 INSERT INTO auth.users (id,email,raw_user_meta_data) VALUES

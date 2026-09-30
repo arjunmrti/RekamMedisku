@@ -543,8 +543,8 @@ SELECT throws_ok(
       'MU005 B foreign floor'
     );
   $test$,
-  '23503',
-  NULL,
+  'P0001',
+  'Parent lokasi tidak ditemukan dalam workspace pengguna.',
   'User B cannot attach a Slaberan location to User A parent'
 );
 
