@@ -7,14 +7,21 @@ import ReportPreview from "../../components/report/ReportPreview";
 import ReportStepTracker from "../../components/report/ReportStepTracker";
 import ReportSummaryCard from "../../components/report/ReportSummaryCard";
 import ReportTemplateSelector from "../../components/report/ReportTemplateSelector";
+import ReportTemplateBuilderModal from "../../components/report/ReportTemplateBuilderModal";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
 import { loadActiveRotation, loadRotations } from "../../data/localRotations";
+import { buildWhatsAppReport } from "../../utils/reportGenerator";
 import {
-  buildWhatsAppReport,
-  getReportTemplateForSpecialty,
-} from "../../utils/reportGenerator";
+  getReportTemplateVersion,
+  listReportTemplates,
+} from "../../data/reportTemplates";
+import { DEFAULT_REPORT_TEMPLATE_DEFINITION } from "../../data/systemReportTemplate";
+import type {
+  ReportTemplate,
+  ReportTemplateSummary,
+} from "../../types/reportTemplate";
 import type { PatientListItem } from "../../types/patient";
-import type { ReportMode, ReportStep, ReportTemplateType } from "../../types/report";
+import type { ReportMode, ReportStep } from "../../types/report";
 import Icon from "../../components/ui/Icon";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import {
@@ -87,10 +94,28 @@ async function copyTextToClipboard(text: string) {
   }
 }
 
-function getFollowUps(
-  patientId: string,
-  fallbackTemplate: ReportTemplateType,
-) {
+const SYSTEM_REPORT_TEMPLATE_ID = "__system_report_template__";
+
+type ActiveReportTemplate = {
+  id: string;
+  name: string;
+  description: string;
+  version: number;
+  isSystem: boolean;
+  definition: ReportTemplate["latestDefinition"];
+};
+
+const SYSTEM_REPORT_TEMPLATE: ActiveReportTemplate = {
+  id: SYSTEM_REPORT_TEMPLATE_ID,
+  name: "Laporan Follow-Up Standar",
+  description:
+    "Format laporan generik RekamMedisku untuk data follow-up tersimpan.",
+  version: 1,
+  isSystem: true,
+  definition: DEFAULT_REPORT_TEMPLATE_DEFINITION,
+};
+
+function getFollowUps(patientId: string) {
   const local = loadSavedFollowUps()[patientId] ?? [];
 
   return [...local]
@@ -98,20 +123,20 @@ function getFollowUps(
       return entries.findIndex((candidate) => candidate.id === entry.id) === index;
     })
     .filter((entry) => entry.status === "Tersimpan")
-    .map((entry) => ({
-      ...entry,
-      templateType: entry.templateType ?? fallbackTemplate,
-    }))
     .sort((a, b) => (b.isoDate + b.time).localeCompare(a.isoDate + a.time));
 }
 
-function normalizeReportTemplateType(
-  value: string | undefined,
-  fallback: ReportTemplateType,
-): ReportTemplateType {
-  return value === "Neurologi" || value === "Ilmu Penyakit Dalam"
-    ? value
-    : fallback;
+function toActiveReportTemplate(
+  template: ReportTemplate,
+): ActiveReportTemplate {
+  return {
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    version: template.latestVersion,
+    isSystem: false,
+    definition: template.latestDefinition,
+  };
 }
 
 export default function ReportGeneratorPage({
@@ -225,26 +250,25 @@ function FollowUpReportGeneratorPage({
   const patientMatchesRotation = Boolean(
     patient && patient.rotationId === activeRotation.id,
   );
-  const reportTemplate = getReportTemplateForSpecialty(
-    patientRotation?.specialty,
-  );
-  const fallbackTemplate: ReportTemplateType = reportTemplate ?? "Neurologi";
 
   const followUps = useMemo(
-    () => getFollowUps(patient?.id ?? "", fallbackTemplate),
-    [fallbackTemplate, patient?.id, workspaceSyncVersion],
+    () => getFollowUps(patient?.id ?? ""),
+    [patient?.id, workspaceSyncVersion],
   );
   const initialFollowUp = followUps[0] ?? null;
-  const initialTemplate: ReportTemplateType = normalizeReportTemplateType(
-    initialFollowUp?.templateType,
-    fallbackTemplate,
-  );
 
   const [selectedFollowUpId, setSelectedFollowUpId] = useState(
     initialFollowUp?.id ?? "",
   );
-  const [templateType, setTemplateType] =
-    useState<ReportTemplateType>(initialTemplate);
+  const [reportTemplates, setReportTemplates] = useState<ReportTemplateSummary[]>(
+    [],
+  );
+  const [selectedReportTemplate, setSelectedReportTemplate] =
+    useState<ActiveReportTemplate>(SYSTEM_REPORT_TEMPLATE);
+  const [reportTemplateLoading, setReportTemplateLoading] = useState(true);
+  const [reportTemplateError, setReportTemplateError] = useState("");
+  const [reportTemplateBuilderOpen, setReportTemplateBuilderOpen] =
+    useState(false);
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
@@ -255,10 +279,73 @@ function FollowUpReportGeneratorPage({
     followUps.find((entry) => entry.id === selectedFollowUpId) ??
     initialFollowUp;
 
-  const sourceTemplate: ReportTemplateType = normalizeReportTemplateType(
-    selectedFollowUp?.templateType,
-    fallbackTemplate,
-  );
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadReportTemplateWorkspace = async () => {
+      setReportTemplateLoading(true);
+      setReportTemplateError("");
+
+      try {
+        const summaries = await listReportTemplates();
+
+        if (cancelled) return;
+
+        setReportTemplates(summaries);
+
+        const boundId = activeRotation.reportTemplateId;
+        const boundVersion = activeRotation.reportTemplateVersion;
+
+        if (boundId && boundVersion) {
+          const boundTemplate = await getReportTemplateVersion(
+            boundId,
+            boundVersion,
+          );
+
+          if (cancelled) return;
+
+          if (!boundTemplate) {
+            setSelectedReportTemplate(SYSTEM_REPORT_TEMPLATE);
+            setReportTemplateError(
+              "Template laporan yang terikat pada stase tidak ditemukan. Template sistem digunakan sebagai fallback.",
+            );
+          } else {
+            setSelectedReportTemplate(
+              toActiveReportTemplate(boundTemplate),
+            );
+          }
+        } else {
+          setSelectedReportTemplate(SYSTEM_REPORT_TEMPLATE);
+        }
+      } catch (error) {
+        if (cancelled) return;
+
+        console.error("Report template load failed:", error);
+        setReportTemplates([]);
+        setSelectedReportTemplate(SYSTEM_REPORT_TEMPLATE);
+        setReportTemplateError(
+          error instanceof Error
+            ? error.message
+            : "Template laporan gagal dimuat.",
+        );
+      } finally {
+        if (!cancelled) {
+          setReportTemplateLoading(false);
+        }
+      }
+    };
+
+    void loadReportTemplateWorkspace();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeRotation.id,
+    activeRotation.reportTemplateId,
+    activeRotation.reportTemplateVersion,
+    workspaceSyncVersion,
+  ]);
 
   const activeStep: ReportStep = copied
     ? 6
@@ -268,33 +355,123 @@ function FollowUpReportGeneratorPage({
         ? 4
         : 2;
 
-  const generateReport = (nextTemplate: ReportTemplateType = templateType) => {
+  const generateReport = () => {
     if (!patient || !selectedFollowUp || !reportIdentity) return;
+
     setReportText(
-      buildWhatsAppReport(patient, selectedFollowUp, nextTemplate, {
-        rotationName:
-          patientRotation?.specialty !== "Lainnya"
-            ? patientRotation?.specialty
-            : patientRotation?.name,
-        reportIdentity,
-      }),
+      buildWhatsAppReport(
+        patient,
+        selectedFollowUp,
+        selectedReportTemplate.definition,
+        {
+          rotationName: patientRotation?.name || "Stase",
+          reportIdentity,
+        },
+      ),
     );
-    setTemplateType(nextTemplate);
+
     setGeneratedKey(
-      selectedFollowUp.id + ":" + nextTemplate + ":" + Date.now(),
+      selectedFollowUp.id +
+        ":" +
+        selectedReportTemplate.id +
+        ":v" +
+        selectedReportTemplate.version +
+        ":" +
+        Date.now(),
     );
     setEditing(false);
     setCopied(false);
     setCopyError("");
   };
 
+  const handleReportTemplateCreated = async (templateId: string) => {
+    try {
+      setReportTemplateLoading(true);
+      setReportTemplateError("");
+
+      const summaries = await listReportTemplates();
+      setReportTemplates(summaries);
+
+      const createdTemplate = await getReportTemplateVersion(
+        templateId,
+        1,
+      );
+
+      if (!createdTemplate) {
+        throw new Error("Template laporan baru tidak dapat dimuat.");
+      }
+
+      setSelectedReportTemplate(toActiveReportTemplate(createdTemplate));
+      setReportText("");
+      setGeneratedKey("");
+      setEditing(false);
+      setCopied(false);
+      setCopyError("");
+    } catch (error) {
+      setReportTemplateError(
+        error instanceof Error
+          ? error.message
+          : "Template laporan baru gagal dimuat.",
+      );
+    } finally {
+      setReportTemplateLoading(false);
+    }
+  };
+
+  const handleReportTemplateChange = async (templateId: string) => {
+    if (templateId === SYSTEM_REPORT_TEMPLATE_ID) {
+      setSelectedReportTemplate(SYSTEM_REPORT_TEMPLATE);
+      setReportText("");
+      setGeneratedKey("");
+      setEditing(false);
+      setCopied(false);
+      setCopyError("");
+      setReportTemplateError("");
+      return;
+    }
+
+    const summary = reportTemplates.find((template) => template.id === templateId);
+
+    if (!summary) {
+      setReportTemplateError("Template laporan yang dipilih tidak ditemukan.");
+      return;
+    }
+
+    try {
+      setReportTemplateLoading(true);
+      setReportTemplateError("");
+
+      const template = await getReportTemplateVersion(
+        summary.id,
+        summary.latestVersion,
+      );
+
+      if (!template) {
+        throw new Error("Versi template laporan yang dipilih tidak ditemukan.");
+      }
+
+      setSelectedReportTemplate(toActiveReportTemplate(template));
+      setReportText("");
+      setGeneratedKey("");
+      setEditing(false);
+      setCopied(false);
+      setCopyError("");
+    } catch (error) {
+      setReportTemplateError(
+        error instanceof Error
+          ? error.message
+          : "Template laporan gagal dimuat.",
+      );
+    } finally {
+      setReportTemplateLoading(false);
+    }
+  };
+
   const handleFollowUpChange = (id: string) => {
     const next = followUps.find((entry) => entry.id === id);
     if (!next) return;
 
-    const nextTemplate = normalizeReportTemplateType(next.templateType, fallbackTemplate);
     setSelectedFollowUpId(id);
-    setTemplateType(nextTemplate);
     setReportText("");
     setGeneratedKey("");
     setEditing(false);
@@ -395,52 +572,6 @@ function FollowUpReportGeneratorPage({
     );
   }
 
-  if (!patientRotation || !reportTemplate) {
-    const title = patientRotation
-      ? "Report Generator untuk stase ini belum tersedia"
-      : "Stase pasien tidak ditemukan";
-    const description = patientRotation
-      ? `MVP RekamMedisku saat ini menyediakan template laporan untuk Neurologi dan Ilmu Penyakit Dalam. Stase ${patientRotation.name} tetap dapat digunakan sebagai rotasi tanpa menghapus data pasien atau riwayat.`
-      : "Data rotasi pasien tidak ditemukan. Periksa kembali data stase sebelum membuat laporan.";
-
-    return (
-      <AppShell
-        activeItem={activeItem}
-        onNavigate={onNavigate}
-        searchValue=""
-        onSearchChange={() => undefined}
-        searchEnabled={false}
-      >
-        <main className="flex flex-1 flex-col items-center justify-center px-4 py-10 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8">
-          <div className="mx-auto mb-5 w-full max-w-xl">
-            <ReportBackLink onNavigate={onNavigate} />
-          </div>
-          <section className="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_16px_50px_-30px_rgba(16,42,86,0.24)]">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">
-              <Icon name="document" className="h-5 w-5" />
-            </div>
-            <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
-              Report Generator
-            </p>
-            <h1 className="mt-2 text-xl font-bold text-slate-900">
-              {title}
-            </h1>
-            <p className="mx-auto mt-2 max-w-md text-xs leading-relaxed text-slate-500">
-              {description}
-            </p>
-            <button
-              type="button"
-              onClick={() => onNavigate("Stase Saya")}
-              className="mt-6 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
-            >
-              Kembali ke Stase
-            </button>
-          </section>
-        </main>
-      </AppShell>
-    );
-  }
-
   if (!selectedFollowUp) {
     return (
       <AppShell
@@ -534,9 +665,27 @@ function FollowUpReportGeneratorPage({
           <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="min-w-0 space-y-6">
               <ReportTemplateSelector
-                selected={templateType}
-                sourceTemplate={sourceTemplate}
-                onChange={setTemplateType}
+                selectedId={selectedReportTemplate.id}
+                templates={[
+                  {
+                    id: SYSTEM_REPORT_TEMPLATE_ID,
+                    name: SYSTEM_REPORT_TEMPLATE.name,
+                    description: SYSTEM_REPORT_TEMPLATE.description,
+                    version: SYSTEM_REPORT_TEMPLATE.version,
+                    isSystem: true,
+                  },
+                  ...reportTemplates.map((template) => ({
+                    id: template.id,
+                    name: template.name,
+                    description: template.description,
+                    version: template.latestVersion,
+                    isSystem: false,
+                  })),
+                ]}
+                loading={reportTemplateLoading}
+                error={reportTemplateError}
+                onChange={handleReportTemplateChange}
+                onCreateTemplate={() => setReportTemplateBuilderOpen(true)}
               />
 
               <section className="rounded-2xl border border-blue-100 bg-gradient-to-r from-blue-50/70 via-white to-white p-4 shadow-[0_8px_30px_-22px_rgba(22,119,255,0.4)] sm:p-5">
@@ -567,8 +716,12 @@ function FollowUpReportGeneratorPage({
 
                   <button
                     type="button"
-                    onClick={() => generateReport()}
-                    disabled={profileLoading || !reportIdentity}
+                    onClick={generateReport}
+                    disabled={
+                      profileLoading ||
+                      reportTemplateLoading ||
+                      !reportIdentity
+                    }
                     className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
                   >
                     <Icon name="bolt" className="h-3.5 w-3.5" />
@@ -596,12 +749,12 @@ function FollowUpReportGeneratorPage({
             <ReportSummaryCard
               patient={patient}
               followUp={selectedFollowUp}
-              templateType={templateType}
+              templateName={selectedReportTemplate.name}
               copied={copied}
               hasReport={Boolean(reportText)}
               copyError={copyError}
               onCopy={handleCopy}
-              onRegenerate={() => generateReport()}
+              onRegenerate={generateReport}
             />
           </div>
 
@@ -611,6 +764,13 @@ function FollowUpReportGeneratorPage({
             pengguna tetap meninjau, menyalin, lalu mengirim secara manual.
           </section>
         </div>
+      <ReportTemplateBuilderModal
+        open={reportTemplateBuilderOpen}
+        onClose={() => setReportTemplateBuilderOpen(false)}
+        onCreated={(templateId) => {
+          void handleReportTemplateCreated(templateId);
+        }}
+      />
       </main>
     </AppShell>
   );

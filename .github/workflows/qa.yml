@@ -1,14 +1,22 @@
 name: QA
 
+# CI verification trigger refresh — no application logic change.
+
+concurrency:
+  group: \${{ github.workflow }}-\${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
 
 jobs:
   qa:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - name: Checkout
         uses: actions/checkout@v4
