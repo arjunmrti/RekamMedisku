@@ -1,5 +1,3 @@
-import type { FollowUpTemplateFieldType } from "./followUpTemplate";
-
 export type RotationTemplateBindingDocumentType = "follow_up" | "report";
 
 export type RotationTemplateBinding = {
