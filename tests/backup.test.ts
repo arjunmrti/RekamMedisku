@@ -83,6 +83,7 @@ function createRestoreLocalState(
     activeRotationId: string;
     drafts: Record<string, FollowUpFormValues>;
     attachments: StoredAttachment[];
+    slaberanTemplates: SlaberanTemplateRecord[];
   };
 } {
   let patients = initialPatients;
@@ -143,6 +144,7 @@ function createRestoreLocalState(
       activeRotationId,
       drafts,
       attachments,
+      slaberanTemplates,
     }),
   };
 }
