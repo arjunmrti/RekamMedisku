@@ -1,11 +1,14 @@
 BEGIN;
 
-SELECT plan(8);
+SELECT plan(7);
 
-SELECT has_table_privilege(
-  'authenticated',
-  'public.template_versions',
-  'SELECT'
+SELECT ok(
+  has_table_privilege(
+    'authenticated',
+    'public.template_versions',
+    'SELECT'
+  ),
+  'authenticated can read template_versions'
 );
 
 SELECT ok(
@@ -35,32 +38,31 @@ SELECT ok(
   'authenticated cannot delete template_versions directly'
 );
 
-SELECT has_function_privilege(
-  'authenticated',
-  'public.create_follow_up_template(text,text,jsonb,integer,jsonb)',
-  'EXECUTE'
+SELECT ok(
+  has_function_privilege(
+    'authenticated',
+    'public.create_follow_up_template(text,text,jsonb,integer,jsonb)',
+    'EXECUTE'
+  ),
+  'authenticated can create templates through the RPC'
 );
-
-SELECT has_function_privilege(
-  'authenticated',
-  'public.append_follow_up_template_version(uuid,integer,integer,jsonb)',
-  'EXECUTE'
-);
-
-SELECT has_function_privilege(
-  'authenticated',
-  'public.validate_follow_up_template_definition(jsonb)',
-  'EXECUTE'
-) IS FALSE;
 
 SELECT ok(
-  EXISTS (
-    SELECT 1
-    FROM pg_proc
-    WHERE pronamespace = 'public'::regnamespace
-      AND proname = 'validate_follow_up_template_definition'
+  has_function_privilege(
+    'authenticated',
+    'public.append_follow_up_template_version(uuid,integer,jsonb,jsonb)',
+    'EXECUTE'
   ),
-  'template definition validator exists'
+  'authenticated can append versions through the canonical RPC'
+);
+
+SELECT ok(
+  NOT has_function_privilege(
+    'authenticated',
+    'public.validate_follow_up_template_definition(jsonb)',
+    'EXECUTE'
+  ),
+  'internal validator is not callable by authenticated clients'
 );
 
 SELECT * FROM finish();
