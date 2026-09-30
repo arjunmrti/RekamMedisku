@@ -1145,7 +1145,7 @@ export default function FollowUpFormPage({
             setErrorMessage("");
 
             try {
-              const { definition: nextDefinition, fieldId } =
+              const { definition: nextDefinition } =
                 addFollowUpTemplateField(activeTemplateDefinition, input);
 
               const normalizedDefinition =
