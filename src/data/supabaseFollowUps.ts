@@ -167,11 +167,8 @@ function normalizeStatus(value: string): FollowUpEntry["status"] {
 function normalizeTemplate(
   value: string | null,
 ): FollowUpEntry["templateType"] {
-  if (value === "Neurologi" || value === "Ilmu Penyakit Dalam") {
-    return value;
-  }
-
-  return undefined;
+  const normalized = value?.trim();
+  return normalized || undefined;
 }
 
 function normalizeTemplateSnapshot(
@@ -261,6 +258,8 @@ function followUpPayload(entry: FollowUpEntry, remotePatientId: string) {
     template_type: entry.templateType ?? null,
     template_id: entry.templateId ?? null,
     template_version: entry.templateVersion ?? null,
+    template_schema_version: entry.templateSchemaVersion ?? null,
+    template_snapshot: entry.templateSnapshot ?? null,
     answers: entry.templateAnswers ?? null,
     assessment_codes: entry.assessmentCodes ?? [],
     planning: entry.planning ?? null,

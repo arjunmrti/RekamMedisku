@@ -3,6 +3,7 @@ import AppShell, { type NavigationProps } from "../../components/layout/AppShell
 import AssessmentSection from "../../components/follow-up/AssessmentSection";
 import ObjectiveSection from "../../components/follow-up/ObjectiveSection";
 import FollowUpTemplateRenderer from "../../components/follow-up/FollowUpTemplateRenderer";
+import FollowUpQuickCustomization from "../../components/follow-up/FollowUpQuickCustomization";
 import PatientContextCard from "../../components/follow-up/PatientContextCard";
 import PlanSection from "../../components/follow-up/PlanSection";
 import SubjectiveSection from "../../components/follow-up/SubjectiveSection";
@@ -18,6 +19,9 @@ import {
   getSupabaseFollowUpErrorMessage,
   persistFollowUpWithSupabase,
 } from "../../data/supabaseFollowUps";
+import {
+  appendFollowUpTemplateVersion,
+} from "../../data/followUpTemplates";
 import { syncWorkspaceWithSupabase } from "../../data/supabaseSyncEngine";
 import { loadActiveRotation } from "../../data/localRotations";
 import { getFollowUpTemplateVersion } from "../../data/followUpTemplates";
@@ -30,11 +34,17 @@ import {
   createInitialFollowUpTemplateAnswers,
   formatFollowUpTemplateAnswers,
   getFirstMeaningfulTemplateAnswer,
+  mergeFollowUpTemplateAnswersForDefinition,
   validateFollowUpTemplateAnswers,
 } from "../../utils/followUpTemplateRuntime";
+import { cloneFollowUpTemplateDefinition, validateFollowUpTemplateDefinition } from "../../utils/followUpTemplate";
+import { addFollowUpTemplateField, type QuickFollowUpFieldInput } from "../../utils/followUpQuickCustomization";
 import type { FollowUpEntry, SupportingExam } from "../../types/followUp";
 import type { FollowUpFormValues } from "../../types/followUpForm";
-import type { FollowUpTemplate } from "../../types/followUpTemplate";
+import type {
+  FollowUpTemplate,
+  FollowUpTemplateDefinition,
+} from "../../types/followUpTemplate";
 import type { PatientListItem } from "../../types/patient";
 import Icon from "../../components/ui/Icon";
 
@@ -222,6 +232,7 @@ function buildFollowUpEntry(
   values: FollowUpFormValues,
   number: number,
   template: FollowUpTemplate,
+  definition: FollowUpTemplateDefinition,
 ): FollowUpEntry {
   const subjective = [
     "Keluhan Pagi Ini: " + values.subjective.keluhan,
@@ -233,8 +244,11 @@ function buildFollowUpEntry(
   ].filter((item) => !item.endsWith(": ")).join("\n");
 
   const basicObjective = buildBasicObjectiveLines(values.objective);
-  const templateAnswers = values.templateAnswers ?? createInitialFollowUpTemplateAnswers(template.latestDefinition);
-  const templateObjective = formatFollowUpTemplateAnswers(template.latestDefinition, templateAnswers);
+  const templateAnswers = mergeFollowUpTemplateAnswersForDefinition(
+    definition,
+    values.templateAnswers ?? createInitialFollowUpTemplateAnswers(definition),
+  );
+  const templateObjective = formatFollowUpTemplateAnswers(definition, templateAnswers);
   const objective = [...basicObjective, templateObjective].filter(Boolean).join("\n");
   const assessment = values.assessments.filter((item) => item.trim()).join("\n");
 
@@ -264,9 +278,9 @@ function buildFollowUpEntry(
     status: "Tersimpan",
     templateType: template.name,
     templateId: template.id,
-    templateVersion: template.latestVersion,
-    templateSchemaVersion: template.latestSchemaVersion,
-    templateSnapshot: template.latestDefinition,
+    templateVersion: values.templateVersion ?? template.latestVersion,
+    templateSchemaVersion: definition.schema_version,
+    templateSnapshot: cloneFollowUpTemplateDefinition(definition),
     templateAnswers,
     assessmentCodes: values.assessmentCodes,
     planning: values.planning,
@@ -278,7 +292,10 @@ function buildFollowUpEntry(
       values.planning ? "P/: " + values.planning : "",
       values.instruction ? "I/: " + values.instruction : "",
     ].filter(Boolean).join("\n"),
-    summary: values.subjective.keluhan || getFirstMeaningfulTemplateAnswer(template.latestDefinition, templateAnswers) || "Follow-up baru tersimpan.",
+    summary:
+      values.subjective.keluhan ||
+      getFirstMeaningfulTemplateAnswer(definition, templateAnswers) ||
+      "Follow-up baru tersimpan.",
     supportingExams,
   };
 }
@@ -294,6 +311,8 @@ export default function FollowUpFormPage({
   const [templateLoading, setTemplateLoading] = useState(Boolean(templateId && templateVersion));
   const [templateLoadError, setTemplateLoadError] = useState("");
   const [openTemplateSections, setOpenTemplateSections] = useState<Record<string, boolean>>({});
+  const [quickCustomizationOpen, setQuickCustomizationOpen] = useState(false);
+  const [quickCustomizationSaving, setQuickCustomizationSaving] = useState(false);
   const patientMatchesRotation = patient.rotationId === activeRotation.id;
   const existingDraft = loadFollowUpDraft(patient.id);
   const draftBelongsToRotation =
@@ -327,12 +346,21 @@ export default function FollowUpFormPage({
     () => loadSavedFollowUps()[patient.id] ?? [],
   );
 
+  const activeTemplateDefinition = useMemo<FollowUpTemplateDefinition | null>(
+    () => values.templateSnapshot ?? template?.latestDefinition ?? null,
+    [template, values.templateSnapshot],
+  );
+
   const latestFollowUp = sortFollowUps(previousFollowUps)[0] ?? null;
 
   const sectionStats = useMemo(() => {
     const subjectiveFilled = countFilled(values.subjective);
     const templateAnswers = values.templateAnswers ?? {};
-    const templateFieldCount = template?.latestDefinition.sections.reduce((count, section) => count + section.fields.length, 0) ?? 0;
+    const templateFieldCount =
+      activeTemplateDefinition?.sections.reduce(
+        (count, section) => count + section.fields.length,
+        0,
+      ) ?? 0;
     const templateFilled = countFilled(templateAnswers);
     const objectiveFilled = countFilled(values.objective) + templateFilled;
     const assessmentFilled = values.assessments.filter((item) => item.trim()).length;
@@ -350,7 +378,7 @@ export default function FollowUpFormPage({
     const filled = Object.values(stats).reduce((sum, stat) => sum + stat.filled, 0);
     const total = Object.values(stats).reduce((sum, stat) => sum + stat.total, 0);
     return { stats, filled, total, percent: total ? Math.round((filled / total) * 100) : 0 };
-  }, [template, values]);
+  }, [activeTemplateDefinition, values]);
   const sectionNav: Array<{
     key: SectionKey;
     label: string;
@@ -393,18 +421,46 @@ export default function FollowUpFormPage({
         if (cancelled) return;
         if (!nextTemplate) throw new Error("Template follow-up yang dipasang pada stase tidak ditemukan.");
         setTemplate(nextTemplate);
-        setOpenTemplateSections(Object.fromEntries(nextTemplate.latestDefinition.sections.map((section) => [section.id, true])));
 
         const draft = loadFollowUpDraft(patient.id);
         if (draft?.rotationId && draft.rotationId !== activeRotation.id) return;
-        const draftMatchesTemplate = draft?.templateId === nextTemplate.id && draft.templateVersion === nextTemplate.latestVersion;
+
+        const draftMatchesTemplate =
+          draft?.templateId === nextTemplate.id &&
+          draft.templateVersion === nextTemplate.latestVersion;
+
+        let draftSnapshot: FollowUpTemplateDefinition | undefined;
+        if (draftMatchesTemplate && draft?.templateSnapshot) {
+          try {
+            draftSnapshot = validateFollowUpTemplateDefinition(
+              draft.templateSnapshot,
+            );
+          } catch {
+            draftSnapshot = undefined;
+          }
+        }
+
+        const definition = draftSnapshot ?? nextTemplate.latestDefinition;
+
+        setOpenTemplateSections(
+          Object.fromEntries(
+            definition.sections.map((section) => [section.id, true]),
+          ),
+        );
+
         setValues((current) => ({
           ...current,
           templateId: nextTemplate.id,
           templateVersion: nextTemplate.latestVersion,
-          templateSchemaVersion: nextTemplate.latestSchemaVersion,
-          templateSnapshot: nextTemplate.latestDefinition,
-          templateAnswers: draftMatchesTemplate && draft?.templateAnswers ? draft.templateAnswers : createInitialFollowUpTemplateAnswers(nextTemplate.latestDefinition),
+          templateSchemaVersion: definition.schema_version,
+          templateSnapshot: cloneFollowUpTemplateDefinition(definition),
+          templateAnswers:
+            draftMatchesTemplate && draft?.templateAnswers
+              ? mergeFollowUpTemplateAnswersForDefinition(
+                  definition,
+                  draft.templateAnswers,
+                )
+              : createInitialFollowUpTemplateAnswers(definition),
         }));
       } catch (error) {
         if (!cancelled) {
@@ -522,8 +578,13 @@ export default function FollowUpFormPage({
       return;
     }
 
+    if (!activeTemplateDefinition) {
+      setErrorMessage("Definition template follow-up tidak tersedia.");
+      return;
+    }
+
     const missingTemplateFields = validateFollowUpTemplateAnswers(
-      template.latestDefinition,
+      activeTemplateDefinition,
       values.templateAnswers ?? {},
     );
     if (missingTemplateFields.length) {
@@ -559,7 +620,12 @@ export default function FollowUpFormPage({
       previousSaved = loadSavedFollowUps();
       const nextNumber =
         Math.max(0, ...sortedSyncedEntries.map((entry) => entry.number)) + 1;
-      const entry = buildFollowUpEntry(values, nextNumber, template);
+      const entry = buildFollowUpEntry(
+        values,
+        nextNumber,
+        template,
+        activeTemplateDefinition,
+      );
       const nextEntries = sortFollowUps([entry, ...sortedSyncedEntries]);
 
       replaceSavedFollowUps({
@@ -812,14 +878,35 @@ export default function FollowUpFormPage({
                 />
                 {templateLoading ? (
                   <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-500">Memuat template follow-up...</div>
-                ) : template ? (
-                  <FollowUpTemplateRenderer
-                    definition={template.latestDefinition}
-                    answers={values.templateAnswers ?? {}}
-                    onChange={(templateAnswers) => updateValues({ ...values, templateAnswers })}
-                    openSections={openTemplateSections}
-                    onToggleSection={(sectionId) => setOpenTemplateSections((current) => ({ ...current, [sectionId]: !(current[sectionId] ?? true) }))}
-                  />
+                ) : template && activeTemplateDefinition ? (
+                  <>
+                    <div className="mb-3 flex flex-col gap-2 rounded-2xl border border-blue-100 bg-blue-50/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1677FF]">
+                          {template.name} · v{values.templateVersion ?? template.latestVersion}
+                        </p>
+                        <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
+                          Struktur follow-up berasal dari versi yang sedang dipakai pada form ini.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setQuickCustomizationOpen(true)}
+                        className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-3.5 py-2 text-xs font-semibold text-[#1677FF] shadow-sm transition hover:bg-blue-50"
+                      >
+                        <Icon name="plus" className="h-3.5 w-3.5" />
+                        Tambah Pemeriksaan
+                      </button>
+                    </div>
+
+                    <FollowUpTemplateRenderer
+                      definition={activeTemplateDefinition}
+                      answers={values.templateAnswers ?? {}}
+                      onChange={(templateAnswers) => updateValues({ ...values, templateAnswers })}
+                      openSections={openTemplateSections}
+                      onToggleSection={(sectionId) => setOpenTemplateSections((current) => ({ ...current, [sectionId]: !(current[sectionId] ?? true) }))}
+                    />
+                  </>
                 ) : (
                   <div role="alert" className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-4 text-xs leading-relaxed text-amber-700">
                     {templateLoadError || "Stase aktif belum memiliki template follow-up. Atur template dari halaman Stase Saya sebelum membuat follow-up."}
@@ -1046,6 +1133,98 @@ export default function FollowUpFormPage({
           </aside>
         </div>
       </div>
+
+      {activeTemplateDefinition ? (
+        <FollowUpQuickCustomization
+          open={quickCustomizationOpen}
+          definition={activeTemplateDefinition}
+          submitting={quickCustomizationSaving}
+          onClose={() => setQuickCustomizationOpen(false)}
+          onApply={async (mode, input: QuickFollowUpFieldInput) => {
+            setQuickCustomizationSaving(true);
+            setErrorMessage("");
+
+            try {
+              const { definition: nextDefinition } =
+                addFollowUpTemplateField(activeTemplateDefinition, input);
+
+              const normalizedDefinition =
+                validateFollowUpTemplateDefinition(nextDefinition);
+              const nextAnswers = mergeFollowUpTemplateAnswersForDefinition(
+                normalizedDefinition,
+                values.templateAnswers ?? {},
+              );
+
+              if (mode === "follow_up_only") {
+                setValues((current) => ({
+                  ...current,
+                  templateSnapshot: normalizedDefinition,
+                  templateSchemaVersion: normalizedDefinition.schema_version,
+                  templateAnswers: nextAnswers,
+                }));
+                setSaveMessage(
+                  "Pemeriksaan ditambahkan ke follow-up ini saja.",
+                );
+              } else {
+                if (!templateId || !templateVersion) {
+                  throw new Error(
+                    "Template aktif belum memiliki ID dan versi yang valid.",
+                  );
+                }
+
+                const result = await appendFollowUpTemplateVersion({
+                  templateId,
+                  expectedVersion: values.templateVersion ?? templateVersion,
+                  definition: normalizedDefinition,
+                });
+
+                setTemplate((current) =>
+                  current
+                    ? {
+                        ...current,
+                        latestVersion: result.version,
+                        latestSchemaVersion: result.schemaVersion,
+                        latestDefinition: normalizedDefinition,
+                      }
+                    : current,
+                );
+                setValues((current) => ({
+                  ...current,
+                  templateId,
+                  templateVersion: result.version,
+                  templateSchemaVersion: result.schemaVersion,
+                  templateSnapshot: normalizedDefinition,
+                  templateAnswers: nextAnswers,
+                }));
+                setOpenTemplateSections(
+                  Object.fromEntries(
+                    normalizedDefinition.sections.map((section) => [
+                      section.id,
+                      true,
+                    ]),
+                  ),
+                );
+                setSaveMessage(
+                  "Template diperbarui menjadi versi " +
+                    result.version +
+                    ". Follow-up ini menggunakan versi tersebut.",
+                );
+              }
+
+              setQuickCustomizationOpen(false);
+            } catch (error) {
+              setErrorMessage(
+                error instanceof Error
+                  ? error.message
+                  : "Pemeriksaan gagal ditambahkan.",
+              );
+              throw error;
+            } finally {
+              setQuickCustomizationSaving(false);
+            }
+          }}
+        />
+      ) : null}
     </AppShell>
   );
 }
