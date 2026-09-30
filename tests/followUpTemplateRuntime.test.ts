@@ -44,6 +44,17 @@ function template(): FollowUpTemplateDefinition {
               { value: "yellow", label: "Kuning" },
             ],
           },
+          {
+            id: "severity",
+            label: "Derajat",
+            type: "radio",
+            options: [
+              { value: "mild", label: "Ringan" },
+              { value: "severe", label: "Berat" },
+            ],
+          },
+          { id: "visit_date", label: "Tanggal", type: "date" },
+          { id: "visit_time", label: "Waktu", type: "time" },
           { id: "stable", label: "Stabil", type: "checkbox" },
         ],
       },
@@ -57,6 +68,9 @@ test("follow-up template runtime creates type-safe empty defaults", () => {
     pain: null,
     finding: "",
     flags: [],
+    severity: "",
+    visit_date: "",
+    visit_time: "",
     stable: false,
   });
 });
@@ -70,6 +84,9 @@ test("follow-up template runtime validates required values", () => {
       pain: 3,
       finding: "",
       flags: [],
+      severity: "",
+      visit_date: "",
+      visit_time: "",
       stable: false,
     }),
     ["Tekanan Darah"],
@@ -81,6 +98,9 @@ test("follow-up template runtime validates required values", () => {
       pain: 3,
       finding: "",
       flags: [],
+      severity: "",
+      visit_date: "",
+      visit_time: "",
       stable: false,
     }),
     [],
@@ -94,6 +114,9 @@ test("renderer answer contract accepts the value type for each field", () => {
       pain: 3,
       finding: "normal",
       flags: ["red"],
+      severity: "mild",
+      visit_date: "2026-09-30",
+      visit_time: "19:30",
       stable: true,
     }),
     [],
@@ -107,6 +130,9 @@ test("renderer answer contract rejects invalid number and select values", () => 
       pain: "3" as never,
       finding: "unknown",
       flags: [],
+      severity: "unknown",
+      visit_date: "2026-09-30",
+      visit_time: "19:30",
       stable: true,
     }),
     [
@@ -123,6 +149,9 @@ test("renderer answer contract rejects invalid multiselect and checkbox values",
       pain: null,
       finding: "",
       flags: ["red", "red"],
+      severity: "",
+      visit_date: "2026-09-30",
+      visit_time: "19:30",
       stable: "yes" as never,
     }),
     [
@@ -139,6 +168,9 @@ test("runtime normalization converts an empty number to null", () => {
       pain: "" as never,
       finding: "",
       flags: [],
+      severity: "",
+      visit_date: "",
+      visit_time: "",
       stable: false,
     }),
     {
@@ -146,6 +178,9 @@ test("runtime normalization converts an empty number to null", () => {
       pain: null,
       finding: "",
       flags: [],
+      severity: "",
+      visit_date: "",
+      visit_time: "",
       stable: false,
     },
   );
@@ -157,12 +192,18 @@ test("follow-up template runtime formats labels instead of internal option value
     pain: 3,
     finding: "normal",
     flags: ["red", "yellow"],
+    severity: "severe",
+    visit_date: "2026-09-30",
+    visit_time: "19:30",
     stable: true,
   });
 
   assert.match(formatted, /Tekanan Darah: 120\/80 mmHg/);
   assert.match(formatted, /Temuan: Normal/);
   assert.match(formatted, /Tanda: Merah, Kuning/);
+  assert.match(formatted, /Derajat: Berat/);
+  assert.match(formatted, /Tanggal: 2026-09-30/);
+  assert.match(formatted, /Waktu: 19:30/);
   assert.match(formatted, /Stabil: true/);
 });
 
@@ -184,8 +225,11 @@ test("follow-up template runtime finds a meaningful display label", () => {
     getFirstMeaningfulTemplateAnswer(template(), {
       bp: "",
       pain: null,
-      finding: "abnormal",
+      finding: "",
       flags: [],
+      severity: "severe",
+      visit_date: "",
+      visit_time: "",
       stable: false,
     }),
     "Abnormal",
