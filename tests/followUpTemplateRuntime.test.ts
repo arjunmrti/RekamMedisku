@@ -166,6 +166,19 @@ test("follow-up template runtime formats labels instead of internal option value
   assert.match(formatted, /Stabil: true/);
 });
 
+
+test("formatter omits false checkbox values", () => {
+  const formatted = formatFollowUpTemplateAnswers(template(), {
+    bp: "120/80",
+    pain: 3,
+    finding: "normal",
+    flags: [],
+    stable: false,
+  });
+
+  assert.doesNotMatch(formatted, /Stabil: false/);
+});
+
 test("follow-up template runtime finds a meaningful display label", () => {
   assert.equal(
     getFirstMeaningfulTemplateAnswer(template(), {
