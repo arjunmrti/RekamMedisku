@@ -62,12 +62,18 @@ const secondRotation: Rotation = {
 
 function withRotations(
   payload: BackupPayload = basePayload,
-  rotations: Rotation[] = [validRotation],
+  rotations?: Rotation[],
 ): BackupPayload {
+  const resolvedRotations =
+    rotations ??
+    payload.rotations ??
+    [validRotation];
+
   return {
     ...payload,
-    rotations,
-    activeRotationId: rotations.find((rotation) => rotation.status === "Aktif")?.id,
+    rotations: resolvedRotations,
+    activeRotationId:
+      resolvedRotations.find((rotation) => rotation.status === "Aktif")?.id,
   };
 }
 
