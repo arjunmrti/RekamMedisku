@@ -36,3 +36,7 @@ node_modules/
 
 # Build
 dist/
+
+# Local Supabase and test artifacts
+supabase/.temp/
+test-results/

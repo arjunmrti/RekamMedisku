@@ -68,37 +68,47 @@ VALUES (
 );
 
 INSERT INTO public.patients (
-  id, user_id, rotation_id, name, rm, current_location_id
+  id, user_id, rotation_id, name, age, gender, rm, room, bed, doctor, current_location_id
 )
 VALUES (
   '30000000-0000-0000-0000-0000000000a1',
   '00000000-0000-0000-0000-0000000000a1'::uuid,
   '10000000-0000-0000-0000-0000000000a1'::uuid,
   'MU005 A Patient',
+  30,
+  'Laki-laki',
   'MU005-A',
+  'Ward A',
+  '1',
+  'Dokter MU005',
   '20000000-0000-0000-0000-0000000000a2'::uuid
 );
 
 INSERT INTO public.follow_ups (
-  id, user_id, patient_id, number, status, subjective
+  id, user_id, patient_id, number, date, iso_date, time, status, subjective
 )
 VALUES (
   '40000000-0000-0000-0000-0000000000a1',
   '00000000-0000-0000-0000-0000000000a1'::uuid,
   '30000000-0000-0000-0000-0000000000a1'::uuid,
   1,
+  CURRENT_DATE,
+  CURRENT_DATE,
+  TIME '09:00',
   'Tersimpan',
   'MU005 A Subjective'
 );
 
 INSERT INTO public.supporting_exams (
-  id, user_id, follow_up_id, name, attachment_id
+  id, user_id, follow_up_id, name, exam_date, icon, attachment_id
 )
 VALUES (
   '50000000-0000-0000-0000-0000000000a1',
   '00000000-0000-0000-0000-0000000000a1'::uuid,
   '40000000-0000-0000-0000-0000000000a1'::uuid,
   'MU005 A Exam',
+  CURRENT_DATE,
+  'lab',
   'mu005-a-attachment'
 );
 
@@ -111,6 +121,10 @@ VALUES (
   'MU005 A Slaberan',
   'Hospital A'
 );
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('rekammedisku-attachments', 'rekammedisku-attachments', false)
+ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO storage.objects (
   id,
@@ -484,13 +498,13 @@ SELECT throws_ok(
 SELECT throws_ok(
   $test$
     INSERT INTO public.patients (
-      user_id, rotation_id, name, rm
+      user_id, rotation_id, name, age, gender, rm, room, bed, doctor
     )
     VALUES (
       '00000000-0000-0000-0000-0000000000b2'::uuid,
       '10000000-0000-0000-0000-0000000000a1'::uuid,
       'MU005 B foreign rotation',
-      'MU005-B-ROT'
+      30, 'Laki-laki', 'MU005-B-ROT', 'Ward B', '1', 'Dokter MU005'
     );
   $test$,
   '23503',
@@ -501,12 +515,15 @@ SELECT throws_ok(
 SELECT throws_ok(
   $test$
     INSERT INTO public.follow_ups (
-      user_id, patient_id, number, subjective
+      user_id, patient_id, number, date, iso_date, time, subjective
     )
     VALUES (
       '00000000-0000-0000-0000-0000000000b2'::uuid,
       '30000000-0000-0000-0000-0000000000a1'::uuid,
-      1,
+      2,
+      CURRENT_DATE,
+      CURRENT_DATE,
+      TIME '09:00',
       'MU005 B foreign patient'
     );
   $test$,
@@ -518,12 +535,14 @@ SELECT throws_ok(
 SELECT throws_ok(
   $test$
     INSERT INTO public.supporting_exams (
-      user_id, follow_up_id, name
+      user_id, follow_up_id, name, exam_date, icon
     )
     VALUES (
       '00000000-0000-0000-0000-0000000000b2'::uuid,
       '40000000-0000-0000-0000-0000000000a1'::uuid,
-      'MU005 B foreign follow-up'
+      'MU005 B foreign follow-up',
+      CURRENT_DATE,
+      'lab'
     );
   $test$,
   '23503',
@@ -551,13 +570,13 @@ SELECT throws_ok(
 SELECT throws_ok(
   $test$
     INSERT INTO public.patients (
-      user_id, rotation_id, name, rm, current_location_id
+      user_id, rotation_id, name, age, gender, rm, room, bed, doctor, current_location_id
     )
     VALUES (
       '00000000-0000-0000-0000-0000000000b2'::uuid,
       '10000000-0000-0000-0000-0000000000a1'::uuid,
       'MU005 B foreign location',
-      'MU005-B-LOC',
+      30, 'Laki-laki', 'MU005-B-LOC', 'Ward B', '1', 'Dokter MU005',
       '20000000-0000-0000-0000-0000000000a2'::uuid
     );
   $test$,

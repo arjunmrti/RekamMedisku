@@ -60,6 +60,9 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/tests/database/mu106_follow_up_instance_snapshot_customization.test.sql" \
             supabase/tests/database/mu106_follow_up_instance_snapshot_customization.test.sql
 
+          cp "$GITHUB_WORKSPACE/supabase/tests/database/mu107_rotation_configuration.test.sql" \
+            supabase/tests/database/mu107_rotation_configuration.test.sql
+
       - name: Validate PR migration filenames
         if: github.event_name == 'pull_request'
         shell: bash
@@ -112,29 +115,11 @@ jobs:
           cp "$GITHUB_WORKSPACE/supabase/tests/fixtures/mu005_tenant_isolation_schema.sql" \
             supabase/migrations/00000000000000_mu005_tenant_fixture.sql
 
-          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928_phase0_multi_user_database_foundation.sql" \
-            supabase/migrations/20260928_phase0_multi_user_database_foundation.sql
-
-          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928140000_mu101_follow_up_template_engine.sql" \
-            supabase/migrations/20260928140000_mu101_follow_up_template_engine.sql
-
-          cp "$GITHUB_WORKSPACE/supabase/migrations/20260927_p4_atomic_follow_up_save.sql" \
-            supabase/migrations/20260927_p4_atomic_follow_up_save.sql
-
-          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928150000_mu102_follow_up_template_persistence.sql" \
-            supabase/migrations/20260928150000_mu102_follow_up_template_persistence.sql
-
-          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928160000_mu103_rotation_template_binding.sql" \
-            supabase/migrations/20260928160000_mu103_rotation_template_binding.sql
-
-          cp "$GITHUB_WORKSPACE/supabase/migrations/20260928170000_mu104_dynamic_follow_up_answers.sql" \
-            supabase/migrations/20260928170000_mu104_dynamic_follow_up_answers.sql
-
-          cp "$GITHUB_WORKSPACE/supabase/migrations/20260930213000_mu106_follow_up_instance_snapshot_customization.sql" \
-            supabase/migrations/20260930213000_mu106_follow_up_instance_snapshot_customization.sql
-
-          cp "$GITHUB_WORKSPACE/supabase/migrations/20260926212923_p3_attachment_storage_sync.sql" \
-            supabase/migrations/20260926212923_p3_attachment_storage_sync.sql
+          # Copy production migrations in historical order without skipping later configuration/hardening
+          for file in "$GITHUB_WORKSPACE"/supabase/migrations/*.sql; do
+            [ -f "$file" ] || continue
+            cp "$file" supabase/migrations/
+          done
 
           declare -A seen_versions=()
           for file in supabase/migrations/*.sql; do

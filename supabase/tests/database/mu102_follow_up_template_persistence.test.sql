@@ -68,7 +68,7 @@ VALUES (
   '00000000-0000-0000-0000-0000000020c3'::uuid,
   '00000000-0000-0000-0000-0000000020a1'::uuid,
   'MU102 Stase',
-  'Template Bebas',
+  'Neurologi',
   CURRENT_DATE,
   CURRENT_DATE + 30,
   'Aktif'
@@ -79,14 +79,24 @@ INSERT INTO public.patients (
   user_id,
   rotation_id,
   name,
-  rm
+  age,
+  gender,
+  rm,
+  room,
+  bed,
+  doctor
 )
 VALUES (
   '00000000-0000-0000-0000-0000000020d4'::uuid,
   '00000000-0000-0000-0000-0000000020a1'::uuid,
   '00000000-0000-0000-0000-0000000020c3'::uuid,
   'Pasien MU102 A',
-  'RM-MU102-A'
+  30,
+  'Laki-laki',
+  'RM-MU102-A',
+  'Ward A',
+  '1',
+  'Dokter MU102'
 );
 
 INSERT INTO public.templates (
@@ -321,7 +331,7 @@ VALUES (
   '00000000-0000-0000-0000-0000000020e5'::uuid,
   '00000000-0000-0000-0000-0000000020b2'::uuid,
   'MU102 Stase B',
-  'Template Bebas',
+  'Neurologi',
   CURRENT_DATE,
   CURRENT_DATE + 30,
   'Aktif'
@@ -332,14 +342,24 @@ INSERT INTO public.patients (
   user_id,
   rotation_id,
   name,
-  rm
+  age,
+  gender,
+  rm,
+  room,
+  bed,
+  doctor
 )
 VALUES (
   '00000000-0000-0000-0000-0000000020f6'::uuid,
   '00000000-0000-0000-0000-0000000020b2'::uuid,
   '00000000-0000-0000-0000-0000000020e5'::uuid,
   'Pasien MU102 B',
-  'RM-MU102-B'
+  30,
+  'Laki-laki',
+  'RM-MU102-B',
+  'Ward B',
+  '1',
+  'Dokter MU102'
 );
 
 SELECT throws_ok(

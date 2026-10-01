@@ -28,6 +28,7 @@
     "src/utils/dashboardFollowUp.ts",
     "src/utils/patientContext.ts",
     "src/data/backupHistory.ts",
-    "src/data/localFollowUps.ts"
+    "src/data/localFollowUps.ts",
+    "src/utils/supabaseConfig.ts"
   ]
 }

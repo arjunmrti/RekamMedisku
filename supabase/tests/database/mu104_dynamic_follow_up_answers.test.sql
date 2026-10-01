@@ -12,8 +12,8 @@ INSERT INTO auth.users (id,email,raw_user_meta_data) VALUES
 INSERT INTO public.rotations (id,user_id,name,specialty,start_date,end_date,status)
 VALUES ('00000000-0000-0000-0000-0000000040b2','00000000-0000-0000-0000-0000000040a1'::uuid,'MU104','Lainnya',CURRENT_DATE,CURRENT_DATE+30,'Aktif');
 
-INSERT INTO public.patients (id,user_id,rotation_id,name,rm)
-VALUES ('00000000-0000-0000-0000-0000000040c3','00000000-0000-0000-0000-0000000040a1'::uuid,'00000000-0000-0000-0000-0000000040b2'::uuid,'Pasien MU104','RM-MU104');
+INSERT INTO public.patients (id,user_id,rotation_id,name,age,gender,rm,room,bed,doctor)
+VALUES ('00000000-0000-0000-0000-0000000040c3','00000000-0000-0000-0000-0000000040a1'::uuid,'00000000-0000-0000-0000-0000000040b2'::uuid,'Pasien MU104',30,'Laki-laki','RM-MU104','Ward A','1','Dokter MU104');
 
 INSERT INTO public.templates (id,user_id,type,name,description)
 VALUES ('00000000-0000-0000-0000-0000000040d4','00000000-0000-0000-0000-0000000040a1'::uuid,'follow_up','MU104 Template','dynamic answers');

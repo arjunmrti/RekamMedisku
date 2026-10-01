@@ -4,11 +4,11 @@
 --   supabase test db
 --
 -- NOTE:
--- The repository currently has incremental application migrations but does
--- not yet contain a reproducible base-schema migration/configuration for the
--- complete legacy database. This file is therefore the Phase 0 database
--- contract and should be executed against a complete test database. It is not
--- wired into CI until that environment is reproducible.
+-- The repository contains incremental application migrations that assume
+-- an existing Supabase baseline schema. CI supplies an isolated tenant
+-- fixture before applying the complete checked-in migration chain. Full
+-- execution still requires the fixture's legacy helper functions (for
+-- example rls_auto_enable) to exist in that baseline.
 
 CREATE EXTENSION IF NOT EXISTS pgtap;
 

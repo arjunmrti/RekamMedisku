@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import Icon from "../../components/ui/Icon";
-import { supabase } from "../../utils/supabase";
+import { isSupabaseConfigured, supabase, supabaseConfigError } from "../../utils/supabase";
 
 function getLoginErrorMessage(message: string) {
   if (
@@ -28,18 +28,27 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMessage("");
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-
-    if (error) {
-      setErrorMessage(getLoginErrorMessage(error.message));
+    if (!isSupabaseConfigured) {
+      setErrorMessage(supabaseConfigError ?? "Konfigurasi server tidak valid.");
       setLoading(false);
       return;
     }
 
-    setLoading(false);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      });
+
+      if (error) {
+        setErrorMessage(getLoginErrorMessage(error.message));
+      }
+    } catch (error) {
+      console.error("Login unavailable:", error);
+      setErrorMessage("Server tidak dapat dihubungi. Periksa koneksi lalu coba lagi.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

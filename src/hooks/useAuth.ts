@@ -10,18 +10,24 @@ export function useAuth() {
     let mounted = true;
 
     async function loadSession() {
-      const {
-        data: { session: currentSession },
-        error,
-      } = await supabase.auth.getSession();
+      try {
+        const {
+          data: { session: currentSession },
+          error,
+        } = await supabase.auth.getSession();
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      if (error) {
-        console.error("Supabase session failed:", error);
+        if (error) {
+          console.error("Supabase session failed:", error);
+          setSession(null);
+        } else {
+          setSession(currentSession);
+        }
+      } catch (error) {
+        if (!mounted) return;
+        console.error("Supabase session unavailable:", error);
         setSession(null);
-      } else {
-        setSession(currentSession);
       }
 
       setLoading(false);
