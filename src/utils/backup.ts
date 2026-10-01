@@ -216,7 +216,7 @@ function isFollowUpStatus(value: unknown): value is FollowUpEntry["status"] {
 function isTemplateType(
   value: unknown,
 ): value is FollowUpEntry["templateType"] {
-  return value === undefined || value === "Neurologi" || value === "Ilmu Penyakit Dalam";
+  return value === undefined || (typeof value === "string" && value.trim().length > 0);
 }
 
 function isSupportingExam(value: unknown): boolean {

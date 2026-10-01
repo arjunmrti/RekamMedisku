@@ -870,7 +870,7 @@ export default function FollowUpFormPage({
                   objective={values.objective}
                   neurology={values.neurology}
                   internalMedicine={values.internalMedicine}
-                  templateType="Neurologi"
+                  templateType={activeRotation?.specialty ?? "Neurologi"}
                   showTemplateFields={false}
                   onObjectiveChange={(objective) => updateValues({ ...values, objective })}
                   onNeurologyChange={(neurology) => updateValues({ ...values, neurology })}

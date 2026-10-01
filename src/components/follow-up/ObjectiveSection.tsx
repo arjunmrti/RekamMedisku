@@ -7,7 +7,7 @@ type ObjectiveSectionProps = {
   objective: FollowUpFormValues["objective"];
   neurology: FollowUpFormValues["neurology"];
   internalMedicine: FollowUpFormValues["internalMedicine"];
-  templateType: "Neurologi" | "Ilmu Penyakit Dalam";
+  templateType: string;
   onObjectiveChange: (value: FollowUpFormValues["objective"]) => void;
   onNeurologyChange: (value: FollowUpFormValues["neurology"]) => void;
   onInternalMedicineChange: (

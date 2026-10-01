@@ -288,6 +288,7 @@ SELECT is(
     SELECT count(*)::integer
     FROM public.templates
     WHERE type = 'follow_up'
+      AND user_id = '00000000-0000-0000-0000-0000000010a1'::uuid
   ),
   0,
   'User B cannot read User A follow-up templates'
@@ -362,3 +363,4 @@ RESET ROLE;
 SELECT * FROM finish();
 
 ROLLBACK;
+

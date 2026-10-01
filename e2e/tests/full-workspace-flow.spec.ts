@@ -10,7 +10,11 @@ type MockState = {
   rotation: Record<string, unknown> | null;
   patient: Record<string, unknown> | null;
   followUp: Record<string, unknown> | null;
+  clonedTemplate: Record<string, unknown> | null;
 };
+
+const STARTER_ID = "00000000-0000-0000-0000-000000000201";
+const CLONED_TEMPLATE_ID = "00000000-0000-4000-8000-000000000007";
 
 const TEMPLATE_ROW = {
   id: TEMPLATE_ID,
@@ -22,6 +26,41 @@ const TEMPLATE_ROW = {
   is_archived: false,
   created_at: "2026-09-27T00:00:00.000Z",
   updated_at: "2026-09-27T00:00:00.000Z",
+};
+
+const STARTER_ROW = {
+  id: STARTER_ID,
+  user_id: null,
+  type: "follow_up",
+  name: "Starter follow-up",
+  description: "System starter follow-up template",
+  metadata: { source: "system" },
+  is_archived: false,
+  is_system_owned: true,
+  created_at: "2026-09-27T00:00:00.000Z",
+  updated_at: "2026-09-27T00:00:00.000Z",
+};
+
+const STARTER_VERSION_ROW = {
+  id: "00000000-0000-0000-0000-000000000202",
+  user_id: null,
+  template_id: STARTER_ID,
+  version: 1,
+  schema_version: 1,
+  definition: {
+    schema_version: 1,
+    sections: [
+      {
+        id: "vitals",
+        title: "Vital Signs",
+        fields: [
+          { id: "bp", label: "Blood Pressure", type: "text", required: false },
+          { id: "rr", label: "Respiratory Rate", type: "number", required: false },
+        ],
+      },
+    ],
+  },
+  created_at: "2026-09-27T00:00:00.000Z",
 };
 
 const TEMPLATE_VERSION_ROW = {
@@ -125,11 +164,15 @@ async function installMockSupabase(page: Page, state: MockState) {
     }
 
     if (path === "/rest/v1/templates" && method === "GET") {
-      return json(route, 200, [TEMPLATE_ROW]);
+      const starters = url.searchParams.get("is_system_owned") === "eq.true"
+        ? [STARTER_ROW]
+        : [TEMPLATE_ROW, ...(state.clonedTemplate ? [state.clonedTemplate] : [])];
+      return json(route, 200, starters);
     }
 
     if (path === "/rest/v1/template_versions" && method === "GET") {
-      return json(route, 200, [TEMPLATE_VERSION_ROW]);
+      const isSystemOwned = url.searchParams.get("template_id") === `eq.${STARTER_ID}`;
+      return json(route, 200, isSystemOwned ? [STARTER_VERSION_ROW] : [TEMPLATE_VERSION_ROW]);
     }
 
     if (path === "/rest/v1/rotations" && method === "GET") {
@@ -177,6 +220,11 @@ async function installMockSupabase(page: Page, state: MockState) {
       return json(route, 201, state.patient);
     }
 
+    if (path.endsWith("/rpc/clone_system_follow_up_template") && method === "POST") {
+      state.clonedTemplate = { ...TEMPLATE_ROW, id: CLONED_TEMPLATE_ID, name: "Starter follow-up" };
+      return json(route, 200, { templateId: CLONED_TEMPLATE_ID, version: 1, schemaVersion: 1 });
+    }
+
     if (path.endsWith("/rpc/upsert_rotation_with_activation") && method === "POST") {
       const payload = request.postDataJSON() as Record<string, unknown>;
       state.rotation = {
@@ -187,7 +235,7 @@ async function installMockSupabase(page: Page, state: MockState) {
         start_date: String(payload.p_start_date ?? "2026-09-27"),
         end_date: String(payload.p_end_date ?? "2026-10-27"),
         status: String(payload.p_status ?? "Aktif"),
-        follow_up_template_id: TEMPLATE_ID,
+        follow_up_template_id: state.clonedTemplate?.id ?? TEMPLATE_ID,
         follow_up_template_version: 1,
         report_template_id: null,
         report_template_version: null,
@@ -251,6 +299,7 @@ test("alur browser utama: login → stase → pasien → follow-up → backup", 
     rotation: null,
     patient: null,
     followUp: null,
+    clonedTemplate: null,
   };
 
   await installMockSupabase(page, state);
@@ -274,8 +323,13 @@ test("alur browser utama: login → stase → pasien → follow-up → backup", 
   await page.getByLabel("Specialty").selectOption({ label: "Neurologi" });
   await page.getByLabel("Start date").fill("2026-09-27");
   await page.getByLabel("End date").fill("2026-10-27");
-  await page.getByLabel("Template Follow-Up").waitFor({ state: "visible" });
-  await page.getByLabel("Template Follow-Up").selectOption({ label: "E2E Follow-Up Template · v1" });
+  await expect(page.getByRole("button", { name: "Salin" })).toBeVisible();
+  await page.getByRole("button", { name: "Salin" }).click();
+  await expect.poll(() => state.clonedTemplate?.id).toBe(CLONED_TEMPLATE_ID);
+
+  const templateSelect = page.locator("select").filter({ has: page.locator("option", { hasText: "Starter follow-up" }) }).first();
+  await templateSelect.waitFor({ state: "visible" });
+  await templateSelect.selectOption({ label: "Starter follow-up · v1" });
   await page.getByLabel("Status").selectOption({ label: "Aktif" });
   await page.getByRole("button", { name: "Simpan Stase" }).click();
 

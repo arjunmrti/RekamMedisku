@@ -3,6 +3,7 @@ import type { PatientListItem } from "../types/patient";
 import type { ReportTemplateType } from "../types/report";
 import type { RotationSpecialty } from "../types/rotation";
 import type { ApplicationProfile } from "../types/profile";
+import { formatFollowUpTemplateAnswers } from "./followUpTemplateRuntime";
 
 function cleanBlock(value: string) {
   const text = value.trim();
@@ -213,24 +214,32 @@ export function buildWhatsAppReport(
         ? "Data pemeriksaan penunjang mengikuti catatan pada follow-up."
         : "Belum ada pemeriksaan penunjang.";
 
-  const templateObjective = getTemplateObjective(
-    followUp.objective,
-    templateType,
+  const hasGenericTemplate = Boolean(
+    followUp.templateSnapshot && followUp.templateAnswers,
   );
-  const generalObjective = getObjectiveWithoutTemplateSection(
-    followUp.objective,
-    templateType,
-  );
+  const templateObjective = hasGenericTemplate
+    ? []
+    : getTemplateObjective(followUp.objective, templateType);
+  const generalObjective = hasGenericTemplate
+    ? followUp.objective
+    : getObjectiveWithoutTemplateSection(followUp.objective, templateType);
   const templateHeading =
     templateType === "Neurologi"
       ? "Pemeriksaan neurologis:"
       : "Pemeriksaan sistemik Ilmu Penyakit Dalam:";
   const templateBlock =
-    templateObjective.length > 0
-      ? templateHeading +
+    followUp.templateSnapshot && followUp.templateAnswers
+      ? cleanBlock(
+          formatFollowUpTemplateAnswers(
+            followUp.templateSnapshot,
+            followUp.templateAnswers,
+          ),
+        )
+      : templateHeading +
         "\n" +
-        templateObjective.map((line) => "- " + line).join("\n")
-      : templateHeading + "\nBelum ada catatan.";
+        (templateObjective.length > 0
+          ? templateObjective.map((line) => "- " + line).join("\n")
+          : "Belum ada catatan.");
 
   return [
     "Assalamualaikum warahmatullahi wabarakatuh dok. Tabe dok, mohon izin dok. " +

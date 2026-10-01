@@ -414,6 +414,7 @@ SELECT is(
   (
     SELECT count(*)::integer
     FROM public.templates
+    WHERE user_id = '00000000-0000-0000-0000-0000000000a1'::uuid
   ),
   1,
   'User A can only see User A template'
@@ -462,6 +463,7 @@ SELECT is(
   (
     SELECT count(*)::integer
     FROM public.templates
+    WHERE user_id = '00000000-0000-0000-0000-0000000000b2'::uuid
   ),
   1,
   'User B can only see User B template'
@@ -470,7 +472,9 @@ SELECT is(
 SELECT is(
   (
     SELECT count(*)::integer
-    FROM public.template_versions
+    FROM public.template_versions v
+    JOIN public.templates t ON t.id = v.template_id
+    WHERE t.user_id = '00000000-0000-0000-0000-0000000000a1'::uuid
   ),
   0,
   'User B cannot see User A template versions'

@@ -13,7 +13,7 @@ import {
 
 type TemplateRow = {
   id: string;
-  user_id: string;
+  user_id: string | null;
   type: "follow_up";
   name: string;
   description: string;
@@ -21,11 +21,12 @@ type TemplateRow = {
   is_archived: boolean;
   created_at: string;
   updated_at: string;
+  is_system_owned?: boolean;
 };
 
 type TemplateVersionRow = {
   id: string;
-  user_id: string;
+  user_id: string | null;
   template_id: string;
   version: number;
   schema_version: number;
@@ -44,6 +45,44 @@ type AppendTemplateVersionRpcResult = {
   version: number;
   schemaVersion: number;
 };
+
+type CloneSystemTemplateRpcResult = AppendTemplateVersionRpcResult;
+
+export type SystemFollowUpTemplateSummary = FollowUpTemplateSummary & {
+  isSystemOwned: true;
+};
+
+export async function listSystemFollowUpTemplates(): Promise<SystemFollowUpTemplateSummary[]> {
+  await getCurrentUserId();
+  const { data, error } = await supabase
+    .from("templates")
+    .select("id,user_id,type,name,description,metadata,is_archived,created_at,updated_at,is_system_owned")
+    .eq("type", "follow_up")
+    .eq("is_system_owned", true)
+    .order("name");
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    ...toSummary(row as TemplateRow, null),
+    isSystemOwned: true as const,
+  }));
+}
+
+export async function cloneSystemFollowUpTemplate(input: {
+  templateId: string;
+  name?: string;
+}): Promise<CloneSystemTemplateRpcResult> {
+  await getCurrentUserId();
+  const { data, error } = await supabase.rpc("clone_system_follow_up_template", {
+    p_template_id: input.templateId,
+    p_name: input.name?.trim() || null,
+  });
+  if (error) throw error;
+  const result = data as CloneSystemTemplateRpcResult;
+  if (!result?.templateId || result.version !== 1) {
+    throw new Error("Respons cloning template follow-up tidak valid.");
+  }
+  return result;
+}
 
 function assertWorkspaceUser() {
   const userId = getWorkspaceUserId();
@@ -75,7 +114,7 @@ async function getCurrentUserId() {
 function toSummary(row: TemplateRow, latestVersion: TemplateVersionRow | null) {
   return {
     id: row.id,
-    userId: row.user_id,
+    userId: row.user_id ?? "",
     name: row.name,
     description: row.description,
     metadata: row.metadata ?? {},
@@ -176,7 +215,7 @@ export async function getFollowUpTemplate(
 
   return {
     id: row.id,
-    userId: row.user_id,
+    userId: row.user_id ?? "",
     name: row.name,
     description: row.description,
     metadata: row.metadata ?? {},
@@ -228,7 +267,7 @@ export async function getFollowUpTemplateVersion(
 
   return {
     id: row.id,
-    userId: row.user_id,
+    userId: row.user_id ?? "",
     name: row.name,
     description: row.description,
     metadata: row.metadata ?? {},

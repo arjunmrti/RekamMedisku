@@ -6,6 +6,7 @@ import type {
   RotationStatus,
 } from "../../types/rotation";
 import type { FollowUpTemplateSummary } from "../../types/followUpTemplate";
+import type { SystemFollowUpTemplateSummary } from "../../data/followUpTemplates";
 import type { SlaberanTemplateRecord } from "../../types/slaberanTemplate";
 import { loadSlaberanTemplates } from "../../data/localSlaberanTemplates";
 
@@ -26,6 +27,8 @@ type RotationFormModalProps = {
     slaberanTemplateId?: string;
   }) => void | Promise<void>;
   followUpTemplates: FollowUpTemplateSummary[];
+  systemFollowUpTemplates?: SystemFollowUpTemplateSummary[];
+  onCloneSystemTemplate?: (templateId: string, name?: string) => Promise<{ templateId: string; version: number }>;
   onCreateTemplate: () => void;
 };
 
@@ -46,6 +49,8 @@ export default function RotationFormModal({
   onClose,
   onSubmit,
   followUpTemplates,
+  systemFollowUpTemplates = [],
+  onCloneSystemTemplate,
   onCreateTemplate,
 }: RotationFormModalProps) {
   const [name, setName] = useState(() => rotation?.name ?? "");
@@ -64,6 +69,7 @@ export default function RotationFormModal({
   const [slaberanTemplateId, setSlaberanTemplateId] = useState<string>(() => rotation?.slaberanTemplateId ?? "");
   const [slaberanTemplates, setSlaberanTemplates] = useState<SlaberanTemplateRecord[]>(() => loadSlaberanTemplates());
   const [submitting, setSubmitting] = useState(false);
+  const [cloningTemplateId, setCloningTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -241,9 +247,9 @@ export default function RotationFormModal({
             </label>
           </div>
 
-          <label className="block">
+          <div>
             <span className="mb-1.5 block text-xs font-semibold text-slate-700">
-              Template Follow-Up
+              Template Follow-Up <span className="ml-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">Template Saya</span>
             </span>
             <div className="flex gap-2">
               <select
@@ -257,7 +263,7 @@ export default function RotationFormModal({
                 className="field-control min-w-0 flex-1"
                 disabled={followUpTemplates.length === 0}
               >
-                <option value="">{followUpTemplates.length ? "Pilih template..." : "Belum ada template"}</option>
+                <option value="">{followUpTemplates.length ? "Pilih template saya..." : "Belum ada template saya"}</option>
                 {followUpTemplates.map((template) => (
                   <option key={template.id} value={template.id}>
                     {template.name} · v{template.latestVersion}
@@ -278,10 +284,49 @@ export default function RotationFormModal({
               </p>
             ) : (
               <p className="mt-1.5 text-[10px] leading-relaxed text-amber-600">
-                {status === "Aktif" ? "Buat atau pilih template sebelum stase dapat diaktifkan." : "Template dapat dipilih nanti sebelum stase digunakan."}
+                {status === "Aktif" ? "Pilih, buat, atau salin starter sebelum stase dapat diaktifkan." : "Pilih dari Template Saya, atau salin dari starter di bawah."}
               </p>
             )}
-          </label>
+
+            {systemFollowUpTemplates.length > 0 ? (
+              <div className="mt-3 rounded-xl border border-amber-200/70 bg-amber-50/70 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700">
+                  Starter · hanya baca
+                </p>
+                <p className="mt-1 text-[10px] leading-relaxed text-amber-700/80">
+                  Salin ke Template Saya untuk dipakai. Starter tidak bisa diedit atau diarsipkan.
+                </p>
+                <ul className="mt-2 space-y-2">
+                  {systemFollowUpTemplates.map((template) => (
+                    <li key={template.id} className="flex items-center justify-between gap-2 rounded-lg bg-white/80 px-2.5 py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-xs font-semibold text-slate-800">{template.name}</p>
+                        <p className="truncate text-[10px] text-slate-400">{template.description || "Template starter sistem"} · v{template.latestVersion}</p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={cloningTemplateId !== null}
+                        onClick={async () => {
+                          if (!onCloneSystemTemplate || cloningTemplateId) return;
+                          setCloningTemplateId(template.id);
+                          try {
+                            const result = await onCloneSystemTemplate(template.id);
+                            setFollowUpTemplateId(result.templateId);
+                            setFollowUpTemplateVersion(result.version);
+                          } finally {
+                            setCloningTemplateId(null);
+                          }
+                        }}
+                        className="shrink-0 rounded-lg bg-[#1677FF] px-2.5 py-2 text-[10px] font-bold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {cloningTemplateId === template.id ? "Menyalin..." : "Salin"}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold text-slate-700">

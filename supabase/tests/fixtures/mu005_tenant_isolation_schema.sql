@@ -11,6 +11,28 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- Legacy baseline compatibility: production hardening migrations revoke this
+-- helper's privileges even though the CI fixture owns RLS setup explicitly.
+CREATE OR REPLACE FUNCTION public.rls_auto_enable()
+RETURNS event_trigger
+LANGUAGE plpgsql
+AS $$ BEGIN RETURN; END; $$;
+
+-- Legacy compatibility: p11 hardening revokes this function before the later
+-- reconciliation migration creates the production implementation.
+CREATE OR REPLACE FUNCTION public.delete_patient_with_history(target_patient_id uuid)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$
+BEGIN
+  DELETE FROM public.patients
+  WHERE id = target_patient_id
+    AND user_id = auth.uid();
+  RETURN jsonb_build_object('deleted', true, 'patientId', target_patient_id::text);
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.set_updated_at()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -20,6 +42,50 @@ BEGIN
   RETURN NEW;
 END;
 $$;
+
+-- p11 hardening stubs: these are revoked before production implementations
+CREATE OR REPLACE FUNCTION public.restore_workspace_backup_v2(p_backup jsonb)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$ BEGIN RETURN '{}'::jsonb; END; $$;
+
+CREATE OR REPLACE FUNCTION public.activate_rotation(target_rotation_id uuid)
+RETURNS TABLE (
+  id uuid, user_id uuid, name text, specialty text,
+  start_date date, end_date date, status text,
+  created_at timestamptz, updated_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$ BEGIN RETURN; END; $$;
+
+CREATE OR REPLACE FUNCTION public.upsert_rotation_with_activation(
+  p_rotation_id uuid, p_expected_updated_at timestamptz, p_name text, p_specialty text,
+  p_start_date date, p_end_date date, p_status text
+)
+RETURNS TABLE (
+  id uuid, user_id uuid, name text, specialty text,
+  start_date date, end_date date, status text,
+  created_at timestamptz, updated_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$ BEGIN RETURN; END; $$;
+
+CREATE OR REPLACE FUNCTION public.save_follow_up_with_exams(
+  p_follow_up_id uuid, p_expected_updated_at timestamptz, p_follow_up jsonb, p_supporting_exams jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$ BEGIN RETURN '{}'::jsonb; END; $$;
+
+CREATE OR REPLACE FUNCTION public.swap_slaberan_locations(p_location_id uuid, p_target_location_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY INVOKER
+AS $$ BEGIN RETURN; END; $$;
 
 CREATE TABLE public.profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,

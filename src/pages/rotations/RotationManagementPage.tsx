@@ -13,7 +13,7 @@ import {
   upsertRotationWithSupabase,
 } from "../../data/supabaseRotations";
 import { loadPatients } from "../../data/localPatients";
-import { listFollowUpTemplates } from "../../data/followUpTemplates";
+import { cloneSystemFollowUpTemplate, listFollowUpTemplates, listSystemFollowUpTemplates, type SystemFollowUpTemplateSummary } from "../../data/followUpTemplates";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
@@ -76,6 +76,7 @@ export default function RotationManagementPage({
   const [editingRotation, setEditingRotation] = useState<Rotation | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [followUpTemplates, setFollowUpTemplates] = useState<FollowUpTemplateSummary[]>([]);
+  const [systemFollowUpTemplates, setSystemFollowUpTemplates] = useState<SystemFollowUpTemplateSummary[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [templateBuilderOpen, setTemplateBuilderOpen] = useState(false);
 
@@ -88,8 +89,11 @@ export default function RotationManagementPage({
     const loadTemplates = async () => {
       setTemplatesLoading(true);
       try {
-        const next = await listFollowUpTemplates();
-        if (!cancelled) setFollowUpTemplates(next);
+        const [next, starters] = await Promise.all([listFollowUpTemplates(), listSystemFollowUpTemplates()]);
+        if (!cancelled) {
+          setFollowUpTemplates(next);
+          setSystemFollowUpTemplates(starters);
+        }
       } catch (error) {
         if (!cancelled) {
           setErrorMessage(error instanceof Error ? error.message : "Template follow-up gagal dimuat.");
@@ -441,6 +445,12 @@ export default function RotationManagementPage({
         onClose={() => setFormOpen(false)}
         onSubmit={handleSaveRotation}
         followUpTemplates={followUpTemplates}
+        systemFollowUpTemplates={systemFollowUpTemplates}
+        onCloneSystemTemplate={async (templateId) => {
+          const result = await cloneSystemFollowUpTemplate({ templateId });
+          setFollowUpTemplates(await listFollowUpTemplates());
+          return result;
+        }}
         onCreateTemplate={() => setTemplateBuilderOpen(true)}
       />
 
