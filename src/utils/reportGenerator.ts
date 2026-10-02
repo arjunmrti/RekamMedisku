@@ -166,6 +166,8 @@ export type RenderContext = {
     doctorCount: string;
     totalPatients: string;
   };
+  templateFields: Record<string, string>;
+  core: Record<string, string>;
 };
 
 export function buildRenderContext(
@@ -203,6 +205,10 @@ export function buildRenderContext(
     admissionDate: formatAdmissionDate(patient.admissionDate),
     admissionComplaint: patient.admissionComplaint?.trim() ?? "",
     summary: { doctorCount: "", totalPatients: "" },
+    templateFields: buildTemplateFields(followUp),
+    core: Object.fromEntries(
+      Object.entries(followUp.coreObjective ?? {}).map(([key, value]) => [key, String(value ?? "")]),
+    ),
   };
 }
 
@@ -230,6 +236,12 @@ export const APPROVED_REPORT_TAGS = [
 ] as const;
 
 const APPROVED_REPORT_TAG_SET = new Set<string>(APPROVED_REPORT_TAGS);
+const APPROVED_CORE_TAGS = new Set([
+  "generalCondition", "consciousness", "gcsEye", "gcsVerbal", "gcsMotor",
+  "systolic", "diastolic", "pulse", "respiratoryRate", "temperature", "spo2",
+  "oxygenVia", "weight", "height", "bmi", "nutritionStatus", "headNeck",
+  "thorax", "abdomen", "extremities", "painNrs", "otherFindings",
+]);
 const REPORT_TAG_PATTERN = /\{\{\s*([^{}]+?)\s*\}\}/g;
 
 export function resolveTag(key: string, context: RenderContext): string {
@@ -255,6 +267,14 @@ export function resolveTag(key: string, context: RenderContext): string {
     "summary.doctor_count": context.summary.doctorCount,
     "summary.total_patients": context.summary.totalPatients,
   };
+  if (key.startsWith("template.field.")) {
+    return context.templateFields[key.slice("template.field.".length)] ?? "";
+  }
+
+  if (key.startsWith("core.")) {
+    return context.core[key.slice("core.".length)] ?? "";
+  }
+
   return values[key] ?? "";
 }
 
@@ -267,6 +287,37 @@ export function extractTagsFromText(text: string): string[] {
   return tags;
 }
 
+function buildTemplateFields(followUp: FollowUpEntry): Record<string, string> {
+  const fields: Record<string, string> = {};
+  const definition = followUp.templateSnapshot;
+  const answers = followUp.templateAnswers ?? {};
+
+  if (!definition?.sections) return fields;
+
+  for (const section of definition.sections) {
+    for (const field of section.fields) {
+      const value = answers[field.id];
+      fields[field.id] = value != null ? String(value) : "";
+    }
+  }
+
+  return fields;
+}
+
+function isApprovedTag(tag: string, _definition?: ReportTemplateDefinition): boolean {
+  if (APPROVED_REPORT_TAG_SET.has(tag)) return true;
+
+  const fieldId = tag.startsWith("template.field.")
+    ? tag.slice("template.field.".length)
+    : "";
+  if (fieldId) return /^[a-zA-Z0-9_-]+$/.test(fieldId);
+
+  const coreKey = tag.startsWith("core.") ? tag.slice("core.".length) : "";
+  if (coreKey) return APPROVED_CORE_TAGS.has(coreKey);
+
+  return false;
+}
+
 export function validateReportTemplateDefinition(
   definition: ReportTemplateDefinition,
 ): void {
@@ -275,7 +326,7 @@ export function validateReportTemplateDefinition(
   if (definition.greeting) {
     const greetingTags = extractTagsFromText(definition.greeting);
     for (const tag of greetingTags) {
-      if (!APPROVED_REPORT_TAG_SET.has(tag)) {
+      if (!isApprovedTag(tag, definition)) {
         errors.push(`Unknown tag in greeting: {{${tag}}}`);
       }
     }
@@ -284,7 +335,7 @@ export function validateReportTemplateDefinition(
   for (const section of definition.sections) {
     const bodyTags = extractTagsFromText(section.body);
     for (const tag of bodyTags) {
-      if (!APPROVED_REPORT_TAG_SET.has(tag)) {
+      if (!isApprovedTag(tag, definition)) {
         errors.push(`Unknown tag in section "${section.label}": {{${tag}}}`);
       }
     }
@@ -293,7 +344,7 @@ export function validateReportTemplateDefinition(
   if (definition.closing) {
     const closingTags = extractTagsFromText(definition.closing);
     for (const tag of closingTags) {
-      if (!APPROVED_REPORT_TAG_SET.has(tag)) {
+      if (!isApprovedTag(tag, definition)) {
         errors.push(`Unknown tag in closing: {{${tag}}}`);
       }
     }

@@ -6,6 +6,7 @@ import {
   formatReportRotationName,
   getReportGreeting,
   getReportTemplateForSpecialty,
+  resolveTag,
   APPROVED_REPORT_TAGS,
   extractTagsFromText,
   validateReportTemplateDefinition,
@@ -291,6 +292,24 @@ test("APPROVED_REPORT_TAGS contains whitelist of expected keys", () => {
   assert.ok(APPROVED_REPORT_TAGS.includes("patient.name"));
   assert.ok(APPROVED_REPORT_TAGS.includes("report.rotation"));
   assert.ok(APPROVED_REPORT_TAGS.includes("followUp.coreObjective"));
+});
+
+test("resolveTag supports dynamic template and core tags", () => {
+  const context = {
+    report: { date: "", rotation: "", hospital: "", doctor: "" },
+    patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" },
+    followUp: { subjective: "", objective: "", assessment: "", plan: "", instruction: "", supportingExams: "", coreObjective: "" },
+    identity: { name: "", studentId: "", program: "", institution: "" },
+    templateType: "Neurologi" as const,
+    admissionDate: "",
+    admissionComplaint: "",
+    summary: { doctorCount: "", totalPatients: "" },
+    templateFields: { "field-001": "nilai field" },
+    core: { generalCondition: "Baik" },
+  };
+  assert.equal(resolveTag("template.field.field-001", context), "nilai field");
+  assert.equal(resolveTag("core.generalCondition", context), "Baik");
+  assert.equal(resolveTag("template.field.unknown", context), "");
 });
 
 test("validateReportTemplateDefinition accepts valid approved tags", () => {
