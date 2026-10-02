@@ -71,7 +71,8 @@ async function installMock(page: Page, state: MockState) {
 
     if (path === "/rest/v1/templates" && method === "GET") {
       const isSystem = url.searchParams.get("is_system_owned") === "eq.true";
-      return json(route, 200, isSystem ? [STARTER_ROW] : state.clonedTemplate ? [state.clonedTemplate] : []);
+      const rows = isSystem ? [STARTER_ROW] : state.clonedTemplate ? [state.clonedTemplate] : [];
+      return json(route, 200, rows);
     }
 
     if (path === "/rest/v1/template_versions" && method === "GET") {

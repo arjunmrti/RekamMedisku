@@ -458,9 +458,7 @@ test("Phase 2: Custom non-Neurology template renders, fills, saves answers", asy
   await page.getByLabel("Start date").fill("2026-10-01");
   await page.getByLabel("End date").fill("2026-10-31");
 
-  const personalTemplateSelect = page.locator("select").filter({
-    has: page.locator(`option[value="${CUSTOM_TEMPLATE_ID}"]`),
-  });
+  const personalTemplateSelect = page.locator("select").filter({ has: page.locator("option", { hasText: "Pilih template saya" }) }).first();
   await expect(personalTemplateSelect).toBeVisible();
   await personalTemplateSelect.selectOption({ value: CUSTOM_TEMPLATE_ID });
 
@@ -568,9 +566,7 @@ test("Phase 2: Snapshot v1 persists when template version advances", async ({ pa
   await page.getByLabel("Start date").fill("2026-10-01");
   await page.getByLabel("End date").fill("2026-10-31");
 
-  const personalTemplateSelect = page.locator("select").filter({
-    has: page.locator(`option[value="${CUSTOM_TEMPLATE_ID}"]`),
-  });
+  const personalTemplateSelect = page.locator("select").filter({ has: page.locator("option", { hasText: "Pilih template saya" }) }).first();
   await expect(personalTemplateSelect).toBeVisible();
   await personalTemplateSelect.selectOption({ value: CUSTOM_TEMPLATE_ID });
 
