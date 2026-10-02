@@ -113,10 +113,20 @@ export default function PatientListTable({
               return (
                 <tr
                   key={patient.id}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={"Pilih pasien " + patient.name}
                   onClick={() => onSelectPatient(patient)}
+                  onKeyDown={(event) => {
+                    if (event.target !== event.currentTarget) return;
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onSelectPatient(patient);
+                    }
+                  }}
                   aria-selected={selected}
                   className={
-                    "cursor-pointer transition-colors " +
+                    "cursor-pointer transition-colors focus:outline-none focus-visible:bg-blue-50/90 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#1677FF] " +
                     (selected
                       ? "bg-blue-50/70 hover:bg-blue-50"
                       : "hover:bg-slate-50/80")

@@ -356,18 +356,21 @@ export default function RotationManagementPage({
                     </p>
                   </div>
 
-                  <button
-                    type="button"
-                    disabled
-                    className={
-                      "mt-5 min-h-11 rounded-xl border px-4 py-2.5 text-xs font-semibold " +
-                      (activeRotation.id
-                        ? "border-emerald-100 bg-emerald-50 text-emerald-600"
-                        : "border-slate-200 bg-slate-50 text-slate-400")
-                    }
-                  >
-                    {activeRotation.id ? "Gunakan Stase Ini" : "Belum ada stase aktif"}
-                  </button>
+                  {activeRotation.id ? (
+                    <div
+                      className="mt-5 flex min-h-11 items-center justify-center rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-2.5 text-xs font-semibold text-emerald-700"
+                      role="status"
+                    >
+                      ✓ Sedang Aktif
+                    </div>
+                  ) : (
+                    <div
+                      className="mt-5 flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-xs font-semibold text-slate-500"
+                      role="status"
+                    >
+                      Belum ada stase aktif
+                    </div>
+                  )}
                 </div>
               </div>
             </section>

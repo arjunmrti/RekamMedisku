@@ -34,6 +34,17 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
 
   useEffect(() => {
     if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
     setName("");
     setDescription("");
     setSections([makeSection(0)]);
@@ -83,11 +94,19 @@ export default function FollowUpTemplateBuilderModal({ open, onClose, onCreated 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-900/45 p-0 backdrop-blur-sm sm:p-4 md:items-center">
+    <div
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-slate-900/45 p-0 backdrop-blur-sm sm:p-4 md:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="follow-up-template-builder-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
       <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:max-h-[92dvh] sm:max-w-4xl md:rounded-3xl">
         <div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-6">
-          <div><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1677FF]">Template Builder</p><h2 className="mt-1 text-lg font-bold text-slate-900">Buat Template Follow-Up</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Susun field berdasarkan kebutuhan Anda. Tidak ada field klinis yang dikunci oleh specialty tertentu.</p></div>
-          <button type="button" onClick={onClose} aria-label="Tutup" className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50">×</button>
+          <div><p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1677FF]">Template Builder</p><h2 id="follow-up-template-builder-title" className="mt-1 text-lg font-bold text-slate-900">Buat Template Follow-Up</h2><p className="mt-1 text-xs leading-relaxed text-slate-500">Susun field berdasarkan kebutuhan Anda. Tidak ada field klinis yang dikunci oleh specialty tertentu.</p></div>
+          <button type="button" onClick={onClose} aria-label="Tutup" className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50">×</button>
         </div>
         <form onSubmit={handleSubmit} className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

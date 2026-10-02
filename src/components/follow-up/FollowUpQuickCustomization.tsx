@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Icon from "../ui/Icon";
 import type {
   FollowUpTemplateDefinition,
@@ -53,6 +53,17 @@ export default function FollowUpQuickCustomization({
   const [placeholder, setPlaceholder] = useState("");
   const [unit, setUnit] = useState("");
   const [optionsText, setOptionsText] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !submitting) onClose();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose, submitting]);
 
   if (!open) return null;
 
@@ -124,14 +135,22 @@ export default function FollowUpQuickCustomization({
   };
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-slate-900/45 p-0 backdrop-blur-sm sm:p-4 md:items-center">
+    <div
+      className="fixed inset-0 z-[95] flex items-end justify-center bg-slate-900/45 p-0 backdrop-blur-sm sm:p-4 md:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="follow-up-quick-customization-title"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget && !submitting) onClose();
+      }}
+    >
       <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden rounded-t-3xl border border-slate-200 bg-white shadow-2xl sm:max-h-[90dvh] sm:max-w-xl md:rounded-3xl">
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-6">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
               Quick Customization
             </p>
-            <h2 className="mt-1 text-lg font-bold text-slate-900">
+            <h2 id="follow-up-quick-customization-title" className="mt-1 text-lg font-bold text-slate-900">
               Tambah Pemeriksaan
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-slate-500">
@@ -143,7 +162,7 @@ export default function FollowUpQuickCustomization({
             onClick={handleClose}
             disabled={submitting}
             aria-label="Tutup"
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 disabled:opacity-50"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 hover:bg-slate-50 disabled:opacity-50"
           >
             ×
           </button>
