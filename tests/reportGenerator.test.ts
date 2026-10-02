@@ -7,6 +7,7 @@ import {
   getReportGreeting,
   getReportTemplateForSpecialty,
   resolveTag,
+  renderReportTemplate,
   APPROVED_REPORT_TAGS,
   extractTagsFromText,
   validateReportTemplateDefinition,

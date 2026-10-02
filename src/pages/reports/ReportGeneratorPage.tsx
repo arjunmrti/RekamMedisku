@@ -12,8 +12,11 @@ import { loadSavedFollowUps } from "../../data/localFollowUps";
 import { loadActiveRotation, loadRotations } from "../../data/localRotations";
 import {
   buildWhatsAppReport,
+  buildRenderContext,
   getReportTemplateForSpecialty,
+  renderReportTemplate,
 } from "../../utils/reportGenerator";
+import { listReportTemplates, type ReportTemplateSummary } from "../../data/supabaseReportTemplates";
 import type { PatientListItem } from "../../types/patient";
 import type { ReportMode, ReportStep, ReportTemplateType } from "../../types/report";
 import Icon from "../../components/ui/Icon";
@@ -252,9 +255,16 @@ function FollowUpReportGeneratorPage({
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
   const [reportText, setReportText] = useState("");
+  const [reportDiagnostics, setReportDiagnostics] = useState<string[]>([]);
   const [generatedKey, setGeneratedKey] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   const previewError = profileError;
+  const [reportTemplates, setReportTemplates] = useState<ReportTemplateSummary[]>([]);
+  const savedReportDefinition = reportTemplates[0]?.latestDefinition ?? undefined;
+
+  useEffect(() => {
+    void listReportTemplates().then(setReportTemplates).catch(() => setReportTemplates([]));
+  }, [workspaceSyncVersion]);
 
   const selectedFollowUp =
     followUps.find((entry) => entry.id === selectedFollowUpId) ??
@@ -275,8 +285,23 @@ function FollowUpReportGeneratorPage({
 
   const generateReport = (nextTemplate: ReportTemplateType = templateType) => {
     if (!patient || !selectedFollowUp || !reportIdentity) return;
-    setReportText(
-      buildWhatsAppReport(patient, selectedFollowUp, nextTemplate, {
+    
+    if (savedReportDefinition) {
+      const context = buildRenderContext(
+        patient,
+        selectedFollowUp,
+        patientRotation?.name ?? nextTemplate,
+        reportIdentity,
+        { name: patientRotation?.name, specialty: patientRotation?.specialty },
+      );
+      const result = renderReportTemplate(savedReportDefinition, context, true);
+      if (typeof result === "object") {
+        const rendered = renderReportTemplate(savedReportDefinition, context, false) as string;
+        setReportText(rendered);
+        setReportDiagnostics([...result.unknown, ...result.unresolved]);
+      }
+    } else {
+      const legacyText = buildWhatsAppReport(patient, selectedFollowUp, nextTemplate, {
         rotationName:
           patientRotation?.specialty !== "Lainnya"
             ? patientRotation?.specialty
@@ -286,8 +311,11 @@ function FollowUpReportGeneratorPage({
           name: patientRotation?.name,
           specialty: patientRotation?.specialty,
         },
-      }),
-    );
+      });
+      setReportText(legacyText);
+      setReportDiagnostics([]);
+    }
+    
     setTemplateType(nextTemplate);
     setGeneratedKey(
       selectedFollowUp.id + ":" + nextTemplate + ":" + Date.now(),
@@ -617,6 +645,7 @@ function FollowUpReportGeneratorPage({
                 template={templateType}
                 loading={profileLoading}
                 error={previewError}
+                diagnostics={reportDiagnostics}
                 onTemplateChange={(value) => generateReport(value)}
                 onCopy={handleCopy}
                 onClose={() => setPreviewOpen(false)}

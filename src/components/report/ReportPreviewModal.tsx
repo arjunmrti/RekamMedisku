@@ -7,6 +7,7 @@ type Props = {
   template: ReportTemplateType;
   loading?: boolean;
   error?: string;
+  diagnostics?: string[];
   onTemplateChange: (value: ReportTemplateType) => void;
   onCopy: () => void;
   onClose: () => void;
@@ -18,6 +19,7 @@ export default function ReportPreviewModal({
   template,
   loading = false,
   error = "",
+  diagnostics = [],
   onTemplateChange,
   onCopy,
   onClose,
@@ -48,6 +50,7 @@ export default function ReportPreviewModal({
           </button>
         </header>
         <div className="space-y-4 overflow-y-auto p-5">
+          {diagnostics.length > 0 ? <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Tag tidak terselesaikan: {diagnostics.join(", ")}</div> : null}
           <label className="block text-xs font-semibold text-slate-700">Template laporan
             <select value={template} onChange={(event) => onTemplateChange(event.target.value as ReportTemplateType)} className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
               <option value="Neurologi">Neurologi</option>
@@ -60,7 +63,7 @@ export default function ReportPreviewModal({
         </div>
         <footer className="flex flex-col-reverse gap-2 border-t border-slate-100 px-5 py-4 sm:flex-row sm:justify-end">
           <button type="button" onClick={onClose} className="rounded-xl border border-slate-200 px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">Tutup</button>
-          <button type="button" onClick={onCopy} disabled={!text || loading} className="rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-40">Salin Laporan</button>
+          <button type="button" onClick={onCopy} disabled={!text || loading || diagnostics.length > 0} className="rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-40">Salin Laporan</button>
         </footer>
       </section>
     </div>
