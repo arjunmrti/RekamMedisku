@@ -290,14 +290,8 @@ function followUpPayload(entry: FollowUpEntry, remotePatientId: string) {
     assessment: entry.assessment,
     plan: entry.plan,
     summary: entry.summary,
-    // Kept out of remote payload until follow-ups schema/RPC supports this JSON field.
   };
 }
-
-// Remote coreObjective migration needed before cloud persistence:
-// add follow_ups.core_objective jsonb nullable, then update save_follow_up_with_exams
-// and follow-up SELECT mapping to read/write that column. Local storage remains source
-// of truth for this field until migration exists.
 
 async function ensureRemoteAttachment(
   exam: SupportingExam,
