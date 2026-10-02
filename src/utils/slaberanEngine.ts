@@ -13,6 +13,7 @@ import {
   normalizeSlaberanDoctorName,
 } from "./slaberanFacts";
 import { normalizePatientLocationType } from "./patientLocation";
+import { resolveTag, type RenderContext } from "./reportGenerator";
 
 type EngineOptions = {
   template: SlaberanTemplateRecord;
@@ -303,13 +304,45 @@ function replaceVariables(
   date: string,
   totalPatients: number,
 ) {
-  return text
-    .replaceAll("{{report.specialty}}", template.specialty)
-    .replaceAll("{{report.doctor}}", doctor)
-    .replaceAll("{{report.hospital}}", template.hospital)
-    .replaceAll("{{report.date}}", formatSlaberanDate(date))
-    .replaceAll("{{summary.doctor_count}}", String(totalPatients))
-    .replaceAll("{{summary.total_patients}}", String(totalPatients));
+  const context: RenderContext = {
+    report: {
+      date: formatSlaberanDate(date),
+      rotation: template.specialty,
+      hospital: template.hospital,
+      doctor,
+    },
+    patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" },
+    followUp: {
+      subjective: "",
+      objective: "",
+      assessment: "",
+      plan: "",
+      instruction: "",
+      supportingExams: "",
+      coreObjective: "",
+    },
+    identity: { name: "", studentId: "", program: "", institution: "" },
+    templateType: template.specialty as RenderContext["templateType"],
+    admissionDate: "",
+    admissionComplaint: "",
+    summary: {
+      doctorCount: String(totalPatients),
+      totalPatients: String(totalPatients),
+    },
+  };
+
+  const aliases: Record<string, string> = {
+    "report.specialty": "report.specialty",
+    "report.doctor": "report.doctor",
+    "report.hospital": "report.hospital",
+    "report.date": "report.date",
+    "summary.doctor_count": "summary.doctor_count",
+    "summary.total_patients": "summary.total_patients",
+  };
+
+  return text.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_match, rawKey: string) =>
+    resolveTag(aliases[rawKey.trim()] ?? rawKey.trim(), context),
+  );
 }
 
 function appendHeader(
