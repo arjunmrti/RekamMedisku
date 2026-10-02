@@ -116,6 +116,9 @@ test("workspace baru tidak membuat stase otomatis", () => {
 
   assert.deepEqual(loadRotations(), []);
   assert.equal(storage.getItem("rekammedisku:rotations"), null);
+  assert.equal(loadActiveRotationId(), "");
+  assert.equal(loadActiveRotation().id, "");
+  assert.equal(loadActiveRotation().name, "Belum ada stase");
 });
 
 test("workspace tanpa stase aktif tidak memilih stase secara otomatis", () => {
