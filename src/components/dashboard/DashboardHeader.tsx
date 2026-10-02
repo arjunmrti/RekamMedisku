@@ -3,6 +3,7 @@ import Icon from "../ui/Icon";
 
 type DashboardHeaderProps = {
   rotation: Rotation;
+  userName: string;
   onChangeRotation: () => void;
 };
 
@@ -31,6 +32,7 @@ function formatPeriod(startDate: string, endDate: string) {
 
 export default function DashboardHeader({
   rotation,
+  userName,
   onChangeRotation,
 }: DashboardHeaderProps) {
   return (
@@ -42,7 +44,7 @@ export default function DashboardHeader({
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-[24px] font-bold leading-tight tracking-tight text-slate-900 sm:text-[28px] lg:text-[30px]">
-              {getGreeting()}, Muhammad Fadel
+              {getGreeting()}, {userName}
             </h1>
             <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-500 shadow-sm">
               Hari ini

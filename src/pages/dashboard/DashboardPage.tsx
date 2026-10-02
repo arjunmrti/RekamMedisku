@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import DashboardHeader from "../../components/dashboard/DashboardHeader";
 import KpiGrid from "../../components/dashboard/KpiGrid";
@@ -9,6 +9,10 @@ import DashboardStatusPanel from "../../components/dashboard/DashboardStatusPane
 import { loadActiveRotation } from "../../data/localRotations";
 import { loadPatients } from "../../data/localPatients";
 import { loadSavedFollowUps } from "../../data/localFollowUps";
+import {
+  APPLICATION_PROFILE_EVENT,
+  loadApplicationProfile,
+} from "../../data/applicationProfile";
 import type { PatientListItem } from "../../types/patient";
 import type { FollowUpEntry } from "../../types/followUp";
 import { toLocalIsoDate } from "../../utils/date";
@@ -47,10 +51,38 @@ export default function DashboardPage({
 }: NavigationProps & {
   onOpenPatientProfile: (patient: PatientListItem) => void;
 }) {
-  useWorkspaceSyncVersion();
+  const syncVersion = useWorkspaceSyncVersion();
   const [searchValue, setSearchValue] = useState("");
+  const [profileName, setProfileName] = useState<string>("Dokter");
   const activeRotation = loadActiveRotation();
   const patients = loadPatients();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchProfile = async () => {
+      try {
+        const profile = await loadApplicationProfile();
+        if (!cancelled && profile?.name) {
+          setProfileName(profile.name);
+        }
+      } catch {
+        // Safe fallback
+      }
+    };
+
+    void fetchProfile();
+
+    const handleProfileUpdate = () => {
+      void fetchProfile();
+    };
+
+    window.addEventListener(APPLICATION_PROFILE_EVENT, handleProfileUpdate);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(APPLICATION_PROFILE_EVENT, handleProfileUpdate);
+    };
+  }, [syncVersion]);
 
   const activePatients = useMemo(
     () =>
@@ -167,6 +199,7 @@ export default function DashboardPage({
       <main className="flex-1 overflow-y-auto px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:pb-8 md:pb-8 sm:px-6 lg:px-8 lg:py-7 lg:pb-8">
         <div className="mx-auto w-full max-w-[1400px]">
           <DashboardHeader
+            userName={profileName}
             rotation={activeRotation}
             onChangeRotation={() => onNavigate("Stase Saya")}
           />
