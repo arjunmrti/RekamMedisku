@@ -345,7 +345,7 @@ export function validateReportTemplateDefinition(
         return;
       }
       if (!snapshot || !knownFieldIds.has(fieldId)) {
-        errors.push(`Unknown tag in ${location}: {{${tag}}}`);
+        errors.push(`Unknown dynamic tag in ${location}: {{${tag}}}. Follow-up template schema is required.`);
       }
       return;
     }
