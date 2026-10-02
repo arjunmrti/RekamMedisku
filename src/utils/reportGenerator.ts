@@ -133,6 +133,96 @@ export type ReportIdentity = Pick<
   "name" | "studentId" | "program" | "institution"
 >;
 
+export type RenderContext = {
+  report: {
+    date: string;
+    rotation: string;
+    hospital: string;
+    doctor: string;
+  };
+  patient: {
+    name: string;
+    age: string;
+    rm: string;
+    room: string;
+    bed: string;
+    dpjp: string;
+  };
+  followUp: {
+    subjective: string;
+    objective: string;
+    assessment: string;
+    plan: string;
+    instruction: string;
+    supportingExams: string;
+    coreObjective: string;
+  };
+  identity: ReportIdentity;
+  templateType: ReportTemplateType;
+  admissionDate: string;
+  admissionComplaint: string;
+};
+
+export function buildRenderContext(
+  patient: PatientListItem,
+  followUp: FollowUpEntry,
+  rotation: string,
+  profile: ReportIdentity,
+): RenderContext {
+  return {
+    report: {
+      date: formatReportDate(followUp.date),
+      rotation,
+      hospital: profile.institution?.trim() ?? "",
+      doctor: patient.doctor,
+    },
+    patient: {
+      name: patient.name,
+      age: String(patient.age),
+      rm: patient.rm,
+      room: patient.room,
+      bed: patient.bed,
+      dpjp: patient.doctor,
+    },
+    followUp: {
+      subjective: followUp.subjective,
+      objective: followUp.objective,
+      assessment: followUp.assessment,
+      plan: followUp.planning?.trim() || followUp.plan?.trim() || "Belum ada planning.",
+      instruction: followUp.instruction?.trim() ?? "",
+      supportingExams: (followUp.supportingExams ?? []).map((exam) => exam.name).join(", "),
+      coreObjective: followUp.coreObjective ? JSON.stringify(followUp.coreObjective) : "",
+    },
+    identity: profile,
+    templateType: rotation as ReportTemplateType,
+    admissionDate: formatAdmissionDate(patient.admissionDate),
+    admissionComplaint: patient.admissionComplaint?.trim() ?? "",
+  };
+}
+
+export function resolveTag(key: string, context: RenderContext): string {
+  const values: Record<string, string> = {
+    "report.date": context.report.date,
+    "report.rotation": context.report.rotation,
+    "report.hospital": context.report.hospital,
+    "report.doctor": context.report.doctor,
+    "patient.name": context.patient.name,
+    "patient.age": context.patient.age,
+    "patient.rm": context.patient.rm,
+    "patient.room": context.patient.room,
+    "patient.bed": context.patient.bed,
+    "patient.dpjp": context.patient.dpjp,
+    "followUp.subjective": context.followUp.subjective,
+    "followUp.objective": context.followUp.objective,
+    "followUp.assessment": context.followUp.assessment,
+    "followUp.plan": context.followUp.plan,
+    "followUp.instruction": context.followUp.instruction,
+    "followUp.supportingExams": context.followUp.supportingExams,
+    "followUp.coreObjective": context.followUp.coreObjective,
+  };
+  return values[key] ?? "";
+}
+
 type BuildWhatsAppReportOptions = {
   rotationName?: string;
   generatedAt?: Date;
@@ -168,13 +258,16 @@ export function buildWhatsAppReport(
   templateType: ReportTemplateType,
   options: BuildWhatsAppReportOptions,
 ) {
-  const exams = followUp.supportingExams ?? [];
   const rotationName = options.rotationName?.trim() || templateType;
-  const planning =
-    followUp.planning?.trim() ||
-    followUp.plan?.trim() ||
-    "Belum ada planning.";
-  const instruction = followUp.instruction?.trim();
+  const context = buildRenderContext(
+    patient,
+    followUp,
+    rotationName,
+    options.reportIdentity,
+  );
+  const exams = followUp.supportingExams ?? [];
+  const planning = context.followUp.plan;
+  const instruction = context.followUp.instruction;
 
   const planBlock = [
     "P: " + planning,
@@ -184,11 +277,11 @@ export function buildWhatsAppReport(
     .join("\n");
 
   const subjectiveBlock = [
-    patient.admissionComplaint?.trim()
-      ? "Keluhan Masuk: " + patient.admissionComplaint.trim()
+    context.admissionComplaint
+      ? "Keluhan Masuk: " + context.admissionComplaint
       : "",
-    followUp.subjective.trim()
-      ? "Keluhan / Perkembangan Hari Ini: " + followUp.subjective.trim()
+    context.followUp.subjective.trim()
+      ? "Keluhan / Perkembangan Hari Ini: " + context.followUp.subjective.trim()
       : "",
   ]
     .filter(Boolean)
@@ -243,17 +336,17 @@ export function buildWhatsAppReport(
 
   return [
     "Assalamualaikum warahmatullahi wabarakatuh dok. Tabe dok, mohon izin dok. " +
-      formatReportIdentity(options.reportIdentity, rotationName),
+      formatReportIdentity(context.identity, resolveTag("report.rotation", context)),
     "",
-    "Nama: " + patient.name,
-    "Umur: " + patient.age + " tahun",
-    "RM: " + patient.rm,
-    "Ruangan: " + patient.room,
-    "Bed: " + patient.bed,
-    "DPJP: " + patient.doctor,
-    "Stase: " + rotationName,
-    "Tanggal Masuk: " + formatAdmissionDate(patient.admissionDate),
-    "Tanggal Follow-Up: " + formatReportDate(followUp.date),
+    "Nama: " + resolveTag("patient.name", context),
+    "Umur: " + resolveTag("patient.age", context) + " tahun",
+    "RM: " + resolveTag("patient.rm", context),
+    "Ruangan: " + resolveTag("patient.room", context),
+    "Bed: " + resolveTag("patient.bed", context),
+    "DPJP: " + resolveTag("patient.dpjp", context),
+    "Stase: " + resolveTag("report.rotation", context),
+    "Tanggal Masuk: " + context.admissionDate,
+    "Tanggal Follow-Up: " + resolveTag("report.date", context),
     "",
     "S:",
     cleanBlock(subjectiveBlock),
@@ -267,7 +360,7 @@ export function buildWhatsAppReport(
     supportingBlock,
     "",
     "A:",
-    cleanBlock(followUp.assessment),
+    cleanBlock(resolveTag("followUp.assessment", context)),
     "",
     planBlock,
     "",

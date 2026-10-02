@@ -180,6 +180,57 @@ test("laporan Neurologi mengambil konteks klinis, penunjang, dan nama stase", ()
   );
 });
 
+test("laporan Neurologi mempertahankan output snapshot", () => {
+  const report = buildWhatsAppReport(
+    patient,
+    neurologyFollowUp,
+    "Neurologi",
+    { rotationName: "Neurologi", reportIdentity },
+  );
+
+  assert.equal(
+    report,
+    `Assalamualaikum warahmatullahi wabarakatuh dok. Tabe dok, mohon izin dok. Perkenalkan saya Dr. Arjuna Murti dengan Stambuk STB-12345 MPPD dari Universitas Uji Stase Neurologi. Mohon izin melaporkan follow-up pasien:
+
+Nama: Pasien Uji
+Umur: 42 tahun
+RM: RM-001
+Ruangan: Melati
+Bed: 03
+DPJP: dr. Penguji
+Stase: Neurologi
+Tanggal Masuk: 01 September 2026
+Tanggal Follow-Up: 26 September 2026
+
+S:
+Keluhan Masuk: Sakit kepala sejak 3 hari sebelum masuk.\nKeluhan / Perkembangan Hari Ini: Sakit kepala berkurang.
+
+O:
+Keadaan Umum: Baik
+TD: 120/80 mmHg
+Nadi: 80 x/menit
+Hasil Penunjang: Tidak ada
+
+Pemeriksaan neurologis:
+- Kesadaran: Compos mentis
+- GCS E/M/V: 456
+- N. Cranialis: Dalam batas normal
+
+Pemeriksaan penunjang:
+- Rontgen · 26 September 2026
+  Tidak tampak kelainan akut.
+  Lampiran: rontgen.png
+
+A:
+Cephalgia membaik.
+
+P: Lanjut observasi.
+I: Kontrol keluhan bila memburuk.
+
+Terimakasih sebelumnya dokter, Mohon arahan dan bimbingannya dok🙏🏻`,
+  );
+});
+
 test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
   const report = buildWhatsAppReport(
     patient,
