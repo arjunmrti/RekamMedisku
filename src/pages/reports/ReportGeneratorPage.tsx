@@ -4,6 +4,7 @@ import ReportHubPage from "./ReportHubPage";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import ReportPatientContext from "../../components/report/ReportPatientContext";
 import ReportPreview from "../../components/report/ReportPreview";
+import ReportPreviewModal from "../../components/report/ReportPreviewModal";
 import ReportStepTracker from "../../components/report/ReportStepTracker";
 import ReportSummaryCard from "../../components/report/ReportSummaryCard";
 import ReportTemplateSelector from "../../components/report/ReportTemplateSelector";
@@ -252,6 +253,8 @@ function FollowUpReportGeneratorPage({
   const [copyError, setCopyError] = useState("");
   const [reportText, setReportText] = useState("");
   const [generatedKey, setGeneratedKey] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const previewError = profileError;
 
   const selectedFollowUp =
     followUps.find((entry) => entry.id === selectedFollowUpId) ??
@@ -567,15 +570,26 @@ function FollowUpReportGeneratorPage({
                   </p>
                 )}
 
+                  <div className="flex shrink-0 flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewOpen(true)}
+                    disabled={!reportText}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-2.5 text-xs font-semibold text-[#1677FF] transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <Icon name="document" className="h-3.5 w-3.5" />
+                    Preview Laporan
+                  </button>
                   <button
                     type="button"
                     onClick={() => generateReport()}
                     disabled={profileLoading || !reportIdentity}
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1677FF] px-4 py-2.5 text-xs font-semibold text-white shadow-sm shadow-blue-500/20 transition hover:-translate-y-0.5 hover:bg-blue-700"
                   >
                     <Icon name="bolt" className="h-3.5 w-3.5" />
                     {profileLoading ? "Memuat profil..." : "Generate Laporan"}
                   </button>
+                  </div>
                 </div>
               </section>
 
@@ -592,6 +606,16 @@ function FollowUpReportGeneratorPage({
                   setCopied(false);
                 }}
                 onFinishEdit={() => setEditing(false)}
+              />
+              <ReportPreviewModal
+                open={previewOpen}
+                text={reportText}
+                template={templateType}
+                loading={profileLoading}
+                error={previewError}
+                onTemplateChange={(value) => generateReport(value)}
+                onCopy={handleCopy}
+                onClose={() => setPreviewOpen(false)}
               />
             </div>
 
