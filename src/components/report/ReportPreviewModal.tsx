@@ -9,6 +9,7 @@ type Props = {
   error?: string;
   diagnostics?: string[];
   templateMetadata?: string;
+  availableTemplates?: ReportTemplateType[];
   onTemplateChange: (value: ReportTemplateType) => void;
   onCopy: () => void;
   onClose: () => void;
@@ -21,6 +22,7 @@ export default function ReportPreviewModal({
   loading = false,
   error = "",
   diagnostics = [],
+  availableTemplates = ["Universal"],
   onTemplateChange,
   onCopy,
   onClose,
@@ -54,8 +56,8 @@ export default function ReportPreviewModal({
           {diagnostics.length > 0 ? <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Beberapa bagian laporan belum dapat diisi: {diagnostics.join(", ")}</div> : null}
           <label className="block text-xs font-semibold text-slate-700">Template laporan
             <select value={template} onChange={(event) => onTemplateChange(event.target.value as ReportTemplateType)} className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
-              <option value="Neurologi">Neurologi</option>
-              <option value="Ilmu Penyakit Dalam">Ilmu Penyakit Dalam</option>
+              {availableTemplates.includes(template) ? null : <option value={template}>{template}</option>}
+              {availableTemplates.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
           {loading && <p className="rounded-xl bg-blue-50 px-3 py-2 text-xs text-blue-700">Membuat preview...</p>}

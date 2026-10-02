@@ -646,7 +646,12 @@ function FollowUpReportGeneratorPage({
                 loading={profileLoading}
                 error={previewError}
                 diagnostics={reportDiagnostics}
-                templateMetadata=""
+                templateMetadata={resolved ? `${selectedReportTemplate?.name} · v${resolved.version} · schema ${resolved.schemaVersion}` : "Template legacy / default specialty"}
+                availableTemplates={Array.from(new Set([
+                  reportTemplate ?? "Universal",
+                  selectedReportTemplate?.name ?? "",
+                  templateType,
+                ].filter(Boolean)))}
                 onTemplateChange={(value) => generateReport(value)}
                 onCopy={handleCopy}
                 onClose={() => setPreviewOpen(false)}

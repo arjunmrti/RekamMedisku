@@ -65,6 +65,15 @@ test("buildRenderContext menangani missing values dengan fallback kosong", () =>
   assert.equal(context.report.rotation, "Neurologi");
 });
 
+test("buildWhatsAppReport supports non-Neurologi template selection", () => {
+  const report = buildWhatsAppReport(patient, followUp, "Bedah", {
+    rotationName: "Bedah",
+    reportIdentity: identity,
+  });
+  assert.ok(report.includes("Pasien Preview"));
+  assert.ok(report.includes("Stase Bedah"));
+});
+
 test("buildWhatsAppReport menghasilkan laporan konsisten untuk preview", () => {
   const report = buildWhatsAppReport(patient, followUp, "Neurologi", {
     rotationName: "Neurologi",
