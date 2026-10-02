@@ -13,7 +13,19 @@ import {
   normalizeSlaberanDoctorName,
 } from "./slaberanFacts";
 import { normalizePatientLocationType } from "./patientLocation";
-import { resolveTag, type RenderContext } from "./reportGenerator";
+import { APPROVED_REPORT_TAGS, extractTagsFromText, resolveTag, type RenderContext } from "./reportGenerator";
+
+export const SLABERAN_SHARED_FIELD_REGISTRY = [...APPROVED_REPORT_TAGS, "followUp.templateAnswers", "followUp.structuredCoreObjective"] as const;
+
+export function validateSlaberanVariables(text: string, context?: RenderContext) {
+  const unknown: string[] = [];
+  for (const tag of extractTagsFromText(text)) {
+    const dynamic = tag.startsWith("template.field.");
+    const known = (SLABERAN_SHARED_FIELD_REGISTRY as readonly string[]).includes(tag) || tag.startsWith("core.") || (dynamic && Boolean(context?.templateFields && Object.prototype.hasOwnProperty.call(context.templateFields, tag.slice(15))));
+    if (!known && !unknown.includes(tag)) unknown.push(tag);
+  }
+  return unknown;
+}
 
 type EngineOptions = {
   template: SlaberanTemplateRecord;
@@ -299,53 +311,10 @@ function appendSpecialUnits(
 
 function replaceVariables(
   text: string,
-  template: SlaberanTemplateRecord,
-  doctor: string,
-  date: string,
-  totalPatients: number,
+  context: RenderContext,
 ) {
-  const context: RenderContext = {
-    report: {
-      date: formatSlaberanDate(date),
-      rotation: template.specialty,
-      specialty: template.specialty,
-      hospital: template.hospital,
-      doctor,
-      rotationMeta: { name: template.specialty, specialty: template.specialty },
-    },
-    patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" },
-    followUp: {
-      subjective: "",
-      objective: "",
-      assessment: "",
-      plan: "",
-      instruction: "",
-      supportingExams: "",
-      coreObjective: "",
-    },
-    identity: { name: "", studentId: "", program: "", institution: "" },
-    templateType: template.specialty as RenderContext["templateType"],
-    admissionDate: "",
-    admissionComplaint: "",
-    summary: {
-      doctorCount: String(totalPatients),
-      totalPatients: String(totalPatients),
-    },
-    templateFields: {},
-    core: {},
-  };
-
-  const aliases: Record<string, string> = {
-    "report.specialty": "report.specialty",
-    "report.doctor": "report.doctor",
-    "report.hospital": "report.hospital",
-    "report.date": "report.date",
-    "summary.doctor_count": "summary.doctor_count",
-    "summary.total_patients": "summary.total_patients",
-  };
-
   return text.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_match, rawKey: string) =>
-    resolveTag(aliases[rawKey.trim()] ?? rawKey.trim(), context),
+    resolveTag(rawKey.trim(), context),
   );
 }
 
@@ -445,15 +414,26 @@ export function renderSlaberanTemplate(options: EngineOptions) {
         case "text": {
           const text = asConfig(block).text;
           if (typeof text === "string" && text.trim()) {
-            lines.push(
-              replaceVariables(
-                text.trim(),
-                options.template,
-                normalizedDoctor,
-                options.date,
-                patientContexts.length,
-              ),
-            );
+            const textContext: RenderContext = {
+              report: {
+                date: formatSlaberanDate(options.date),
+                rotation: options.template.specialty,
+                specialty: options.template.specialty,
+                hospital: options.template.hospital,
+                doctor: normalizedDoctor,
+                rotationMeta: { name: options.template.specialty, specialty: options.template.specialty },
+              },
+              patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" },
+              followUp: { subjective: "", objective: "", assessment: "", plan: "", instruction: "", supportingExams: "", coreObjective: "" },
+              identity: { name: "", studentId: "", program: "", institution: "" },
+              templateType: options.template.specialty as RenderContext["templateType"],
+              admissionDate: "",
+              admissionComplaint: "",
+              summary: { doctorCount: String(patientContexts.length), totalPatients: String(patientContexts.length) },
+              templateFields: {},
+              core: {},
+            };
+            lines.push(replaceVariables(text.trim(), textContext));
           }
           break;
         }
