@@ -1,5 +1,9 @@
 import { test, expect, type Page, type Route } from "@playwright/test";
 
+declare global {
+  interface Window { __clipboardText?: string; }
+}
+
 const USER_ID = "00000000-0000-4000-8000-0000000000r1";
 const ROTATION_ID = "00000000-0000-4000-8000-0000000000r2";
 const PATIENT_ID = "00000000-0000-4000-8000-0000000000r3";
@@ -226,12 +230,15 @@ async function installMockSupabase(page: Page) {
 
     if (path === "/rest/v1/templates" && method === "GET") {
       const templateId = url.searchParams.get("id");
+      const type = url.searchParams.get("type");
+      
       if (templateId?.includes(REPORT_TEMPLATE_ID)) {
         return json(route, 200, [
           {
             id: REPORT_TEMPLATE_ID,
             user_id: USER_ID,
             name: "Neurologi Bound Template",
+            description: "",
             type: "report",
             is_system_owned: false,
             is_archived: false,
@@ -241,6 +248,24 @@ async function installMockSupabase(page: Page) {
           },
         ]);
       }
+      
+      if (type === "eq.report") {
+        return json(route, 200, [
+          {
+            id: REPORT_TEMPLATE_ID,
+            user_id: USER_ID,
+            name: "Neurologi Bound Template",
+            description: "",
+            type: "report",
+            is_system_owned: false,
+            is_archived: false,
+            latest_version: 1,
+            created_at: nowIso(),
+            updated_at: nowIso(),
+          },
+        ]);
+      }
+      
       return json(route, 200, []);
     }
 
@@ -274,22 +299,48 @@ test("bound report template resolves patient, core, and template.field tags in p
   page,
 }) => {
   await installMockSupabase(page);
+  
+  let clipboardText = "";
   await page.goto("/");
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "clipboard", {
+      value: {
+        writeText: (text: string) => {
+          window.__clipboardText = text;
+          return Promise.resolve();
+        },
+        readText: () => Promise.resolve(window.__clipboardText || ""),
+      },
+      writable: true,
+    });
+  });
 
   await page.locator("#login-email").fill("report@example.test");
   await page.locator("#login-password").fill("e2e-password");
   await page.getByRole("button", { name: "Masuk" }).click();
 
-  await expect(page.getByText("Budi Santoso")).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole("button", { name: "Semua Laporan" })).toBeVisible({ timeout: 10000 });
   
-  await page.getByRole("button", { name: "Budi Santoso" }).click();
-  await expect(page.getByText("Nyeri kepala berkurang")).toBeVisible({ timeout: 5000 });
+  await page.getByRole("button", { name: "Semua Laporan" }).click();
+  await expect(page.getByRole("heading", { name: "Semua Laporan" })).toBeVisible({ timeout: 5000 });
 
-  const reportButton = page.getByRole("button", { name: /Lihat Laporan|Report|Preview/i }).first();
-  await reportButton.click({ timeout: 5000 });
+  await page.getByRole("button", { name: /Buat Laporan|Generate/i }).first().click();
+  
+  await expect(page.getByRole("button", { name: "Generate Laporan", exact: true }).first()).toBeEnabled({ timeout: 5000 });
+  await page.getByRole("button", { name: "Generate Laporan", exact: true }).first().click();
 
-  await expect(page.getByText("Budi Santoso", { exact: false })).toBeVisible({ timeout: 5000 });
+  await expect(page.getByText("Budi Santoso")).toBeVisible({ timeout: 5000 });
   await expect(page.getByText("120/80")).toBeVisible({ timeout: 5000 });
   await expect(page.getByText("4/5/6")).toBeVisible({ timeout: 5000 });
+
+  const copyButton = page.getByRole("button", { name: /Salin/i }).first();
+  await expect(copyButton).toBeEnabled({ timeout: 5000 });
+  await copyButton.click();
+
+  await page.waitForTimeout(500);
+  clipboardText = await page.evaluate(() => window.__clipboardText || "");
+  expect(clipboardText).toContain("Budi Santoso");
+  expect(clipboardText).toContain("120/80");
+  expect(clipboardText).toContain("4/5/6");
 });
 
