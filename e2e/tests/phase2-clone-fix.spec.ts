@@ -78,7 +78,7 @@ async function installMock(page: Page, state: MockState) {
     if (path === "/rest/v1/template_versions" && method === "GET") {
       const templateId = url.searchParams.get("template_id");
       if (templateId === `eq.${STARTER_ID}`) return json(route, 200, [STARTER_VERSION_ROW]);
-      if (templateId === `eq.${CLONED_TEMPLATE_ID}`) {
+      if (templateId?.includes(CLONED_TEMPLATE_ID)) {
         return json(route, 200, [{
           id: "00000000-0000-4000-8000-0000000000p8",
           user_id: USER_ID,
@@ -135,9 +135,12 @@ test("Phase 2 clone regression: RPC result triggers template list reload and aut
   // After clone callback returns, application calls setFollowUpTemplates(await listFollowUpTemplates())
   // Mock will return [clonedTemplate] on next GET /rest/v1/templates
   // RotationFormModal receives updated followUpTemplates prop and renders the cloned option
-  await page.waitForTimeout(800);
+  await expect.poll(async () => {
+    const opts = await templateSelect.locator("option").allTextContents();
+    return opts.some((opt) => opt.includes("Starter follow-up · v1"));
+  }).toBe(true);
 
-  const templateSelect = page.locator("select").filter({ has: page.locator("option", { hasText: "Starter follow-up" }) }).first();
+  const templateSelect = page.locator("select").filter({ has: page.locator('option[value="' + CLONED_TEMPLATE_ID + '"]') });
   await templateSelect.waitFor({ state: "visible", timeout: 5000 });
 
   const options = await templateSelect.locator("option").allTextContents();

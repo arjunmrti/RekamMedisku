@@ -385,9 +385,9 @@ test("Phase 2: Starter clone returns id and auto-selects in rotation form", asyn
   await expect(page.getByRole("button", { name: "Salin" })).toBeVisible();
   await page.getByRole("button", { name: "Salin" }).click();
 
-  const personalTemplateSelect = page.locator("select").filter({
-    has: page.locator(`option[value="${CLONED_TEMPLATE_ID}"]`),
-  });
+  const personalTemplateSelect = page
+    .getByText("Template Follow-Up", { exact: false })
+    .locator("..").locator("select");
   await expect(personalTemplateSelect).toBeVisible();
   await expect(personalTemplateSelect).toHaveValue(CLONED_TEMPLATE_ID);
 
