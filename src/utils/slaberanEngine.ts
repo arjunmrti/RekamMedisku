@@ -10,10 +10,11 @@ import type {
 import {
   formatSlaberanDate,
   getDiagnosisSummary,
+  getLatestFollowUp,
   normalizeSlaberanDoctorName,
 } from "./slaberanFacts";
 import { normalizePatientLocationType } from "./patientLocation";
-import { APPROVED_REPORT_TAGS, extractTagsFromText, resolveTag, type RenderContext } from "./reportGenerator";
+import { APPROVED_REPORT_TAGS, buildRenderContext, extractTagsFromText, resolveTag, type RenderContext } from "./reportGenerator";
 
 export const SLABERAN_SHARED_FIELD_REGISTRY = [...APPROVED_REPORT_TAGS, "followUp.templateAnswers", "followUp.structuredCoreObjective"] as const;
 
@@ -34,6 +35,8 @@ type EngineOptions = {
   patients: PatientListItem[];
   followUpsByPatient: Record<string, FollowUpEntry[]>;
   locations: SlaberanLocation[];
+  identity?: { name: string; studentId: string; program: string; institution: string };
+  rotationMeta?: { name?: string; specialty?: string };
 };
 
 type PatientContext = {
@@ -414,25 +417,22 @@ export function renderSlaberanTemplate(options: EngineOptions) {
         case "text": {
           const text = asConfig(block).text;
           if (typeof text === "string" && text.trim()) {
-            const textContext: RenderContext = {
-              report: {
-                date: formatSlaberanDate(options.date),
-                rotation: options.template.specialty,
-                specialty: options.template.specialty,
-                hospital: options.template.hospital,
-                doctor: normalizedDoctor,
-                rotationMeta: { name: options.template.specialty, specialty: options.template.specialty },
-              },
-              patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" },
-              followUp: { subjective: "", objective: "", assessment: "", plan: "", instruction: "", supportingExams: "", coreObjective: "" },
-              identity: { name: "", studentId: "", program: "", institution: "" },
-              templateType: options.template.specialty as RenderContext["templateType"],
-              admissionDate: "",
-              admissionComplaint: "",
-              summary: { doctorCount: String(patientContexts.length), totalPatients: String(patientContexts.length) },
-              templateFields: {},
-              core: {},
-            };
+            const patient = filteredPatients[0];
+            const followUp = patient ? getLatestFollowUp(options.followUpsByPatient[patient.id]) : undefined;
+            const textContext: RenderContext = patient && followUp
+              ? buildRenderContext(
+                  patient,
+                  followUp,
+                  options.rotationMeta?.name ?? options.template.specialty,
+                  options.identity ?? { name: "", studentId: "", program: "", institution: options.template.hospital },
+                  options.rotationMeta ?? { name: options.template.specialty, specialty: options.template.specialty },
+                )
+              : {
+                  report: { date: formatSlaberanDate(options.date), rotation: options.template.specialty, specialty: options.template.specialty, hospital: options.template.hospital, doctor: normalizedDoctor, rotationMeta: { name: options.template.specialty, specialty: options.template.specialty } },
+                  patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" },
+                  followUp: { subjective: "", objective: "", assessment: "", plan: "", instruction: "", supportingExams: "", coreObjective: "" }, identity: options.identity ?? { name: "", studentId: "", program: "", institution: "" }, templateType: options.template.specialty as RenderContext["templateType"], admissionDate: "", admissionComplaint: "", summary: { doctorCount: String(patientContexts.length), totalPatients: String(patientContexts.length) }, templateFields: {}, core: {},
+                };
+            textContext.summary = { doctorCount: String(patientContexts.length), totalPatients: String(patientContexts.length) };
             lines.push(replaceVariables(text.trim(), textContext));
           }
           break;

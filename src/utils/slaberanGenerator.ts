@@ -117,6 +117,8 @@ export function buildSlaberanReport(
     patients: PatientListItem[];
     followUpsByPatient: Record<string, FollowUpEntry[]>;
     locations?: SlaberanLocation[];
+    identity?: { name: string; studentId: string; program: string; institution: string };
+    rotationMeta?: { name?: string; specialty?: string };
   },
 ) {
   const record =
@@ -129,5 +131,7 @@ export function buildSlaberanReport(
     patients: options.patients,
     followUpsByPatient: options.followUpsByPatient,
     locations: options.locations ?? [],
+    identity: options.identity,
+    rotationMeta: options.rotationMeta,
   });
 }

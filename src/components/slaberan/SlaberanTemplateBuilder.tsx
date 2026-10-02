@@ -21,6 +21,7 @@ import {
   cloneSlaberanTemplate,
   createStarterSlaberanTemplate,
 } from "../../utils/slaberanTemplate";
+import { validateSlaberanVariables } from "../../utils/slaberanEngine";
 
 type Props = {
   onBack: () => void;
@@ -311,6 +312,12 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
 
     if (!draft.name.trim()) {
       setErrorMessage("Nama template wajib diisi.");
+      return;
+    }
+    const templateText = [draft.opening, ...draft.blocks.map((block) => typeof block.config.text === "string" ? block.config.text : "")].join("\n");
+    const unknownTags = validateSlaberanVariables(templateText);
+    if (unknownTags.length) {
+      setErrorMessage(`Tag tidak dikenal: ${unknownTags.map((tag) => `{{${tag}}}`).join(", ")}`);
       return;
     }
 
