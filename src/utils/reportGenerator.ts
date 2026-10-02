@@ -5,6 +5,7 @@ import type { ReportTemplateDefinition } from "../types/reportTemplate";
 import type { RotationSpecialty } from "../types/rotation";
 import type { ApplicationProfile } from "../types/profile";
 import { formatFollowUpTemplateAnswers } from "./followUpTemplateRuntime";
+import { formatCoreObjective as formatStructuredCoreObjective, formatSupportingExams, formatTemplateAnswers } from "./reportFormatters";
 
 function cleanBlock(value: string) {
   const text = value.trim();
@@ -174,6 +175,8 @@ export type RenderContext = {
   };
   templateFields: Record<string, string>;
   core: Record<string, string>;
+  templateAnswers?: string;
+  structuredCoreObjective?: string;
 };
 
 export function buildRenderContext(
@@ -211,8 +214,9 @@ export function buildRenderContext(
       assessment: followUp.assessment,
       plan: followUp.planning?.trim() || followUp.plan?.trim() || "Belum ada planning.",
       instruction: followUp.instruction?.trim() ?? "",
-      supportingExams: (followUp.supportingExams ?? []).map((exam) => exam.name).join(", "),
-      coreObjective: followUp.coreObjective ? JSON.stringify(followUp.coreObjective) : "",
+      supportingExams: formatSupportingExams(followUp.supportingExams) || (followUp.objective.includes("Hasil Penunjang:") ? "Data pemeriksaan penunjang mengikuti catatan pada follow-up." : ""),
+      coreObjective: formatStructuredCoreObjective(followUp.coreObjective) || followUp.objective,
+
     },
     identity: profile,
     templateType: (rotationMeta.specialty?.trim() || rotation) as ReportTemplateType,
@@ -220,6 +224,8 @@ export function buildRenderContext(
     admissionComplaint: patient.admissionComplaint?.trim() ?? "",
     summary: { doctorCount: "", totalPatients: "" },
     templateFields: buildTemplateFields(followUp),
+    templateAnswers: formatTemplateAnswers(followUp.templateSnapshot, followUp.templateAnswers),
+    structuredCoreObjective: formatStructuredCoreObjective(followUp.coreObjective),
     core: Object.fromEntries(
       Object.entries(followUp.coreObjective ?? {}).map(([key, value]) => [key, String(value ?? "")]),
     ),
@@ -278,6 +284,8 @@ export function resolveTag(key: string, context: RenderContext): string {
     "followUp.instruction": context.followUp.instruction,
     "followUp.supportingExams": context.followUp.supportingExams,
     "followUp.coreObjective": context.followUp.coreObjective,
+    "followUp.templateAnswers": context.templateAnswers ?? "",
+    "followUp.structuredCoreObjective": context.structuredCoreObjective ?? "",
     "summary.doctor_count": context.summary.doctorCount,
     "summary.total_patients": context.summary.totalPatients,
   };

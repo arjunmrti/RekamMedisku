@@ -16,6 +16,14 @@ import {
 import type { FollowUpEntry } from "../src/types/followUp";
 import type { PatientListItem } from "../src/types/patient";
 import type { ReportTemplateDefinition } from "../src/types/reportTemplate";
+import { formatCoreObjective, formatTemplateAnswers, formatSupportingExams } from "../src/utils/reportFormatters";
+
+test("structured report formatters preserve order and omit empty values", () => {
+  assert.match(formatCoreObjective({ generalCondition: "Baik", consciousness: "Compos mentis", gcsEye: "4", gcsVerbal: "5", gcsMotor: "6", systolic: "120", diastolic: "80", pulse: "", respiratoryRate: "", temperature: "", spo2: "", oxygenVia: "", weight: "", height: "", bmi: "", nutritionStatus: "", headNeck: "", thorax: "", abdomen: "", extremities: "", painNrs: "", otherFindings: "" }), /GCS E\/M\/V: 4\/5\/6/);
+  assert.equal(formatCoreObjective(undefined), "");
+  assert.equal(formatTemplateAnswers({ schema_version: 1, sections: [{ id: "s", title: "Klinis", fields: [{ id: "f", label: "Nyeri", type: "text" }] }] }, { f: "ringan" }), "Klinis:\nNyeri: ringan");
+  assert.match(formatSupportingExams([{ id: "e", name: "Lab", examType: "Darah", date: "2026-10-02", result: "Normal", icon: "lab" }]), /Lab \(Darah\).*Hasil: Normal/s);
+});
 
 const patient: PatientListItem = {
   id: "p-test",
@@ -352,7 +360,7 @@ test("snapshot validation accepts known and rejects unknown dynamic fields", () 
   const valid: ReportTemplateDefinition = { schema_version: 1, sections: [{ id: "s", label: "S", enabled: true, body: "{{template.field.known-field}}" }] };
   assert.doesNotThrow(() => validateReportTemplateDefinitionWithSnapshot(valid, snapshot));
   const invalid: ReportTemplateDefinition = { schema_version: 1, sections: [{ id: "s", label: "S", enabled: true, body: "{{template.field.unknown-field}}" }] };
-  assert.throws(() => validateReportTemplateDefinitionWithSnapshot(invalid, snapshot), /Unknown tag/);
+  assert.throws(() => validateReportTemplateDefinitionWithSnapshot(invalid, snapshot), /Unknown dynamic tag/);
 });
 
 test("validateReportTemplateDefinition accepts valid approved tags", () => {
