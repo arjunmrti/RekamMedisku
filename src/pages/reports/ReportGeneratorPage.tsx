@@ -260,7 +260,10 @@ function FollowUpReportGeneratorPage({
   const [previewOpen, setPreviewOpen] = useState(false);
   const previewError = profileError;
   const [reportTemplates, setReportTemplates] = useState<ReportTemplateSummary[]>([]);
-  const savedReportDefinition = reportTemplates[0]?.latestDefinition ?? undefined;
+  const boundReportTemplateId = patientRotation?.defaultReportTemplateId ?? patientRotation?.reportTemplateId;
+  const selectedReportTemplate = reportTemplates.find((item) => item.id === boundReportTemplateId);
+  const savedReportDefinition = selectedReportTemplate?.latestDefinition;
+
 
   useEffect(() => {
     void listReportTemplates().then(setReportTemplates).catch(() => setReportTemplates([]));
@@ -646,6 +649,7 @@ function FollowUpReportGeneratorPage({
                 loading={profileLoading}
                 error={previewError}
                 diagnostics={reportDiagnostics}
+                templateMetadata={selectedReportTemplate ? `${selectedReportTemplate.name} · v${selectedReportTemplate.latestVersion} · schema ${selectedReportTemplate.latestSchemaVersion}` : "Template legacy / default specialty"}
                 onTemplateChange={(value) => generateReport(value)}
                 onCopy={handleCopy}
                 onClose={() => setPreviewOpen(false)}

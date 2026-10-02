@@ -8,6 +8,7 @@ type Props = {
   loading?: boolean;
   error?: string;
   diagnostics?: string[];
+  templateMetadata?: string;
   onTemplateChange: (value: ReportTemplateType) => void;
   onCopy: () => void;
   onClose: () => void;
@@ -20,6 +21,7 @@ export default function ReportPreviewModal({
   loading = false,
   error = "",
   diagnostics = [],
+  templateMetadata = "",
   onTemplateChange,
   onCopy,
   onClose,
@@ -50,6 +52,7 @@ export default function ReportPreviewModal({
           </button>
         </header>
         <div className="space-y-4 overflow-y-auto p-5">
+          {templateMetadata ? <p className="text-xs text-slate-500">{templateMetadata}</p> : null}
           {diagnostics.length > 0 ? <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Tag tidak terselesaikan: {diagnostics.join(", ")}</div> : null}
           <label className="block text-xs font-semibold text-slate-700">Template laporan
             <select value={template} onChange={(event) => onTemplateChange(event.target.value as ReportTemplateType)} className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
