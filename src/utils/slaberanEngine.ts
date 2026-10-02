@@ -308,8 +308,10 @@ function replaceVariables(
     report: {
       date: formatSlaberanDate(date),
       rotation: template.specialty,
+      specialty: template.specialty,
       hospital: template.hospital,
       doctor,
+      rotationMeta: { name: template.specialty, specialty: template.specialty },
     },
     patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" },
     followUp: {
@@ -329,6 +331,8 @@ function replaceVariables(
       doctorCount: String(totalPatients),
       totalPatients: String(totalPatients),
     },
+    templateFields: {},
+    core: {},
   };
 
   const aliases: Record<string, string> = {

@@ -296,7 +296,7 @@ test("APPROVED_REPORT_TAGS contains whitelist of expected keys", () => {
 
 test("resolveTag supports dynamic template and core tags", () => {
   const context = {
-    report: { date: "", rotation: "", hospital: "", doctor: "" },
+    report: { date: "", rotation: "", specialty: "", hospital: "", doctor: "", rotationMeta: { name: "", specialty: "" } },
     patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" },
     followUp: { subjective: "", objective: "", assessment: "", plan: "", instruction: "", supportingExams: "", coreObjective: "" },
     identity: { name: "", studentId: "", program: "", institution: "" },

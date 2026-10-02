@@ -138,8 +138,14 @@ export type RenderContext = {
   report: {
     date: string;
     rotation: string;
+    specialty: string;
     hospital: string;
+    /** Patient DPJP, not report author. */
     doctor: string;
+    rotationMeta: {
+      name: string;
+      specialty: string;
+    };
   };
   patient: {
     name: string;
@@ -175,13 +181,19 @@ export function buildRenderContext(
   followUp: FollowUpEntry,
   rotation: string,
   profile: ReportIdentity,
+  rotationMeta: { name?: string; specialty?: string } = {},
 ): RenderContext {
   return {
     report: {
       date: formatReportDate(followUp.date),
-      rotation,
+      rotation: rotationMeta.name?.trim() || rotation,
+      specialty: rotationMeta.specialty?.trim() || rotation,
       hospital: profile.institution?.trim() ?? "",
       doctor: patient.doctor,
+      rotationMeta: {
+        name: rotationMeta.name?.trim() || rotation,
+        specialty: rotationMeta.specialty?.trim() || rotation,
+      },
     },
     patient: {
       name: patient.name,
@@ -201,7 +213,7 @@ export function buildRenderContext(
       coreObjective: followUp.coreObjective ? JSON.stringify(followUp.coreObjective) : "",
     },
     identity: profile,
-    templateType: rotation as ReportTemplateType,
+    templateType: (rotationMeta.specialty?.trim() || rotation) as ReportTemplateType,
     admissionDate: formatAdmissionDate(patient.admissionDate),
     admissionComplaint: patient.admissionComplaint?.trim() ?? "",
     summary: { doctorCount: "", totalPatients: "" },
@@ -248,7 +260,7 @@ export function resolveTag(key: string, context: RenderContext): string {
   const values: Record<string, string> = {
     "report.date": context.report.date,
     "report.rotation": context.report.rotation,
-    "report.specialty": context.report.rotation,
+    "report.specialty": context.report.specialty,
     "report.hospital": context.report.hospital,
     "report.doctor": context.report.doctor,
     "patient.name": context.patient.name,
@@ -304,55 +316,119 @@ function buildTemplateFields(followUp: FollowUpEntry): Record<string, string> {
   return fields;
 }
 
-function isApprovedTag(tag: string, _definition?: ReportTemplateDefinition): boolean {
-  if (APPROVED_REPORT_TAG_SET.has(tag)) return true;
-
-  const fieldId = tag.startsWith("template.field.")
-    ? tag.slice("template.field.".length)
-    : "";
-  if (fieldId) return /^[a-zA-Z0-9_-]+$/.test(fieldId);
-
-  const coreKey = tag.startsWith("core.") ? tag.slice("core.".length) : "";
-  if (coreKey) return APPROVED_CORE_TAGS.has(coreKey);
-
-  return false;
-}
-
 export function validateReportTemplateDefinition(
   definition: ReportTemplateDefinition,
+  snapshot?: { sections?: { fields?: { id: string }[] }[] },
 ): void {
   const errors: string[] = [];
+  const knownFieldIds = new Set<string>();
+
+  if (snapshot?.sections) {
+    for (const section of snapshot.sections) {
+      for (const field of section.fields ?? []) {
+        knownFieldIds.add(field.id);
+      }
+    }
+  }
+
+  const validateTag = (tag: string, location: string) => {
+    if (APPROVED_REPORT_TAG_SET.has(tag)) return;
+
+    const fieldId = tag.startsWith("template.field.")
+      ? tag.slice("template.field.".length)
+      : "";
+    if (fieldId) {
+      if (snapshot && !knownFieldIds.has(fieldId)) {
+        errors.push(`Unknown tag in ${location}: {{template.field.${fieldId}}}`);
+      } else if (!/^[a-zA-Z0-9_-]+$/.test(fieldId)) {
+        errors.push(`${location}: invalid field ID syntax {{${tag}}}`);
+      }
+      return;
+    }
+
+    const coreKey = tag.startsWith("core.") ? tag.slice("core.".length) : "";
+    if (coreKey && APPROVED_CORE_TAGS.has(coreKey)) return;
+
+    errors.push(`Unknown tag in ${location}: {{${tag}}}`);
+  };
 
   if (definition.greeting) {
-    const greetingTags = extractTagsFromText(definition.greeting);
-    for (const tag of greetingTags) {
-      if (!isApprovedTag(tag, definition)) {
-        errors.push(`Unknown tag in greeting: {{${tag}}}`);
-      }
+    for (const tag of extractTagsFromText(definition.greeting)) {
+      validateTag(tag, "greeting");
     }
   }
 
   for (const section of definition.sections) {
-    const bodyTags = extractTagsFromText(section.body);
-    for (const tag of bodyTags) {
-      if (!isApprovedTag(tag, definition)) {
-        errors.push(`Unknown tag in section "${section.label}": {{${tag}}}`);
-      }
+    for (const tag of extractTagsFromText(section.body)) {
+      validateTag(tag, `section "${section.label}"`);
     }
   }
 
   if (definition.closing) {
-    const closingTags = extractTagsFromText(definition.closing);
-    for (const tag of closingTags) {
-      if (!isApprovedTag(tag, definition)) {
-        errors.push(`Unknown tag in closing: {{${tag}}}`);
-      }
+    for (const tag of extractTagsFromText(definition.closing)) {
+      validateTag(tag, "closing");
     }
   }
 
   if (errors.length > 0) {
     throw new Error("Template validation failed: " + errors.join(", "));
   }
+}
+
+export type ResolveTagDiagnostics = {
+  resolved: { greeting: string; sections: { id: string; body: string }[]; closing: string };
+  unknown: string[];
+  unresolved: string[];
+};
+
+export function renderReportTemplate(
+  definition: ReportTemplateDefinition,
+  context: RenderContext,
+  diagnostics: boolean = false,
+): string | ResolveTagDiagnostics {
+  const unknown: string[] = [];
+  const unresolved: string[] = [];
+
+  const replaceTag = (key: string): string => {
+    const resolved = resolveTag(key, context);
+    if (!resolved) {
+      if (APPROVED_REPORT_TAG_SET.has(key) || /^core\.[a-zA-Z0-9_-]+$/.test(key)) {
+        unresolved.push(key);
+      } else if (!/^template\.field\.[a-zA-Z0-9_-]+$/.test(key)) {
+        unknown.push(key);
+      }
+    }
+    return resolved;
+  };
+
+  const greeting = definition.greeting
+    ? definition.greeting.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_m, k) => replaceTag(k.trim()))
+    : "";
+
+  const sections = definition.sections
+    .filter((s) => s.enabled)
+    .map((s) => ({
+      ...s,
+      body: s.body.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_m, k) => replaceTag(k.trim())),
+    }));
+
+  const closing = definition.closing
+    ? definition.closing.replace(/\{\{\s*([^{}]+?)\s*\}\}/g, (_m, k) => replaceTag(k.trim()))
+    : "";
+
+  if (diagnostics) {
+    return {
+      resolved: {
+        greeting,
+        sections: sections.map((s) => ({ id: s.id, body: s.body })),
+        closing,
+      } as any,
+      unknown,
+      unresolved,
+    };
+  }
+
+  return [greeting, ...sections.map((s) => s.body), closing].filter(Boolean).join("\n\n");
 }
 
 type BuildWhatsAppReportOptions = {
