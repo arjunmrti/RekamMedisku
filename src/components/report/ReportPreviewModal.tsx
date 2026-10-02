@@ -21,7 +21,6 @@ export default function ReportPreviewModal({
   loading = false,
   error = "",
   diagnostics = [],
-  templateMetadata = "",
   onTemplateChange,
   onCopy,
   onClose,
@@ -45,15 +44,14 @@ export default function ReportPreviewModal({
         <header className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
           <div>
             <h2 id="report-preview-title" className="text-base font-bold text-slate-900">Preview Laporan</h2>
-            <p className="mt-1 text-xs text-slate-400">Tinjau laporan sebelum disalin.</p>
+            <p className="mt-1 text-xs text-slate-400">Periksa laporan sebelum disalin. Format hanya mengubah tampilan laporan.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Tutup preview laporan" className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100">
             <span aria-hidden="true" className="text-xl leading-none">×</span>
           </button>
         </header>
         <div className="space-y-4 overflow-y-auto p-5">
-          {templateMetadata ? <p className="text-xs text-slate-500">{templateMetadata}</p> : null}
-          {diagnostics.length > 0 ? <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Tag tidak terselesaikan: {diagnostics.join(", ")}</div> : null}
+          {diagnostics.length > 0 ? <div role="alert" className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">Beberapa bagian laporan belum dapat diisi: {diagnostics.join(", ")}</div> : null}
           <label className="block text-xs font-semibold text-slate-700">Template laporan
             <select value={template} onChange={(event) => onTemplateChange(event.target.value as ReportTemplateType)} className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400">
               <option value="Neurologi">Neurologi</option>

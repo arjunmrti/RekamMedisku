@@ -18,10 +18,10 @@ export default function ReportTemplateSelector({
       <div className="mb-3 flex items-end justify-between gap-3">
         <div>
           <h2 className="text-sm font-bold tracking-tight text-slate-900">
-            Pilih Template Laporan
+            Pilih format laporan awal
           </h2>
           <p className="mt-1 text-[11px] text-slate-400">
-            Template mengikuti konteks stase dan tipe follow-up yang dipilih.
+            Pilih format yang paling sesuai. Format hanya mengubah susunan laporan, bukan data klinis.
           </p>
         </div>
         <span className="hidden rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-semibold text-[#1677FF] sm:inline-flex">

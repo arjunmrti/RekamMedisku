@@ -541,14 +541,13 @@ function FollowUpReportGeneratorPage({
             <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#1677FF]">
-                  P4 · WhatsApp Report Generator
+                  LANGKAH 1 · PILIH FORMAT
                 </p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                   Buat Laporan Follow-Up
                 </h1>
                 <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-400">
-                  Ubah follow-up tersimpan menjadi draft laporan yang siap
-                  ditinjau, diedit, dan disalin ke WhatsApp.
+                  Pilih format awal, sesuaikan bila perlu, lalu tinjau sebelum digunakan untuk stase.
                 </p>
               </div>
 
@@ -586,11 +585,10 @@ function FollowUpReportGeneratorPage({
                     </span>
                     <div>
                       <p className="text-xs font-bold text-slate-800">
-                        Draft laporan siap dibuat
+                        Siap membuat laporan
                       </p>
                       <p className="mt-1 text-[11px] leading-relaxed text-slate-400">
-                        Sistem memformat data follow-up #{selectedFollowUp.number}
-                        {" "}tanpa meminta input klinis ulang.
+                        Data follow-up #{selectedFollowUp.number} akan diformat menjadi laporan.
                       </p>
                     </div>
                   </div>
@@ -648,7 +646,7 @@ function FollowUpReportGeneratorPage({
                 loading={profileLoading}
                 error={previewError}
                 diagnostics={reportDiagnostics}
-                templateMetadata={resolved ? `${selectedReportTemplate?.name} · v${resolved.version} · schema ${resolved.schemaVersion}` : "Template legacy / default specialty"}
+                templateMetadata=""
                 onTemplateChange={(value) => generateReport(value)}
                 onCopy={handleCopy}
                 onClose={() => setPreviewOpen(false)}
