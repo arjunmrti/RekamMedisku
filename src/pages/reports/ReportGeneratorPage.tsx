@@ -17,6 +17,7 @@ import {
   renderReportTemplate,
 } from "../../utils/reportGenerator";
 import { listReportTemplates, type ReportTemplateSummary } from "../../data/supabaseReportTemplates";
+import { resolveBoundReportDefinition } from "../../utils/reportTemplateBinding";
 import type { PatientListItem } from "../../types/patient";
 import type { ReportMode, ReportStep, ReportTemplateType } from "../../types/report";
 import Icon from "../../components/ui/Icon";
@@ -261,8 +262,10 @@ function FollowUpReportGeneratorPage({
   const previewError = profileError;
   const [reportTemplates, setReportTemplates] = useState<ReportTemplateSummary[]>([]);
   const boundReportTemplateId = patientRotation?.defaultReportTemplateId ?? patientRotation?.reportTemplateId;
+  const boundReportTemplateVersion = patientRotation?.defaultReportTemplateVersion ?? patientRotation?.reportTemplateVersion;
   const selectedReportTemplate = reportTemplates.find((item) => item.id === boundReportTemplateId);
-  const savedReportDefinition = selectedReportTemplate?.latestDefinition;
+  const resolved = resolveBoundReportDefinition(selectedReportTemplate, boundReportTemplateVersion);
+  const savedReportDefinition = resolved?.definition;
 
 
   useEffect(() => {
@@ -649,7 +652,7 @@ function FollowUpReportGeneratorPage({
                 loading={profileLoading}
                 error={previewError}
                 diagnostics={reportDiagnostics}
-                templateMetadata={selectedReportTemplate ? `${selectedReportTemplate.name} · v${selectedReportTemplate.latestVersion} · schema ${selectedReportTemplate.latestSchemaVersion}` : "Template legacy / default specialty"}
+                templateMetadata={resolved ? `${selectedReportTemplate?.name} · v${resolved.version} · schema ${resolved.schemaVersion}` : "Template legacy / default specialty"}
                 onTemplateChange={(value) => generateReport(value)}
                 onCopy={handleCopy}
                 onClose={() => setPreviewOpen(false)}

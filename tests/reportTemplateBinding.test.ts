@@ -1,31 +1,17 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { resolveBoundReportDefinition, type BoundReportTemplate } from "../src/utils/reportTemplateBinding";
 
-test("rotation default report template binding takes priority", () => {
-  const rotation = {
-    id: "r1",
-    defaultReportTemplateId: "default-tpl",
-    reportTemplateId: "legacy-tpl",
-  };
-  const templates = [
-    { id: "default-tpl", name: "Default", latestVersion: 2, latestDefinition: { schema_version: 1, sections: [] } },
-    { id: "legacy-tpl", name: "Legacy", latestVersion: 1, latestDefinition: { schema_version: 1, sections: [] } },
-  ];
-  const boundId = rotation.defaultReportTemplateId ?? rotation.reportTemplateId;
-  const selected = templates.find((t) => t.id === boundId);
-  assert.equal(selected?.id, "default-tpl");
+const template = (version: number): BoundReportTemplate => ({ latestVersion: 2, latestSchemaVersion: 1, latestDefinition: { schema_version: 1, sections: [{ id: "v2", enabled: true, label: "V2", body: "new" }] }, versions: [{ version: 1, schemaVersion: 1, definition: { schema_version: 1, sections: [{ id: "v1", enabled: true, label: "V1", body: "old" }] } }, { version, schemaVersion: 1, definition: { schema_version: 1, sections: [] } }] });
+
+test("bound report version remains active after newer version exists", () => {
+  const resolved = resolveBoundReportDefinition(template(2), 1);
+  assert.equal(resolved?.version, 1);
+  assert.equal(resolved?.definition?.sections[0]?.body, "old");
 });
 
-test("rotation falls back to reportTemplateId when defaultReportTemplateId missing", () => {
-  const rotation = { id: "r1", reportTemplateId: "legacy-tpl" };
-  const templates = [{ id: "legacy-tpl", name: "Legacy", latestVersion: 1 }];
-  const boundId = rotation.reportTemplateId;
-  const selected = templates.find((t) => t.id === boundId);
-  assert.equal(selected?.id, "legacy-tpl");
-});
-
-test("rotation without any binding uses undefined", () => {
-  const rotation: { id: string; defaultReportTemplateId?: string; reportTemplateId?: string } = { id: "r1" };
-  const boundId = rotation.defaultReportTemplateId ?? rotation.reportTemplateId;
-  assert.equal(boundId, undefined);
+test("unversioned legacy binding uses latest report version", () => {
+  const resolved = resolveBoundReportDefinition(template(2));
+  assert.equal(resolved?.version, 2);
+  assert.equal(resolved?.definition?.sections[0]?.body, "new");
 });
