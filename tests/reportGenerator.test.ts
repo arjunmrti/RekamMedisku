@@ -247,6 +247,14 @@ Terimakasih sebelumnya dokter, Mohon arahan dan bimbingannya dok🙏🏻`,
   );
 });
 
+test("universal custom template path supports Bedah without specialty branching", () => {
+  const followUp = { ...internalMedicineFollowUp, templateSnapshot: { schema_version: 1, sections: [{ id: "s", title: "Bedah", fields: [{ id: "wound", label: "Luka", type: "text" as const }] }] }, templateAnswers: { wound: "Bersih" } };
+  const report = buildWhatsAppReport(patient, followUp, "Bedah", { rotationName: "Bedah", reportIdentity });
+  assert.match(report, /Bedah/);
+  assert.match(report, /Luka: Bersih/);
+  assert.doesNotMatch(report, /Pemeriksaan neurologis|Pemeriksaan sistemik Ilmu Penyakit Dalam/);
+});
+
 test("laporan Ilmu Penyakit Dalam tidak menggandakan Keadaan Umum", () => {
   const report = buildWhatsAppReport(
     patient,

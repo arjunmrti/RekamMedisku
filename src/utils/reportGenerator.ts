@@ -66,7 +66,7 @@ export function getReportTemplateForSpecialty(
   return specialty as ReportTemplateType;
 }
 
-function getTemplateObjective(
+function getLegacySpecialtyObjectiveLines(
   objective: string,
   templateType: ReportTemplateType,
 ) {
@@ -120,7 +120,7 @@ function getObjectiveWithoutTemplateSection(
   templateType: ReportTemplateType,
 ) {
   const templateLines = new Set(
-    getTemplateObjective(objective, templateType),
+    getLegacySpecialtyObjectiveLines(objective, templateType),
   );
 
   return objective
@@ -129,6 +129,14 @@ function getObjectiveWithoutTemplateSection(
     .filter(Boolean)
     .filter((line) => !templateLines.has(line))
     .join("\n");
+}
+
+function getLegacySpecialtyTemplateHeading(
+  templateType: ReportTemplateType,
+): string {
+  return templateType === "Neurologi"
+    ? "Pemeriksaan neurologis:"
+    : "Pemeriksaan sistemik Ilmu Penyakit Dalam:";
 }
 
 export type ReportIdentity = Pick<
@@ -548,19 +556,16 @@ export function buildWhatsAppReport(
         ? "Data pemeriksaan penunjang mengikuti catatan pada follow-up."
         : "Belum ada pemeriksaan penunjang.";
 
-  const hasGenericTemplate = Boolean(
+  const usesUniversalTemplatePath = Boolean(
     followUp.templateSnapshot && followUp.templateAnswers,
   );
-  const templateObjective = hasGenericTemplate
+  const templateObjective = usesUniversalTemplatePath
     ? []
-    : getTemplateObjective(followUp.objective, templateType);
-  const generalObjective = hasGenericTemplate
+    : getLegacySpecialtyObjectiveLines(followUp.objective, templateType);
+  const generalObjective = usesUniversalTemplatePath
     ? followUp.objective
     : getObjectiveWithoutTemplateSection(followUp.objective, templateType);
-  const templateHeading =
-    templateType === "Neurologi"
-      ? "Pemeriksaan neurologis:"
-      : "Pemeriksaan sistemik Ilmu Penyakit Dalam:";
+  const templateHeading = getLegacySpecialtyTemplateHeading(templateType);
   const templateBlock =
     followUp.templateSnapshot && followUp.templateAnswers
       ? cleanBlock(
