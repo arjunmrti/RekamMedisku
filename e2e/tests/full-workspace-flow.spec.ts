@@ -164,6 +164,13 @@ async function installMockSupabase(page: Page, state: MockState) {
     }
 
     if (path === "/rest/v1/templates" && method === "GET") {
+      const templateId = url.searchParams.get("id");
+      if (templateId === `eq.${CLONED_TEMPLATE_ID}` && state.clonedTemplate) {
+        return json(route, 200, [state.clonedTemplate]);
+      }
+      if (templateId === `eq.${TEMPLATE_ID}`) {
+        return json(route, 200, [TEMPLATE_ROW]);
+      }
       const starters = url.searchParams.get("is_system_owned") === "eq.true"
         ? [STARTER_ROW]
         : [TEMPLATE_ROW, ...(state.clonedTemplate ? [state.clonedTemplate] : [])];
@@ -171,8 +178,20 @@ async function installMockSupabase(page: Page, state: MockState) {
     }
 
     if (path === "/rest/v1/template_versions" && method === "GET") {
-      const isSystemOwned = url.searchParams.get("template_id") === `eq.${STARTER_ID}`;
-      return json(route, 200, isSystemOwned ? [STARTER_VERSION_ROW] : [TEMPLATE_VERSION_ROW]);
+      const templateFilter = url.searchParams.get("template_id") ?? "";
+      if (templateFilter === `eq.${STARTER_ID}`) {
+        return json(route, 200, [STARTER_VERSION_ROW]);
+      }
+      if (templateFilter === `eq.${CLONED_TEMPLATE_ID}`) {
+        return json(route, 200, [{ ...TEMPLATE_VERSION_ROW, template_id: CLONED_TEMPLATE_ID }]);
+      }
+      if (templateFilter.includes(CLONED_TEMPLATE_ID)) {
+        return json(route, 200, [
+          TEMPLATE_VERSION_ROW,
+          { ...TEMPLATE_VERSION_ROW, template_id: CLONED_TEMPLATE_ID },
+        ]);
+      }
+      return json(route, 200, [TEMPLATE_VERSION_ROW]);
     }
 
     if (path === "/rest/v1/rotations" && method === "GET") {
