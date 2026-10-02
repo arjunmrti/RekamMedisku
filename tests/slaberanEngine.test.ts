@@ -6,7 +6,13 @@ import type { SlaberanLocation } from "../src/types/slaberanLocation";
 import type { SlaberanTemplateRecord } from "../src/types/slaberanTemplate";
 import { buildSlaberanReport } from "../src/utils/slaberanGenerator";
 import { createStarterSlaberanTemplate } from "../src/utils/slaberanTemplate";
-import { renderSlaberanTemplate } from "../src/utils/slaberanEngine";
+import { renderSlaberanTemplate, validateSlaberanVariables } from "../src/utils/slaberanEngine";
+
+test("Slaberan validates approved and rejected core/global tags", () => {
+  assert.deepEqual(validateSlaberanVariables("{{core.generalCondition}} {{core.anything}}"), ["core.anything"]);
+  assert.deepEqual(validateSlaberanVariables("{{patient.name}}", undefined, true), ["patient.name"]);
+  assert.deepEqual(validateSlaberanVariables("{{report.date}}"), []);
+});
 
 const patient = (
   id: string,

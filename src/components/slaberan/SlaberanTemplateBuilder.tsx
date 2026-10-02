@@ -314,8 +314,10 @@ export default function SlaberanTemplateBuilder({ onBack }: Props) {
       setErrorMessage("Nama template wajib diisi.");
       return;
     }
-    const templateText = [draft.opening, ...draft.blocks.map((block) => typeof block.config.text === "string" ? block.config.text : "")].join("\n");
-    const unknownTags = validateSlaberanVariables(templateText);
+    const unknownTags = [
+      ...validateSlaberanVariables(draft.opening),
+      ...draft.blocks.flatMap((block) => typeof block.config.text === "string" ? validateSlaberanVariables(block.config.text, undefined, true) : []),
+    ].filter((tag, index, tags) => tags.indexOf(tag) === index);
     if (unknownTags.length) {
       setErrorMessage(`Tag tidak dikenal: ${unknownTags.map((tag) => `{{${tag}}}`).join(", ")}`);
       return;

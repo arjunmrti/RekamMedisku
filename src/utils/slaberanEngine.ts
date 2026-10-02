@@ -10,20 +10,43 @@ import type {
 import {
   formatSlaberanDate,
   getDiagnosisSummary,
-  getLatestFollowUp,
   normalizeSlaberanDoctorName,
 } from "./slaberanFacts";
 import { normalizePatientLocationType } from "./patientLocation";
-import { APPROVED_REPORT_TAGS, buildRenderContext, extractTagsFromText, resolveTag, type RenderContext } from "./reportGenerator";
+import { APPROVED_REPORT_TAGS, extractTagsFromText, resolveTag, type RenderContext } from "./reportGenerator";
 
 export const SLABERAN_SHARED_FIELD_REGISTRY = [...APPROVED_REPORT_TAGS, "followUp.templateAnswers", "followUp.structuredCoreObjective"] as const;
 
-export function validateSlaberanVariables(text: string, context?: RenderContext) {
+const APPROVED_CORE_TAGS = new Set([
+  "generalCondition", "consciousness", "gcsEye", "gcsVerbal", "gcsMotor",
+  "systolic", "diastolic", "pulse", "respiratoryRate", "temperature", "spo2",
+  "oxygenVia", "weight", "height", "bmi", "nutritionStatus", "headNeck",
+  "thorax", "abdomen", "extremities", "painNrs", "otherFindings",
+]);
+
+export function validateSlaberanVariables(text: string, context?: RenderContext, isGlobalTextBlock?: boolean) {
   const unknown: string[] = [];
   for (const tag of extractTagsFromText(text)) {
     const dynamic = tag.startsWith("template.field.");
     const known = (SLABERAN_SHARED_FIELD_REGISTRY as readonly string[]).includes(tag) || tag.startsWith("core.") || (dynamic && Boolean(context?.templateFields && Object.prototype.hasOwnProperty.call(context.templateFields, tag.slice(15))));
     if (!known && !unknown.includes(tag)) unknown.push(tag);
+    
+    if (isGlobalTextBlock) {
+      if (tag.startsWith("patient.") || tag.startsWith("followUp.") || tag.startsWith("core.") || tag.startsWith("template.field.")) {
+        if (!unknown.includes(tag)) unknown.push(tag);
+      }
+      if (tag.startsWith("core.")) {
+        const coreKey = tag.slice("core.".length);
+        if (!APPROVED_CORE_TAGS.has(coreKey)) {
+          if (!unknown.includes(tag)) unknown.push(tag);
+        }
+      }
+    } else if (tag.startsWith("core.")) {
+      const coreKey = tag.slice("core.".length);
+      if (!APPROVED_CORE_TAGS.has(coreKey)) {
+        if (!unknown.includes(tag)) unknown.push(tag);
+      }
+    }
   }
   return unknown;
 }
@@ -417,17 +440,7 @@ export function renderSlaberanTemplate(options: EngineOptions) {
         case "text": {
           const text = asConfig(block).text;
           if (typeof text === "string" && text.trim()) {
-            const patient = filteredPatients[0];
-            const followUp = patient ? getLatestFollowUp(options.followUpsByPatient[patient.id]) : undefined;
-            const textContext: RenderContext = patient && followUp
-              ? buildRenderContext(
-                  patient,
-                  followUp,
-                  options.rotationMeta?.name ?? options.template.specialty,
-                  options.identity ?? { name: "", studentId: "", program: "", institution: options.template.hospital },
-                  options.rotationMeta ?? { name: options.template.specialty, specialty: options.template.specialty },
-                )
-              : {
+            const textContext: RenderContext = {
                   report: { date: formatSlaberanDate(options.date), rotation: options.template.specialty, specialty: options.template.specialty, hospital: options.template.hospital, doctor: normalizedDoctor, rotationMeta: { name: options.template.specialty, specialty: options.template.specialty } },
                   patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" },
                   followUp: { subjective: "", objective: "", assessment: "", plan: "", instruction: "", supportingExams: "", coreObjective: "" }, identity: options.identity ?? { name: "", studentId: "", program: "", institution: "" }, templateType: options.template.specialty as RenderContext["templateType"], admissionDate: "", admissionComplaint: "", summary: { doctorCount: String(patientContexts.length), totalPatients: String(patientContexts.length) }, templateFields: {}, core: {},
