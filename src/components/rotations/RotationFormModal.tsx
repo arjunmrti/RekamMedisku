@@ -383,51 +383,55 @@ export default function RotationFormModal({
             ) : null}
           </div>
 
-          <label className="block" htmlFor="default-report-template-select">
-            <span className="mb-1.5 block text-xs font-semibold text-slate-700">
-              Template Report Default <span className="ml-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#1677FF]">Pasangan Stase</span>
-            </span>
-            <select
-              id="default-report-template-select"
-              value={defaultReportTemplateId}
-              onChange={(event) => {
-                const id = event.target.value;
-                setDefaultReportTemplateId(id);
-                setDefaultReportTemplateVersion(reportTemplates.find((template) => template.id === id)?.latestVersion);
-              }}
-              className="field-control"
-              disabled={reportTemplates.length === 0}
-            >
-              <option value="">{reportTemplates.length ? "Tanpa template report default" : "Template report belum tersedia"}</option>
-              {reportTemplates.map((template) => (
-                <option key={template.id} value={template.id}>{template.name} · v{template.latestVersion}</option>
-              ))}
-            </select>
+          <div>
+            <label className="block" htmlFor="default-report-template-select">
+              <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                Template Report Default <span className="ml-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#1677FF]">Pasangan Stase</span>
+              </span>
+              <select
+                id="default-report-template-select"
+                value={defaultReportTemplateId}
+                onChange={(event) => {
+                  const id = event.target.value;
+                  setDefaultReportTemplateId(id);
+                  setDefaultReportTemplateVersion(reportTemplates.find((template) => template.id === id)?.latestVersion);
+                }}
+                className="field-control"
+                disabled={reportTemplates.length === 0}
+              >
+                <option value="">{reportTemplates.length ? "Tanpa template report default" : "Template report belum tersedia"}</option>
+                {reportTemplates.map((template) => (
+                  <option key={template.id} value={template.id}>{template.name} · v{template.latestVersion}</option>
+                ))}
+              </select>
+            </label>
             <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
               Pasangkan default follow-up dengan format laporan untuk stase ini. Starter dapat disalin lalu diedit; pilihan tidak dibatasi specialty.
             </p>
-          </label>
+          </div>
 
-          <label className="block">
-            <span className="mb-1.5 block text-xs font-semibold text-slate-700">
-              Template Slaberan
-            </span>
-            <select
-              value={slaberanTemplateId}
-              onChange={(event) => setSlaberanTemplateId(event.target.value)}
-              className="field-control"
-            >
-              <option value="">Tanpa template Slaberan</option>
-              {slaberanTemplates.map((template) => (
-                <option key={template.id} value={template.id}>
-                  {template.name}
-                </option>
-              ))}
-            </select>
+          <div>
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+                Template Slaberan
+              </span>
+              <select
+                value={slaberanTemplateId}
+                onChange={(event) => setSlaberanTemplateId(event.target.value)}
+                className="field-control"
+              >
+                <option value="">Tanpa template Slaberan</option>
+                {slaberanTemplates.map((template) => (
+                  <option key={template.id} value={template.id}>
+                    {template.name}
+                  </option>
+                ))}
+              </select>
+            </label>
             <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">
               Template Slaberan dipilih dari workspace akun ini.
             </p>
-          </label>
+          </div>
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold text-slate-700">
