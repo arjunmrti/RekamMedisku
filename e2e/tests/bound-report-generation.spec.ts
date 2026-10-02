@@ -329,18 +329,28 @@ test("bound report template resolves patient, core, and template.field tags in p
   await expect(page.getByRole("button", { name: "Generate Laporan", exact: true }).first()).toBeEnabled({ timeout: 5000 });
   await page.getByRole("button", { name: "Generate Laporan", exact: true }).first().click();
 
-  await expect(page.getByText("Budi Santoso")).toBeVisible({ timeout: 5000 });
-  await expect(page.getByText("120/80")).toBeVisible({ timeout: 5000 });
-  await expect(page.getByText("4/5/6")).toBeVisible({ timeout: 5000 });
+  await page.waitForTimeout(1000);
+  
+  const previewButton = page.getByRole("button", { name: /Preview|Pratinjau/i }).first();
+  await expect(previewButton).toBeVisible({ timeout: 5000 });
+  await previewButton.click();
 
-  const copyButton = page.getByRole("button", { name: /Salin/i }).first();
+  const preview = page.getByRole("dialog", { name: "Preview Laporan" });
+  await expect(preview).toBeVisible({ timeout: 5000 });
+  await expect(preview.getByText(`${"Neurologi Bound Template"} · v1 · schema 1`)).toBeVisible();
+  const reportText = preview.getByLabel("Teks laporan");
+  await expect(reportText).toHaveValue(/Laporan Follow-Up Pasien Budi Santoso/);
+  await expect(reportText).toHaveValue(/GCS: 4\/5\/6/);
+  await expect(reportText).toHaveValue(/BP Reading: 120\/80/);
+
+  const copyButton = preview.getByRole("button", { name: "Salin Laporan" });
   await expect(copyButton).toBeEnabled({ timeout: 5000 });
   await copyButton.click();
 
   await page.waitForTimeout(500);
   clipboardText = await page.evaluate(() => window.__clipboardText || "");
   expect(clipboardText).toContain("Budi Santoso");
-  expect(clipboardText).toContain("120/80");
-  expect(clipboardText).toContain("4/5/6");
+  expect(clipboardText).toContain("GCS: 4/5/6");
+  expect(clipboardText).toContain("BP Reading: 120/80");
 });
 
