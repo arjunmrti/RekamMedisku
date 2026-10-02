@@ -30,7 +30,7 @@ const items: Array<{
     icon: "database",
     match: ["Data", "Cadangan & Data"],
   },
-  { label: "Stase", target: "Stase Saya", icon: "brain", match: ["Stase Saya"] },
+  { label: "Stase", target: "Stase Saya", icon: "layers", match: ["Stase Saya"] },
 ];
 
 export default function MobileBottomNav({

@@ -109,11 +109,7 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
               <Icon
-                name={
-                  activeRotation.specialty === "Neurologi"
-                    ? "brain"
-                    : "stethoscope"
-                }
+                name="layers"
                 className="h-4 w-4"
               />
             </div>

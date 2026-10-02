@@ -306,11 +306,7 @@ export default function RotationManagementPage({
                     <div className="flex min-w-0 items-start gap-4">
                       <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-[#1677FF] shadow-sm ring-1 ring-blue-100">
                         <Icon
-                          name={
-                            activeRotation.specialty === "Neurologi"
-                              ? "brain"
-                              : "stethoscope"
-                          }
+                          name="layers"
                           className="h-7 w-7"
                         />
                       </span>
@@ -451,9 +447,8 @@ export default function RotationManagementPage({
             <section className="rounded-xl border border-blue-100 bg-blue-50/60 px-4 py-3 text-[11px] leading-relaxed text-slate-500">
               RekamMedisku menggunakan konteks stase untuk menjaga data pasien
               tetap terpisah. Berpindah stase tidak menghapus riwayat stase
-              sebelumnya. Template klinis MVP saat ini tersedia untuk Neurologi
-              dan Ilmu Penyakit Dalam; stase lain dapat disimpan sebagai rotasi
-              tetapi template khususnya belum termasuk scope MVP.
+              sebelumnya. Setiap stase memiliki konteks data dan format catatan
+              masing-masing; berpindah stase tidak menghapus riwayat sebelumnya.
             </section>
           </div>
         </main>

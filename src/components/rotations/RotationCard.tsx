@@ -21,8 +21,8 @@ function getStatusClass(status: RotationStatus) {
   return "border-blue-100 bg-blue-50 text-[#1677FF]";
 }
 
-function getIconName(rotation: Rotation) {
-  return rotation.specialty === "Neurologi" ? "brain" : "stethoscope";
+function getIconName(_rotation: Rotation) {
+  return "layers" as const;
 }
 
 function formatPeriod(startDate: string, endDate: string) {

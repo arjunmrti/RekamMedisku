@@ -28,7 +28,7 @@ export default function RotationSwitchDialog({
         <div className="flex items-start gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1677FF]">
             <Icon
-              name={rotation.specialty === "Neurologi" ? "brain" : "stethoscope"}
+              name="layers"
               className="h-5 w-5"
             />
           </span>

@@ -115,7 +115,7 @@ export default function AppShell({
                 { label: "Daftar Pasien", icon: "users" as IconName },
                 { label: "Semua Laporan", icon: "document" as IconName },
                 { label: "Cadangan & Data", icon: "database" as IconName },
-                { label: "Stase Saya", icon: "brain" as IconName },
+                { label: "Stase Saya", icon: "layers" as IconName },
               ].map((item) => {
                 const active = activeItem === item.label;
 
@@ -156,7 +156,7 @@ export default function AppShell({
               >
                 <div className="flex min-w-0 items-center gap-2.5">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                    <Icon name="brain" className="h-4 w-4" />
+                    <Icon name="layers" className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
                     <span className="block text-[9px] font-bold uppercase leading-none tracking-wider text-slate-400">

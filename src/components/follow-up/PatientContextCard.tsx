@@ -59,7 +59,7 @@ export default function PatientContextCard({
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <Icon
-                  name={rotation.specialty === "Neurologi" ? "brain" : "stethoscope"}
+                  name="layers"
                   className="h-3.5 w-3.5 text-slate-400"
                 />
                 {rotation.name}

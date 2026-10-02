@@ -60,7 +60,7 @@ export default function ReportTemplateSelector({
                   }
                 >
                   <Icon
-                    name={template.type === "Neurologi" ? "brain" : "stethoscope"}
+                    name="document"
                     className="h-5 w-5"
                   />
                 </div>

@@ -65,7 +65,7 @@ export default function DashboardHeader({
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
                 <Icon
-                  name={rotation.specialty === "Neurologi" ? "brain" : "stethoscope"}
+                  name="layers"
                   className="h-4 w-4"
                 />
               </div>

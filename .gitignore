@@ -40,3 +40,7 @@ dist/
 # Local Supabase and test artifacts
 supabase/.temp/
 test-results/
+
+# Deepwork state (local session only)
+.slim/
+.slim/deepwork/

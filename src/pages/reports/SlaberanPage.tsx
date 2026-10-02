@@ -366,21 +366,11 @@ export default function SlaberanPage({
             </div>
           ) : null}
 
-          {activeRotation.specialty !== "Neurologi" ? (
-            <section className="rounded-2xl border border-amber-100 bg-amber-50 p-4">
-              <div className="flex items-start gap-3">
-                <Icon
-                  name="alert"
-                  className="mt-0.5 h-4 w-4 shrink-0 text-amber-600"
-                />
-                <p className="text-[11px] leading-relaxed text-amber-800">
-                  Template Slaberan bersifat bebas. Stase aktif saat ini adalah{" "}
-                  <span className="font-semibold">{activeRotation.name}</span>.
-                  Pastikan template dan dokter yang dipilih sesuai kebutuhan.
-                </p>
-              </div>
-            </section>
-          ) : null}
+          <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              Pilih template dan dokter yang sesuai untuk menyusun laporan harian stase aktif.
+            </p>
+          </section>
 
           <section className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="min-w-0 space-y-6">
