@@ -52,9 +52,9 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_top_left,_#dbeafe_0,_transparent_42%),linear-gradient(135deg,#f8fafc,#eef4fb)] px-4 py-8">
+    <main className="flex min-h-screen items-center justify-center bg-[#F7F9FC] px-4 py-8">
       <div className="w-full max-w-md">
-        <div className="rounded-[28px] border border-white/80 bg-white/90 p-6 shadow-[0_24px_70px_-28px_rgba(16,42,86,0.34)] backdrop-blur sm:p-8">
+        <div className="rounded-3xl border border-[#E5EAF1] bg-white p-6 shadow-[0_18px_50px_-28px_rgba(16,42,86,0.28)] sm:p-8">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1677FF] text-white shadow-sm shadow-blue-500/20">
             <Icon name="pulse" className="h-6 w-6" strokeWidth={2.5} />
           </div>

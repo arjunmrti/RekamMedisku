@@ -49,7 +49,7 @@ export default function RotationCard({
   const active = rotation.status === "Aktif";
 
   return (
-    <article className="group rounded-2xl border border-slate-200/70 bg-white p-5 shadow-[0_4px_16px_-8px_rgba(16,42,86,0.14)] transition duration-200 hover:-translate-y-1 hover:border-slate-300 hover:shadow-[0_12px_32px_-12px_rgba(16,42,86,0.24)] sm:p-6">
+    <article className="group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_-6px_rgba(16,42,86,0.12)] transition duration-200 hover:-translate-y-0.5 hover:shadow-md sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-[#1677FF]">

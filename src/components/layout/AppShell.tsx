@@ -48,7 +48,7 @@ export default function AppShell({
     : "pt-16 xl:pt-[72px]";
 
   return (
-    <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-slate-50 via-blue-50/20 to-slate-50 text-slate-800">
+    <div className="min-h-[100dvh] overflow-x-hidden bg-[#F7F9FC] text-slate-800">
       <div className="flex min-h-[100dvh] min-w-0">
         <Sidebar activeItem={activeItem} onNavigate={navigate} />
 

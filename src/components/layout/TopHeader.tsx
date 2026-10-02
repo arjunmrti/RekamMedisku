@@ -136,7 +136,7 @@ export default function TopHeader({
   }).format(new Date());
 
   return (
-    <header className={`fixed inset-x-0 top-0 z-30 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 bg-white/95 shadow-[0_4px_20px_-18px_rgba(15,23,42,0.35)] backdrop-blur px-3 py-2 sm:flex-nowrap sm:gap-3 sm:px-4 sm:py-0 xl:gap-6 xl:px-8 lg:left-[252px] ${headerSizeClass}`}>
+    <header className={`fixed inset-x-0 top-0 z-30 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#E5EAF1] bg-white px-3 py-2 sm:flex-nowrap sm:gap-3 sm:px-4 sm:py-0 xl:gap-6 xl:px-8 lg:left-[252px] ${headerSizeClass}`}>
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <button
           type="button"
@@ -173,7 +173,7 @@ export default function TopHeader({
               value={searchValue}
               onChange={handleChange}
               placeholder="Cari nama pasien, RM, atau kata kunci..."
-              className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#1677FF] focus:ring-2 focus:ring-blue-500/10"
+              className="h-10 w-full rounded-xl border border-[#D7E3F2] bg-white pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#1677FF] focus:ring-2 focus:ring-blue-500/10"
             />
           </label>
         ) : null}
@@ -190,7 +190,7 @@ export default function TopHeader({
             value={searchValue}
             onChange={handleChange}
             placeholder="Cari pasien, RM, atau kata kunci..."
-            className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#1677FF] focus:ring-2 focus:ring-blue-500/10"
+            className="h-10 w-full rounded-xl border border-[#D7E3F2] bg-white pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-[#1677FF] focus:ring-2 focus:ring-blue-500/10"
           />
         </label>
       ) : null}
