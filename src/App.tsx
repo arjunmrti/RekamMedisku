@@ -1,16 +1,17 @@
-import { useEffect, useState } from "react";
-import DashboardPage from "./pages/dashboard/DashboardPage";
-import PatientProfilePage from "./pages/patient-profile/PatientProfilePage";
-import FollowUpFormPage from "./pages/follow-up/FollowUpFormPage";
-import ReportGeneratorPage from "./pages/reports/ReportGeneratorPage";
+import { lazy, Suspense, useEffect, useState } from "react";
 import type { ReportMode } from "./types/report";
-import PatientsPage from "./pages/patients/PatientsPage";
-import BackupDataPage from "./pages/backup/BackupDataPage";
-import RotationManagementPage from "./pages/rotations/RotationManagementPage";
-import { loadActiveRotation } from "./data/localRotations";
-import { loadPatients } from "./data/localPatients";
 import type { Rotation } from "./types/rotation";
 import type { PatientListItem } from "./types/patient";
+
+const DashboardPage = lazy(() => import("./pages/dashboard/DashboardPage"));
+const PatientProfilePage = lazy(() => import("./pages/patient-profile/PatientProfilePage"));
+const FollowUpFormPage = lazy(() => import("./pages/follow-up/FollowUpFormPage"));
+const ReportGeneratorPage = lazy(() => import("./pages/reports/ReportGeneratorPage"));
+const PatientsPage = lazy(() => import("./pages/patients/PatientsPage"));
+const BackupDataPage = lazy(() => import("./pages/backup/BackupDataPage"));
+const RotationManagementPage = lazy(() => import("./pages/rotations/RotationManagementPage"));
+import { loadActiveRotation } from "./data/localRotations";
+import { loadPatients } from "./data/localPatients";
 import { useWorkspaceSyncVersion } from "./hooks/useWorkspaceSync";
 import { isActivePatientInRotation } from "./utils/patientContext";
 
@@ -34,7 +35,26 @@ function getInitialPatient() {
   );
 }
 
-function App() {
+export default function App() {
+  return (
+    <Suspense fallback={<AppLoadingFallback />}>
+      <AppContent />
+    </Suspense>
+  );
+}
+
+function AppLoadingFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#F7F9FC]">
+      <div className="text-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-500 mx-auto mb-4"></div>
+        <p className="text-sm text-slate-600">Memuat halaman...</p>
+      </div>
+    </div>
+  );
+}
+
+function AppContent() {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
   const [activeItem, setActiveItem] = useState<View>(() =>
     loadActiveRotation().id ? "Beranda" : "Stase Saya",
@@ -289,4 +309,3 @@ function App() {
   );
 }
 
-export default App;
