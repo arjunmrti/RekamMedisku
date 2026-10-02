@@ -8,6 +8,7 @@ import {
   getReportTemplateForSpecialty,
   resolveTag,
   renderReportTemplate,
+  validateReportTemplateDefinitionWithSnapshot,
   APPROVED_REPORT_TAGS,
   extractTagsFromText,
   validateReportTemplateDefinition,
@@ -311,6 +312,47 @@ test("resolveTag supports dynamic template and core tags", () => {
   assert.equal(resolveTag("template.field.field-001", context), "nilai field");
   assert.equal(resolveTag("core.generalCondition", context), "Baik");
   assert.equal(resolveTag("template.field.unknown", context), "");
+});
+
+test("renderReportTemplate renders enabled sections and omits disabled sections", () => {
+  const context = {
+    report: { date: "2026-10-02", rotation: "Rotasi A", specialty: "Neurologi", hospital: "RS Uji", doctor: "dr. DPJP", rotationMeta: { name: "Rotasi A", specialty: "Neurologi" } },
+    patient: { name: "Pasien Uji", age: "40", rm: "RM-1", room: "A", bed: "1", dpjp: "dr. DPJP" },
+    followUp: { subjective: "S", objective: "O", assessment: "A", plan: "P", instruction: "I", supportingExams: "", coreObjective: "" },
+    identity: { name: "", studentId: "", program: "", institution: "" }, templateType: "Neurologi" as const,
+    admissionDate: "", admissionComplaint: "", summary: { doctorCount: "", totalPatients: "" }, templateFields: { "field-1": "Jawaban" }, core: {},
+  };
+  const definition: ReportTemplateDefinition = {
+    schema_version: 1, greeting: "Halo {{patient.name}}",
+    sections: [
+      { id: "enabled", label: "Aktif", enabled: true, body: "{{template.field.field-1}}" },
+      { id: "disabled", label: "Nonaktif", enabled: false, body: "JANGAN TAMPIL" },
+    ], closing: "Selesai {{report.specialty}}",
+  };
+  validateReportTemplateDefinitionWithSnapshot(definition, { sections: [{ fields: [{ id: "field-1" }] }] });
+  assert.equal(renderReportTemplate(definition, context), "Halo Pasien Uji\n\nJawaban\n\nSelesai Neurologi");
+});
+
+test("renderReportTemplate reports missing dynamic fields and unknown tags", () => {
+  const context = {
+    report: { date: "", rotation: "", specialty: "", hospital: "", doctor: "", rotationMeta: { name: "", specialty: "" } },
+    patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" }, followUp: { subjective: "", objective: "", assessment: "", plan: "", instruction: "", supportingExams: "", coreObjective: "" },
+    identity: { name: "", studentId: "", program: "", institution: "" }, templateType: "Neurologi" as const, admissionDate: "", admissionComplaint: "", summary: { doctorCount: "", totalPatients: "" }, templateFields: {}, core: {},
+  };
+  const result = renderReportTemplate({ schema_version: 1, sections: [{ id: "s", label: "S", enabled: true, body: "{{template.field.missing}} {{not.allowed}}" }] }, context, true);
+  assert.equal(typeof result, "object");
+  if (typeof result !== "string") {
+    assert.ok(result.unresolved.includes("template.field.missing"));
+    assert.ok(result.unknown.includes("not.allowed"));
+  }
+});
+
+test("snapshot validation accepts known and rejects unknown dynamic fields", () => {
+  const snapshot = { sections: [{ fields: [{ id: "known-field" }] }] };
+  const valid: ReportTemplateDefinition = { schema_version: 1, sections: [{ id: "s", label: "S", enabled: true, body: "{{template.field.known-field}}" }] };
+  assert.doesNotThrow(() => validateReportTemplateDefinitionWithSnapshot(valid, snapshot));
+  const invalid: ReportTemplateDefinition = { schema_version: 1, sections: [{ id: "s", label: "S", enabled: true, body: "{{template.field.unknown-field}}" }] };
+  assert.throws(() => validateReportTemplateDefinitionWithSnapshot(invalid, snapshot), /Unknown tag/);
 });
 
 test("validateReportTemplateDefinition accepts valid approved tags", () => {
