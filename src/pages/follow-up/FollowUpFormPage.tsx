@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import AssessmentSection from "../../components/follow-up/AssessmentSection";
+import CoreObjectiveSection from "../../components/follow-up/CoreObjectiveSection";
 import FollowUpTemplateRenderer from "../../components/follow-up/FollowUpTemplateRenderer";
 import FollowUpQuickCustomization from "../../components/follow-up/FollowUpQuickCustomization";
 import PatientContextCard from "../../components/follow-up/PatientContextCard";
@@ -45,6 +46,7 @@ import type {
   FollowUpTemplateDefinition,
 } from "../../types/followUpTemplate";
 import type { PatientListItem } from "../../types/patient";
+import { emptyCoreObjective, type CoreObjective } from "../../types/coreObjective";
 import Icon from "../../components/ui/Icon";
 
 type FollowUpFormPageProps = NavigationProps & {
@@ -93,6 +95,7 @@ function emptyForm(rotationId?: string): FollowUpFormValues {
       physicalFindings: "",
       supportingExamText: "",
     },
+    coreObjective: { ...emptyCoreObjective },
     neurology: {
       generalCondition: "",
       consciousness: "",
@@ -169,6 +172,10 @@ function getInitialValues(patientId: string, rotationId: string) {
     internalMedicine: {
       ...fallback.internalMedicine,
       ...(draft.internalMedicine ?? {}),
+    },
+    coreObjective: {
+      ...emptyCoreObjective,
+      ...(draft.coreObjective ?? {}),
     },
     supportingExams: Array.isArray(draft.supportingExams)
       ? draft.supportingExams
@@ -296,6 +303,7 @@ function buildFollowUpEntry(
       getFirstMeaningfulTemplateAnswer(definition, templateAnswers) ||
       "Follow-up baru tersimpan.",
     supportingExams,
+    coreObjective: values.coreObjective,
   };
 }
 export default function FollowUpFormPage({
@@ -863,6 +871,14 @@ export default function FollowUpFormPage({
                 id="follow-up-section-objective"
                 className="scroll-mt-24 transition-all duration-300"
               >
+                <CoreObjectiveSection
+                  open={openSections.objective}
+                  onToggle={() => toggleSection("objective")}
+                  value={values.coreObjective ?? { ...emptyCoreObjective }}
+                  onChange={(coreObjective: CoreObjective) =>
+                    updateValues({ ...values, coreObjective })
+                  }
+                />
                 {templateLoading ? (
                   <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-500">Memuat template follow-up...</div>
                 ) : template && activeTemplateDefinition ? (

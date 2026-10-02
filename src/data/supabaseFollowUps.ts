@@ -1,4 +1,6 @@
 import type { FollowUpEntry, SupportingExam } from "../types/followUp";
+import { emptyCoreObjective, type CoreObjective } from "../types/coreObjective";
+
 import { replaceSavedFollowUps } from "./localFollowUps";
 import { updatePatient } from "./localPatients";
 import { syncPatientsWithSupabase } from "./supabasePatients";
@@ -38,6 +40,7 @@ type FollowUpRow = {
   template_version: number | null;
   template_schema_version: number | null;
   template_snapshot: unknown;
+  core_objective: unknown;
   answers: unknown;
   assessment_codes: string[];
   planning: string | null;
@@ -211,6 +214,22 @@ function toSupportingExam(
   };
 }
 
+function normalizeCoreObjective(value: unknown): CoreObjective | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return undefined;
+  }
+
+  const raw = value as Record<string, unknown>;
+  const normalized = { ...emptyCoreObjective };
+
+  for (const key of Object.keys(emptyCoreObjective) as Array<keyof CoreObjective>) {
+    const val = raw[key];
+    normalized[key] = typeof val === "string" ? val : "";
+  }
+
+  return normalized;
+}
+
 function toFollowUpEntry(
   row: FollowUpRow,
   localId: string,
@@ -228,6 +247,7 @@ function toFollowUpEntry(
     templateVersion: row.template_version ?? undefined,
     templateSchemaVersion: row.template_schema_version ?? undefined,
     templateSnapshot: normalizeTemplateSnapshot(row.template_snapshot),
+    coreObjective: normalizeCoreObjective(row.core_objective),
     templateAnswers:
       row.answers && typeof row.answers === "object" && !Array.isArray(row.answers)
         ? (row.answers as FollowUpTemplateAnswers)
@@ -260,6 +280,7 @@ function followUpPayload(entry: FollowUpEntry, remotePatientId: string) {
     template_version: entry.templateVersion ?? null,
     template_schema_version: entry.templateSchemaVersion ?? null,
     template_snapshot: entry.templateSnapshot ?? null,
+    core_objective: entry.coreObjective ?? null,
     answers: entry.templateAnswers ?? null,
     assessment_codes: entry.assessmentCodes ?? [],
     planning: entry.planning ?? null,
@@ -269,8 +290,14 @@ function followUpPayload(entry: FollowUpEntry, remotePatientId: string) {
     assessment: entry.assessment,
     plan: entry.plan,
     summary: entry.summary,
+    // Kept out of remote payload until follow-ups schema/RPC supports this JSON field.
   };
 }
+
+// Remote coreObjective migration needed before cloud persistence:
+// add follow_ups.core_objective jsonb nullable, then update save_follow_up_with_exams
+// and follow-up SELECT mapping to read/write that column. Local storage remains source
+// of truth for this field until migration exists.
 
 async function ensureRemoteAttachment(
   exam: SupportingExam,
@@ -621,7 +648,7 @@ async function syncFollowUpsWithSupabaseInternal(): Promise<
   const { data: remoteFollowUps, error: followUpError } = await supabase
     .from("follow_ups")
     .select(
-      "id,user_id,patient_id,number,date,iso_date,time,status,template_type,template_id,template_version,template_schema_version,template_snapshot,answers,assessment_codes,planning,instruction,subjective,objective,assessment,plan,summary,created_at,updated_at",
+      "id,user_id,patient_id,number,date,iso_date,time,status,template_type,template_id,template_version,template_schema_version,template_snapshot,core_objective,answers,assessment_codes,planning,instruction,subjective,objective,assessment,plan,summary,created_at,updated_at",
     )
     .eq("user_id", userId)
     .order("iso_date", { ascending: false })

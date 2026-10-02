@@ -2,6 +2,8 @@ import type {
   FollowUpTemplateAnswers,
   FollowUpTemplateDefinition,
 } from "./followUpTemplate";
+import type { CoreObjective } from "./coreObjective";
+
 
 export type SupportingExamForm = {
   id: string;
@@ -88,4 +90,5 @@ export type FollowUpFormValues = {
   assessmentCodes: string[];
   planning: string;
   instruction: string;
+  coreObjective?: CoreObjective;
 };

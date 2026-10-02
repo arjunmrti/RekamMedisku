@@ -1,4 +1,6 @@
 import type { FollowUpTemplateAnswers, FollowUpTemplateDefinition } from "./followUpTemplate";
+import type { CoreObjective } from "./coreObjective";
+
 
 export type FollowUpStatus = "Tersimpan" | "Draf";
 
@@ -48,4 +50,5 @@ export type FollowUpEntry = {
   plan: string;
   summary: string;
   supportingExams?: SupportingExam[];
+  coreObjective?: CoreObjective;
 };
