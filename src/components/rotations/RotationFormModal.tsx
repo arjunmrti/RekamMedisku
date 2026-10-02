@@ -271,7 +271,7 @@ export default function RotationFormModal({
 
           <div>
             <span className="mb-1.5 block text-xs font-semibold text-slate-700">
-              Template Follow-Up <span className="ml-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">Template Saya</span>
+              Template Follow-Up <span className="ml-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-slate-500">Default Stase</span>
             </span>
             <div className="flex gap-2">
               <select
@@ -302,11 +302,11 @@ export default function RotationFormModal({
             </div>
             {selectedTemplate ? (
               <p className="mt-1.5 text-[10px] leading-relaxed text-slate-400">
-                {selectedTemplate.description || "Template user-owned"} · versi {followUpTemplateVersion ?? selectedTemplate.latestVersion}
+                {selectedTemplate.description || "Template stase"} · versi {followUpTemplateVersion ?? selectedTemplate.latestVersion}
               </p>
             ) : (
               <p className="mt-1.5 text-[10px] leading-relaxed text-amber-600">
-                {status === "Aktif" ? "Pilih, buat, atau salin starter sebelum stase dapat diaktifkan." : "Pilih dari Template Saya, atau salin dari starter di bawah."}
+                {status === "Aktif" ? "Pilih, buat, atau salin starter. Stase aktif wajib memiliki template follow-up default." : "Pilih dari Template Saya, atau salin dari starter di bawah. Ini template follow-up default untuk stase."}
               </p>
             )}
 
@@ -385,7 +385,7 @@ export default function RotationFormModal({
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold text-slate-700">
-              Template Report Default
+              Template Report Default <span className="ml-1 rounded-md bg-blue-50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#1677FF]">Pasangan Stase</span>
             </span>
             <select
               value={defaultReportTemplateId}
@@ -394,13 +394,17 @@ export default function RotationFormModal({
                 setDefaultReportTemplateId(id);
                 setDefaultReportTemplateVersion(reportTemplates.find((template) => template.id === id)?.latestVersion);
               }}
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700"
+              className="field-control"
+              disabled={reportTemplates.length === 0}
             >
-              <option value="">Tidak ada</option>
+              <option value="">{reportTemplates.length ? "Tanpa template report default" : "Template report belum tersedia"}</option>
               {reportTemplates.map((template) => (
                 <option key={template.id} value={template.id}>{template.name} · v{template.latestVersion}</option>
               ))}
             </select>
+            <p className="mt-1.5 text-[10px] leading-relaxed text-slate-500">
+              Pasangkan default follow-up dengan format laporan untuk stase ini. Starter dapat disalin lalu diedit; pilihan tidak dibatasi specialty.
+            </p>
           </label>
 
           <label className="block">
