@@ -62,12 +62,18 @@ const secondRotation: Rotation = {
 
 function withRotations(
   payload: BackupPayload = basePayload,
-  rotations: Rotation[] = [validRotation],
+  rotations?: Rotation[],
 ): BackupPayload {
+  const resolvedRotations =
+    rotations ??
+    payload.rotations ??
+    [validRotation];
+
   return {
     ...payload,
-    rotations,
-    activeRotationId: rotations.find((rotation) => rotation.status === "Aktif")?.id,
+    rotations: resolvedRotations,
+    activeRotationId:
+      resolvedRotations.find((rotation) => rotation.status === "Aktif")?.id,
   };
 }
 
@@ -83,6 +89,7 @@ function createRestoreLocalState(
     activeRotationId: string;
     drafts: Record<string, FollowUpFormValues>;
     attachments: StoredAttachment[];
+    slaberanTemplates: SlaberanTemplateRecord[];
   };
 } {
   let patients = initialPatients;
@@ -94,6 +101,7 @@ function createRestoreLocalState(
   let drafts: Record<string, FollowUpFormValues> = {};
   let attachments: StoredAttachment[] = [];
   let slaberanLocations: SlaberanLocation[] = [];
+  let slaberanTemplates: SlaberanTemplateRecord[] = [];
 
   const state: RestoreBackupLocalState = {
     loadPatients: () => patients,
@@ -127,6 +135,10 @@ function createRestoreLocalState(
     replaceSlaberanLocations: (value) => {
       slaberanLocations = value;
     },
+    loadSlaberanTemplates: () => slaberanTemplates,
+    replaceSlaberanTemplates: (value) => {
+      slaberanTemplates = value;
+    },
   };
 
   return {
@@ -138,6 +150,7 @@ function createRestoreLocalState(
       activeRotationId,
       drafts,
       attachments,
+      slaberanTemplates,
     }),
   };
 }
@@ -585,6 +598,40 @@ test("backup menolak lebih dari satu stase Aktif", () => {
   assert.equal(result.ok, false);
 });
 
+test("backup menolak binding template rotation yang tidak lengkap", () => {
+  const payload = withRotations({
+    ...basePayload,
+    rotations: [
+      {
+        ...validRotation,
+        followUpTemplateId: "template-follow-up",
+      },
+    ],
+  });
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
+test("backup menolak binding Slaberan rotation yang tidak ada di catalog", () => {
+  const payload = withRotations({
+    ...basePayload,
+    schemaVersion: 2,
+    rotations: [
+      {
+        ...validRotation,
+        slaberanTemplateId: "template-missing",
+      },
+    ],
+    slaberanTemplates: [],
+  });
+
+  const result = parseBackupText(serializeBackup(payload));
+
+  assert.equal(result.ok, false);
+});
+
 test("backup menolak activeRotationId yang tidak menunjuk ke stase", () => {
   const payload = {
     ...withRotations(),
@@ -654,6 +701,77 @@ test("restore mempertahankan local baru ketika cloud sudah sukses tetapi sync ga
   assert.equal(snapshot.activeRotationId, validRotation.id);
 });
 
+test("restore meremap ID Slaberan lokal setelah cloud commit", async () => {
+  const payload = withRotations({
+    ...basePayload,
+    schemaVersion: 2,
+    patients: [
+      {
+        ...patient,
+        currentLocation: {
+          locationId: "location-local",
+          type: "ward",
+          name: "Bangsal",
+          bed: "1",
+        },
+        admissionLocation: {
+          locationId: "location-local",
+          type: "ward",
+          name: "Bangsal",
+        },
+      },
+    ],
+    rotations: [
+      {
+        ...validRotation,
+        slaberanTemplateId: "template-local",
+      },
+    ],
+    slaberanLocations: [
+      {
+        ...slaberanLocation,
+        id: "location-local",
+      },
+    ],
+    slaberanTemplates: [
+      {
+        ...slaberanTemplate,
+        id: "template-local",
+      },
+    ],
+  });
+
+  const { state } = createRestoreLocalState();
+
+  const result = await restoreBackupPayload(payload, {
+    localState: state,
+    persistRemote: async () => ({
+      slaberanTemplateIds: {
+        "template-local": "template-remote",
+      },
+      slaberanLocationIds: {
+        "location-local": "location-remote",
+      },
+    }),
+    syncRemote: async () => {
+      throw new Error("sync tertunda");
+    },
+  });
+
+  assert.equal(result.syncStatus, "partial");
+  assert.equal(state.loadSlaberanTemplates()[0]?.id, "template-remote");
+  assert.equal(state.loadSlaberanLocations()[0]?.id, "location-remote");
+  assert.equal(state.loadRotations()[0]?.slaberanTemplateId, "template-remote");
+  assert.equal(
+    state.loadPatients()[0]?.currentLocation?.locationId,
+    "location-remote",
+  );
+  assert.equal(
+    state.loadPatients()[0]?.admissionLocation?.locationId,
+    "location-remote",
+  );
+});
+
 test("restore tidak rollback local jika cloud sudah commit tetapi persist mengembalikan error committed", async () => {
   const payload = withRotations({
     ...basePayload,
@@ -681,6 +799,66 @@ test("restore tidak rollback local jika cloud sudah commit tetapi persist mengem
   assert.equal(snapshot.patients[0]?.name, "Pasien Baru");
   assert.equal(snapshot.rotations[0]?.id, validRotation.id);
   assert.equal(snapshot.activeRotationId, validRotation.id);
+});
+
+test("restore mengganti local Slaberan templates dari backup", async () => {
+  const payload = withRotations({
+    ...basePayload,
+    schemaVersion: 2,
+    slaberanLocations: [],
+    slaberanTemplates: [slaberanTemplate],
+  });
+
+  const { state } = createRestoreLocalState();
+
+  await restoreBackupPayload(payload, {
+    localState: state,
+    persistRemote: async () => {},
+    syncRemote: async () => {},
+  });
+
+  assert.deepEqual(
+    state.loadSlaberanTemplates(),
+    [slaberanTemplate],
+  );
+});
+
+test("restore rollback mengembalikan local Slaberan templates jika cloud gagal", async () => {
+  const payload = withRotations({
+    ...basePayload,
+    schemaVersion: 2,
+    slaberanLocations: [],
+    slaberanTemplates: [slaberanTemplate],
+  });
+
+  const { state } = createRestoreLocalState();
+
+  state.replaceSlaberanTemplates([
+    {
+      ...slaberanTemplate,
+      id: "old-template",
+      name: "Template Lama",
+    },
+  ]);
+
+  await assert.rejects(
+    restoreBackupPayload(payload, {
+      localState: state,
+      persistRemote: async () => {
+        throw new Error("restore cloud gagal");
+      },
+      syncRemote: async () => {},
+    }),
+    /restore cloud gagal/,
+  );
+
+  assert.deepEqual(state.loadSlaberanTemplates(), [
+    {
+      ...slaberanTemplate,
+      id: "old-template",
+      name: "Template Lama",
+    },
+  ]);
 });
 
 test("restore rollback local jika cloud restore gagal", async () => {
