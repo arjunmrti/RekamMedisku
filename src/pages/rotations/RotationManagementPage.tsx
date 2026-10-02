@@ -13,7 +13,7 @@ import {
   upsertRotationWithSupabase,
 } from "../../data/supabaseRotations";
 import { loadPatients } from "../../data/localPatients";
-import { cloneSystemFollowUpTemplate, listFollowUpTemplates, listSystemFollowUpTemplates, type SystemFollowUpTemplateSummary } from "../../data/followUpTemplates";
+import { cloneSystemFollowUpTemplate, duplicateFollowUpTemplate, listFollowUpTemplates, listSystemFollowUpTemplates, type SystemFollowUpTemplateSummary } from "../../data/followUpTemplates";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
@@ -79,6 +79,8 @@ export default function RotationManagementPage({
   const [systemFollowUpTemplates, setSystemFollowUpTemplates] = useState<SystemFollowUpTemplateSummary[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [templateBuilderOpen, setTemplateBuilderOpen] = useState(false);
+  const [duplicatingTemplateId, setDuplicatingTemplateId] = useState<string | null>(null);
+  const [templateToast, setTemplateToast] = useState<{ message: string; error: boolean } | null>(null);
 
   useEffect(() => {
     setRotations(loadRotations());
@@ -451,8 +453,31 @@ export default function RotationManagementPage({
           setFollowUpTemplates(await listFollowUpTemplates());
           return result;
         }}
+        onDuplicateTemplate={async (templateId) => {
+          if (duplicatingTemplateId) throw new Error("Duplikasi template sedang berjalan. Tunggu hingga selesai.");
+          setDuplicatingTemplateId(templateId);
+          setTemplateToast(null);
+          try {
+            const result = await duplicateFollowUpTemplate(templateId);
+            setFollowUpTemplates(await listFollowUpTemplates());
+            setTemplateToast({ message: "Template \"" + result.name + "\" berhasil diduplikasi.", error: false });
+            return result;
+          } catch (error) {
+            setTemplateToast({ message: error instanceof Error ? error.message : "Duplikasi template gagal. Periksa koneksi lalu coba lagi.", error: true });
+            throw error;
+          } finally {
+            setDuplicatingTemplateId(null);
+          }
+        }}
         onCreateTemplate={() => setTemplateBuilderOpen(true)}
       />
+
+      {templateToast ? (
+        <div role="status" className={`fixed bottom-20 left-4 z-50 max-w-sm rounded-xl border px-4 py-3 text-xs font-semibold shadow-lg sm:left-6 md:bottom-6 ${templateToast.error ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+          {templateToast.message}
+          <button type="button" onClick={() => setTemplateToast(null)} className="ml-3" aria-label="Tutup notifikasi">×</button>
+        </div>
+      ) : null}
 
       <FollowUpTemplateBuilderModal
         open={templateBuilderOpen}

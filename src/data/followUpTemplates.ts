@@ -47,6 +47,7 @@ type AppendTemplateVersionRpcResult = {
 };
 
 type CloneSystemTemplateRpcResult = AppendTemplateVersionRpcResult;
+type DuplicateTemplateRpcResult = { templateId: string; name: string; version: 1 };
 
 export type SystemFollowUpTemplateSummary = FollowUpTemplateSummary & {
   isSystemOwned: true;
@@ -65,6 +66,19 @@ export async function listSystemFollowUpTemplates(): Promise<SystemFollowUpTempl
     ...toSummary(row as TemplateRow, null),
     isSystemOwned: true as const,
   }));
+}
+
+export async function duplicateFollowUpTemplate(templateId: string): Promise<DuplicateTemplateRpcResult> {
+  await getCurrentUserId();
+  const { data, error } = await supabase.rpc("duplicate_follow_up_template", {
+    p_source_template_id: templateId,
+  });
+  if (error) throw error;
+  const result = data as DuplicateTemplateRpcResult;
+  if (!result?.templateId || !result.name || result.version !== 1) {
+    throw new Error("Respons duplikasi template follow-up tidak valid.");
+  }
+  return result;
 }
 
 export async function cloneSystemFollowUpTemplate(input: {
