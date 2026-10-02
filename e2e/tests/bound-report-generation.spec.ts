@@ -193,7 +193,7 @@ async function installMockSupabase(page: Page) {
           template_version: 1,
           template_schema_version: 1,
           template_snapshot: FOLLOW_UP_TEMPLATE_DEFINITION,
-          template_answers: {
+          answers: {
             bp_reading: "120/80",
             clinical_notes: "Kondisi stabil",
           },
@@ -342,6 +342,7 @@ test("bound report template resolves patient, core, and template.field tags in p
   await expect(reportText).toHaveValue(/Laporan Follow-Up Pasien Budi Santoso/);
   await expect(reportText).toHaveValue(/GCS: 4\/5\/6/);
   await expect(reportText).toHaveValue(/BP Reading: 120\/80/);
+  await expect(reportText).toHaveValue(/Notes: Kondisi stabil/);
 
   const copyButton = preview.getByRole("button", { name: "Salin Laporan" });
   await expect(copyButton).toBeEnabled({ timeout: 5000 });
