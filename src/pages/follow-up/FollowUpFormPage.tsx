@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import AssessmentSection from "../../components/follow-up/AssessmentSection";
-import ObjectiveSection from "../../components/follow-up/ObjectiveSection";
 import FollowUpTemplateRenderer from "../../components/follow-up/FollowUpTemplateRenderer";
 import FollowUpQuickCustomization from "../../components/follow-up/FollowUpQuickCustomization";
 import PatientContextCard from "../../components/follow-up/PatientContextCard";
@@ -864,18 +863,6 @@ export default function FollowUpFormPage({
                 id="follow-up-section-objective"
                 className="scroll-mt-24 transition-all duration-300"
               >
-                <ObjectiveSection
-                  open={openSections.objective}
-                  onToggle={() => toggleSection("objective")}
-                  objective={values.objective}
-                  neurology={values.neurology}
-                  internalMedicine={values.internalMedicine}
-                  templateType={activeRotation?.specialty ?? "Neurologi"}
-                  showTemplateFields={false}
-                  onObjectiveChange={(objective) => updateValues({ ...values, objective })}
-                  onNeurologyChange={(neurology) => updateValues({ ...values, neurology })}
-                  onInternalMedicineChange={(internalMedicine) => updateValues({ ...values, internalMedicine })}
-                />
                 {templateLoading ? (
                   <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-xs text-slate-500">Memuat template follow-up...</div>
                 ) : template && activeTemplateDefinition ? (
