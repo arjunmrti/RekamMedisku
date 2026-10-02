@@ -8,7 +8,7 @@
 :root {
   font-family: "Plus Jakarta Sans", sans-serif;
   color: #172b4d;
-  background: #f7f9fc;
+  background: #f4f7fb;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -21,7 +21,7 @@ body {
   min-height: 100vh;
   margin: 0;
   font-family: "Plus Jakarta Sans", sans-serif;
-  background: #f7f9fc;
+  background: #f4f7fb;
 }
 
 body {
@@ -38,7 +38,7 @@ option {
 }
 
 .field-control {
-  min-height: 44px;
+  min-height: 46px;
   width: 100%;
   border: 1px solid #E5EAF1;
   border-radius: 12px;

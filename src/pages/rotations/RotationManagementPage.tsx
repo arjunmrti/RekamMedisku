@@ -254,13 +254,13 @@ export default function RotationManagementPage({
             <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#1677FF]">
-                  Workspace · Rotation Management
+                  Workspace klinis
                 </p>
                 <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900">
                   Stase Saya
                 </h1>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Kelola workspace berdasarkan rotasi klinik.
+                  Atur konteks kerja, pasien, dan format catatan untuk setiap rotasi klinik.
                 </p>
               </div>
 

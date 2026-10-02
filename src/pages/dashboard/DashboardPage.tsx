@@ -196,7 +196,7 @@ export default function DashboardPage({
       searchValue={searchValue}
       onSearchChange={setSearchValue}
     >
-      <main className="flex-1 overflow-y-auto px-4 py-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] xl:pb-8 md:pb-8 sm:px-6 lg:px-8 lg:py-7 lg:pb-8">
+      <main className="flex-1 overflow-y-auto px-4 py-6 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-8 sm:px-6 lg:px-10 lg:py-9 lg:pb-8">
         <div className="mx-auto w-full max-w-[1400px]">
           <DashboardHeader
             userName={profileName}

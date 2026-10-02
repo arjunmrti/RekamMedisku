@@ -51,9 +51,9 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
   const activeRotation = loadActiveRotation();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden h-screen w-[252px] shrink-0 flex-col overflow-hidden border-r border-[#E5EAF1] bg-[#F8FBFF] lg:flex">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden h-screen w-[252px] shrink-0 flex-col overflow-hidden border-r border-slate-200 bg-white lg:flex">
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="flex h-[72px] items-center gap-3 px-6">
+        <div className="flex h-[80px] items-center gap-3 border-b border-slate-100 px-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#1677FF] text-white shadow-sm shadow-blue-500/20">
             <Icon name="pulse" className="h-6 w-6" strokeWidth={2.5} />
           </div>
@@ -67,7 +67,7 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
           </div>
         </div>
 
-        <nav className="space-y-4 px-3 py-3" aria-label="Navigasi utama">
+        <nav className="space-y-5 px-3 py-5" aria-label="Navigasi utama">
           <NavButton
             label="Beranda"
             icon="home"
@@ -95,7 +95,7 @@ export default function Sidebar({ activeItem, onNavigate }: SidebarProps) {
         </nav>
       </div>
 
-      <div className="shrink-0 border-t border-[#E5EAF1] bg-[#F8FBFF] p-3">
+      <div className="shrink-0 border-t border-slate-100 bg-white p-3">
         <button
           type="button"
           onClick={() => onNavigate("Stase Saya")}
