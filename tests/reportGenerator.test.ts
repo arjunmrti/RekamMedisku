@@ -111,14 +111,14 @@ const internalMedicineFollowUp: FollowUpEntry = {
   summary: "Mual berkurang.",
 };
 
-test("template hanya tersedia untuk stase MVP yang didukung", () => {
+test("template tersedia untuk semua stase", () => {
   assert.equal(getReportTemplateForSpecialty("Neurologi"), "Neurologi");
   assert.equal(
     getReportTemplateForSpecialty("Ilmu Penyakit Dalam"),
     "Ilmu Penyakit Dalam",
   );
-  assert.equal(getReportTemplateForSpecialty("Bedah"), null);
-  assert.equal(getReportTemplateForSpecialty("Pediatri"), null);
+  assert.equal(getReportTemplateForSpecialty("Bedah"), "Bedah");
+  assert.equal(getReportTemplateForSpecialty("Pediatri"), "Pediatri");
   assert.equal(getReportTemplateForSpecialty(undefined), null);
 });
 

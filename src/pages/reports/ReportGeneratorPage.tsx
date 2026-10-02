@@ -234,8 +234,8 @@ function FollowUpReportGeneratorPage({
       : undefined;
   const reportTemplate = getReportTemplateForSpecialty(
     patientRotation?.specialty,
-  );
-  const fallbackTemplate: ReportTemplateType = reportTemplate ?? "Neurologi";
+  ) ?? (patientRotation ? "Universal" : null);
+  const fallbackTemplate: ReportTemplateType = reportTemplate ?? patientRotation?.specialty ?? "Universal";
 
   const followUps = useMemo(
     () => getFollowUps(patient?.id ?? "", fallbackTemplate),
@@ -438,13 +438,9 @@ function FollowUpReportGeneratorPage({
     );
   }
 
-  if (!patientRotation || !reportTemplate) {
-    const title = patientRotation
-      ? "Report Generator untuk stase ini belum tersedia"
-      : "Stase pasien tidak ditemukan";
-    const description = patientRotation
-      ? `MVP RekamMedisku saat ini menyediakan template laporan untuk Neurologi dan Ilmu Penyakit Dalam. Stase ${patientRotation.name} tetap dapat digunakan sebagai rotasi tanpa menghapus data pasien atau riwayat.`
-      : "Data rotasi pasien tidak ditemukan. Periksa kembali data stase sebelum membuat laporan.";
+  if (!patientRotation) {
+    const title = "Stase pasien tidak ditemukan";
+    const description = "Data rotasi pasien tidak ditemukan. Periksa kembali data stase sebelum membuat laporan.";
 
     return (
       <AppShell

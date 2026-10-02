@@ -60,9 +60,10 @@ export function getReportGreeting(date = new Date()) {
 export function getReportTemplateForSpecialty(
   specialty: RotationSpecialty | undefined,
 ): ReportTemplateType | null {
+  if (!specialty?.trim()) return null;
   if (specialty === "Neurologi") return "Neurologi";
   if (specialty === "Ilmu Penyakit Dalam") return "Ilmu Penyakit Dalam";
-  return null;
+  return specialty as ReportTemplateType;
 }
 
 function getTemplateObjective(
