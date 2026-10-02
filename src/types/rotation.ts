@@ -12,6 +12,7 @@ export type Rotation = {
   id: string;
   name: string;
   specialty: RotationSpecialty;
+  institution?: string | null;
   startDate: string;
   endDate: string;
   status: RotationStatus;

@@ -75,13 +75,13 @@ export default function PatientsPage({
   onOpenPatientProfile,
 }: PatientsPageProps) {
   const workspaceSyncVersion = useWorkspaceSyncVersion();
+  const [activeRotation, setActiveRotation] = useState(() => loadActiveRotation());
   const [filterSearch, setFilterSearch] = useState("");
   const [status, setStatus] = useState<
     "Semua" | "Aktif" | "Diarsipkan"
   >("Semua");
   const [room, setRoom] = useState("Semua");
   const [sort, setSort] = useState<PatientSort>("newest");
-  const activeRotation = loadActiveRotation();
   const [patients, setPatients] = useState(() => loadPatients());
   const [selectedPatient, setSelectedPatient] =
     useState<PatientListItem | null>(() =>
@@ -96,6 +96,7 @@ export default function PatientsPage({
   useEffect(() => {
     if (workspaceSyncVersion === 0) return;
 
+    setActiveRotation(loadActiveRotation());
     const latestPatients = loadPatients();
     setPatients(latestPatients);
     setSelectedPatient((current) => {

@@ -132,6 +132,7 @@ export function upsertRotation(input: {
   id?: string;
   name: string;
   specialty: RotationSpecialty;
+  institution?: string | null;
   startDate: string;
   endDate: string;
   status: RotationStatus;
@@ -154,6 +155,7 @@ export function upsertRotation(input: {
     id,
     name: input.name.trim(),
     specialty: input.specialty,
+    institution: input.institution?.trim() || null,
     startDate: input.startDate,
     endDate: input.endDate,
     status: input.status,

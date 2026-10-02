@@ -19,6 +19,7 @@ type RotationFormModalProps = {
     updatedAt?: string;
     name: string;
     specialty: RotationSpecialty;
+    institution?: string | null;
     startDate: string;
     endDate: string;
     status: RotationStatus;
@@ -56,6 +57,7 @@ export default function RotationFormModal({
   const [name, setName] = useState(() => rotation?.name ?? "");
   const [specialty, setSpecialty] =
     useState<RotationSpecialty>(() => rotation?.specialty ?? "Neurologi");
+  const [institution, setInstitution] = useState(() => rotation?.institution ?? "");
   const [startDate, setStartDate] = useState(
     () => rotation?.startDate ?? "2026-09-01",
   );
@@ -75,6 +77,7 @@ export default function RotationFormModal({
     if (!open) return;
     setName(rotation?.name ?? "");
     setSpecialty(rotation?.specialty ?? "Neurologi");
+    setInstitution(rotation?.institution ?? "");
     setStartDate(rotation?.startDate ?? "2026-09-01");
     setEndDate(rotation?.endDate ?? "2026-09-30");
     setStatus(rotation?.status ?? "Mendatang");
@@ -131,6 +134,7 @@ export default function RotationFormModal({
         updatedAt: rotation?.updatedAt,
         name,
         specialty,
+        institution: institution.trim() || null,
         startDate,
         endDate,
         status,
@@ -216,6 +220,11 @@ export default function RotationFormModal({
                 <option key={item}>{item}</option>
               ))}
             </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-700">Institution</span>
+            <input value={institution} onChange={(event) => setInstitution(event.target.value)} placeholder="Nama institusi (opsional)" className="field-control" />
           </label>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

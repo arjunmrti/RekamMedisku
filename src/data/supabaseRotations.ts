@@ -19,6 +19,7 @@ type RotationRow = {
   user_id: string;
   name: string;
   specialty: string;
+  institution: string | null;
   start_date: string;
   end_date: string;
   status: string;
@@ -97,6 +98,7 @@ function toRotation(row: RotationRow, localId: string): Rotation {
     id: localId,
     name: row.name,
     specialty: normalizeSpecialty(row.specialty),
+    institution: row.institution,
     startDate: row.start_date,
     endDate: row.end_date,
     status: normalizeStatus(row.status),
@@ -162,7 +164,7 @@ export async function syncRotationsWithSupabase(): Promise<Rotation[]> {
   const { data: remoteRows, error } = await supabase
     .from("rotations")
     .select(
-      "id,user_id,name,specialty,start_date,end_date,status,follow_up_template_id,follow_up_template_version,report_template_id,report_template_version,slaberan_template_id,created_at,updated_at",
+      "id,user_id,name,specialty,institution,start_date,end_date,status,follow_up_template_id,follow_up_template_version,report_template_id,report_template_version,slaberan_template_id,created_at,updated_at",
     )
     .eq("user_id", userId)
     .order("start_date", { ascending: false })
@@ -248,6 +250,7 @@ export async function upsertRotationWithSupabase(input: {
   updatedAt?: string;
   name: string;
   specialty: RotationSpecialty;
+  institution?: string | null;
   startDate: string;
   endDate: string;
   status: RotationStatus;
@@ -290,6 +293,7 @@ export async function upsertRotationWithSupabase(input: {
           null,
         p_name: nextRotation.name,
         p_specialty: nextRotation.specialty,
+        p_institution: nextRotation.institution ?? null,
         p_start_date: nextRotation.startDate,
         p_end_date: nextRotation.endDate,
         p_status: nextRotation.status,
@@ -433,6 +437,7 @@ export async function activateRotationWithSupabase(
         toRotation(
           {
             ...target,
+            institution: target.institution ?? null,
             id: remoteId,
             user_id: "",
             created_at: target.createdAt ?? new Date().toISOString(),
