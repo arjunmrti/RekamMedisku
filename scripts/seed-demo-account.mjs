@@ -11,7 +11,11 @@ if (!url || !secret) {
 }
 
 const admin = createClient(url, secret, { auth: { persistSession: false } });
-const starterId = "00000000-0000-0000-0000-000000000201";
+const starterIds = {
+  ipd: "00000000-0000-0000-0000-000000000212",
+  bedah: "00000000-0000-0000-0000-000000000215",
+  pediatri: "00000000-0000-0000-0000-000000000211",
+};
 
 const now = new Date();
 const iso = (daysAgo, hours = 8) => {
@@ -28,6 +32,11 @@ const usersRes = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
 if (usersRes.error) throw usersRes.error;
 
 let user = usersRes.data.users.find((u) => u.email === email);
+if (user) {
+  const deleted = await admin.auth.admin.deleteUser(user.id);
+  if (deleted.error) throw deleted.error;
+  user = null;
+}
 if (!user) {
   const created = await admin.auth.admin.createUser({
     email,
@@ -53,20 +62,28 @@ if (signInRes.error) throw signInRes.error;
 // 2. Profile
 await sessionClient.from("profiles").upsert({
   id: userId,
-  name: "dr. Muhammad Arkan (Koas)",
+  name: "Muhammad Fadel",
 });
 
-// 3. Clone Starter Template
-const cloned = await sessionClient.rpc("clone_system_follow_up_template", {
-  p_template_id: starterId,
-  p_name: "Format SOAP Penyakit Dalam",
-});
-if (cloned.error) throw cloned.error;
-const templateId = cloned.data.templateId;
+// 3. Clone specialty starter templates
+const cloneStarter = async (starterId, name) => {
+  const cloned = await sessionClient.rpc("clone_system_follow_up_template", {
+    p_template_id: starterId,
+    p_name: name,
+  });
+  if (cloned.error) throw cloned.error;
+  return cloned.data.templateId;
+};
+const templateIds = {
+  ipd: await cloneStarter(starterIds.ipd, "Format SOAP Penyakit Dalam"),
+  bedah: await cloneStarter(starterIds.bedah, "Format SOAP Bedah"),
+  pediatri: await cloneStarter(starterIds.pediatri, "Format SOAP Pediatri"),
+};
 
 // 4. Rotations (Ilmu Penyakit Dalam = Aktif)
 const rotInterna = crypto.randomUUID();
 const rotBedah = crypto.randomUUID();
+const rotPediatri = crypto.randomUUID();
 
 const rotationRows = [
   {
@@ -78,7 +95,7 @@ const rotationRows = [
     start_date: dateStr(21),
     end_date: dateStr(-40),
     status: "Aktif",
-    follow_up_template_id: templateId,
+    follow_up_template_id: templateIds.ipd,
     follow_up_template_version: 1,
   },
   {
@@ -90,6 +107,20 @@ const rotationRows = [
     start_date: dateStr(90),
     end_date: dateStr(22),
     status: "Selesai",
+    follow_up_template_id: templateIds.bedah,
+    follow_up_template_version: 1,
+  },
+  {
+    id: rotPediatri,
+    user_id: userId,
+    name: "Stase Ilmu Kesehatan Anak",
+    specialty: "Pediatri",
+    institution: "RS PKU Muhammadiyah Yogyakarta",
+    start_date: dateStr(150),
+    end_date: dateStr(91),
+    status: "Selesai",
+    follow_up_template_id: templateIds.pediatri,
+    follow_up_template_version: 1,
   },
 ];
 
@@ -162,6 +193,19 @@ const patientDefs = [
     admission_date: dateStr(28),
     admission_complaint: "Nyeri perut kanan bawah mendadak disertai demam dan mual.",
     rotation_id: rotBedah,
+  },
+  {
+    name: "An. Dimas Aditya",
+    age: 7,
+    gender: "Laki-laki",
+    rm: "RM-PED-02014",
+    room: "Bangsal Kenanga",
+    bed: "03",
+    doctor: "dr. Nurul Sp.A",
+    status: "Aktif",
+    admission_date: dateStr(100),
+    admission_complaint: "Diare cair frekuensi >5x sehari disertai demam dan muntah.",
+    rotation_id: rotPediatri,
   },
 ];
 
@@ -249,6 +293,15 @@ const followUpList = [
   },
 ];
 
+const coreObjectiveByPatient = {
+  "Tn. Agus Prasetyo": { generalCondition: "Sedang", consciousness: "Compos Mentis", gcsEye: "4", gcsVerbal: "5", gcsMotor: "6", systolic: "115", diastolic: "75", pulse: "80", respiratoryRate: "18", temperature: "36.5", spo2: "99", oxygenVia: "Room air", weight: "70", height: "170", bmi: "24.2", nutritionStatus: "Baik", headNeck: "Konjungtiva tidak anemis, sklera tidak ikterik", thorax: "Cor reguler, pulmo vesikuler", abdomen: "Supel, nyeri tekan epigastrium minimal", extremities: "Akral hangat, CRT <2 detik", painNrs: "2", otherFindings: "Petekie memudar" },
+  "Ny. Sri Wahyuni": { generalCondition: "Sedang", consciousness: "Compos Mentis", gcsEye: "4", gcsVerbal: "5", gcsMotor: "6", systolic: "135", diastolic: "85", pulse: "82", respiratoryRate: "20", temperature: "36.4", spo2: "98", oxygenVia: "Room air", weight: "62", height: "158", bmi: "24.8", nutritionStatus: "Cukup", headNeck: "JVP tidak meningkat", thorax: "Ronki basal minimal", abdomen: "Supel", extremities: "Edema tungkai +1/+1", painNrs: "1", otherFindings: "" },
+  "Tn. Bambang Sutrisno": { generalCondition: "Sedang", consciousness: "Compos Mentis", gcsEye: "4", gcsVerbal: "5", gcsMotor: "6", systolic: "130", diastolic: "80", pulse: "84", respiratoryRate: "18", temperature: "36.9", spo2: "98", oxygenVia: "Room air", weight: "82", height: "168", bmi: "29.1", nutritionStatus: "Obesitas", headNeck: "Konjungtiva agak pucat", thorax: "Pulmo vesikuler", abdomen: "Supel", extremities: "Ulkus plantar pedis dextra 4x3 cm", painNrs: "3", otherFindings: "Pulsasi dorsalis pedis teraba" },
+  "Ny. Endang Lestari": { generalCondition: "Baik", consciousness: "Compos Mentis", gcsEye: "4", gcsVerbal: "5", gcsMotor: "6", systolic: "120", diastolic: "80", pulse: "78", respiratoryRate: "18", temperature: "36.6", spo2: "99", oxygenVia: "Room air", weight: "55", height: "155", bmi: "22.9", nutritionStatus: "Baik", headNeck: "Tidak anemis", thorax: "Cor-pulmo dalam batas normal", abdomen: "Nyeri tekan epigastrium minimal", extremities: "Edema (-)", painNrs: "2", otherFindings: "" },
+  "Tn. Rizky Pratama": { generalCondition: "Baik", consciousness: "Compos Mentis", gcsEye: "4", gcsVerbal: "5", gcsMotor: "6", systolic: "120", diastolic: "70", pulse: "80", respiratoryRate: "18", temperature: "36.7", spo2: "99", oxygenVia: "Room air", weight: "68", height: "172", bmi: "23.0", nutritionStatus: "Baik", headNeck: "Tidak anemis", thorax: "Pulmo vesikuler", abdomen: "Luka operasi bersih", extremities: "Akral hangat", painNrs: "4", otherFindings: "" },
+  "An. Dimas Aditya": { generalCondition: "Sedang", consciousness: "Compos Mentis", gcsEye: "4", gcsVerbal: "5", gcsMotor: "6", systolic: "100", diastolic: "65", pulse: "110", respiratoryRate: "24", temperature: "38.2", spo2: "98", oxygenVia: "Room air", weight: "22", height: "118", bmi: "15.8", nutritionStatus: "Cukup", headNeck: "Mukosa bibir kering", thorax: "Vesikuler", abdomen: "Supel, bising usus meningkat", extremities: "CRT 2 detik", painNrs: "2", otherFindings: "Turgor sedikit menurun" },
+};
+
 const savedFollowUps = [];
 for (const f of followUpList) {
   const patientId = patientMap[f.patientName];
@@ -260,7 +313,7 @@ for (const f of followUpList) {
     time: f.time,
     status: "Tersimpan",
     template_type: "Format SOAP Penyakit Dalam",
-    template_id: templateId,
+    template_id: templateIds[f.templateKey ?? (f.patientName === "Tn. Rizky Pratama" ? "bedah" : "ipd")],
     template_version: 1,
     subjective: f.s,
     objective: f.o,
@@ -276,6 +329,7 @@ for (const f of followUpList) {
     assessment_codes: [],
     planning: f.p,
     instruction: "Lapor residen/konsulen jaga jika ada kegawatan atau perburukan hemodinamik.",
+    core_objective: coreObjectiveByPatient[f.patientName] ?? {},
   };
 
   const saveRes = await sessionClient.rpc("save_follow_up_with_exams", {
