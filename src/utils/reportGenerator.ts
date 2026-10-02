@@ -162,6 +162,10 @@ export type RenderContext = {
   templateType: ReportTemplateType;
   admissionDate: string;
   admissionComplaint: string;
+  summary: {
+    doctorCount: string;
+    totalPatients: string;
+  };
 };
 
 export function buildRenderContext(
@@ -198,12 +202,14 @@ export function buildRenderContext(
     templateType: rotation as ReportTemplateType,
     admissionDate: formatAdmissionDate(patient.admissionDate),
     admissionComplaint: patient.admissionComplaint?.trim() ?? "",
+    summary: { doctorCount: "", totalPatients: "" },
   };
 }
 
 export const APPROVED_REPORT_TAGS = [
   "report.date",
   "report.rotation",
+  "report.specialty",
   "report.hospital",
   "report.doctor",
   "patient.name",
@@ -219,6 +225,8 @@ export const APPROVED_REPORT_TAGS = [
   "followUp.instruction",
   "followUp.supportingExams",
   "followUp.coreObjective",
+  "summary.doctor_count",
+  "summary.total_patients",
 ] as const;
 
 const APPROVED_REPORT_TAG_SET = new Set<string>(APPROVED_REPORT_TAGS);
@@ -228,6 +236,7 @@ export function resolveTag(key: string, context: RenderContext): string {
   const values: Record<string, string> = {
     "report.date": context.report.date,
     "report.rotation": context.report.rotation,
+    "report.specialty": context.report.rotation,
     "report.hospital": context.report.hospital,
     "report.doctor": context.report.doctor,
     "patient.name": context.patient.name,
@@ -243,6 +252,8 @@ export function resolveTag(key: string, context: RenderContext): string {
     "followUp.instruction": context.followUp.instruction,
     "followUp.supportingExams": context.followUp.supportingExams,
     "followUp.coreObjective": context.followUp.coreObjective,
+    "summary.doctor_count": context.summary.doctorCount,
+    "summary.total_patients": context.summary.totalPatients,
   };
   return values[key] ?? "";
 }

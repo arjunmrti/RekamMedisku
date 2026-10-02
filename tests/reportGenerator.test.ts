@@ -287,7 +287,7 @@ test("tanggal kosong memakai fallback yang aman", () => {
 });
 
 test("APPROVED_REPORT_TAGS contains whitelist of expected keys", () => {
-  assert.equal(APPROVED_REPORT_TAGS.length, 17);
+  assert.equal(APPROVED_REPORT_TAGS.length, 20);
   assert.ok(APPROVED_REPORT_TAGS.includes("patient.name"));
   assert.ok(APPROVED_REPORT_TAGS.includes("report.rotation"));
   assert.ok(APPROVED_REPORT_TAGS.includes("followUp.coreObjective"));

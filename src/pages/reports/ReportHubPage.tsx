@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import AppShell, { type NavigationProps } from "../../components/layout/AppShell";
 import Icon from "../../components/ui/Icon";
 import ReportHubCard, {
@@ -12,6 +12,7 @@ import { loadSlaberanLocations } from "../../data/localSlaberanLocations";
 import { loadSlaberanTemplates } from "../../data/localSlaberanTemplates";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import type { ReportMode } from "../../types/report";
+import ReportTemplateEditor from "../../components/report/ReportTemplateEditor";
 
 type ReportHubPageProps = NavigationProps & {
   onSelectMode: (mode: Exclude<ReportMode, "hub">) => void;
@@ -25,6 +26,7 @@ export default function ReportHubPage({
   const workspaceSyncVersion = useWorkspaceSyncVersion();
   const activeRotation = loadActiveRotation();
   const patients = loadPatients();
+  const [editorOpen, setEditorOpen] = useState(false);
 
   const activePatients = useMemo(
     () =>
@@ -152,6 +154,8 @@ export default function ReportHubPage({
             </div>
           </section>
 
+          <button type="button" onClick={() => setEditorOpen(true)} className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-semibold text-[#1677FF] hover:bg-blue-100">Kelola Template Laporan</button>
+
           <div className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-slate-50/70 p-4 sm:p-5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-slate-500 shadow-sm ring-1 ring-slate-100">
               <Icon name="lightbulb" className="h-4 w-4" />
@@ -169,6 +173,7 @@ export default function ReportHubPage({
           </div>
         </div>
       </main>
+      {editorOpen && <ReportTemplateEditor onClose={() => setEditorOpen(false)} />}
     </AppShell>
   );
 }
