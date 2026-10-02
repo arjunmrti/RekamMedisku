@@ -183,16 +183,18 @@ export function buildRenderContext(
   profile: ReportIdentity,
   rotationMeta: { name?: string; specialty?: string } = {},
 ): RenderContext {
+  const normalizedName = rotationMeta.name?.trim() || rotation;
+  const normalizedSpecialty = rotationMeta.specialty?.trim() || "";
   return {
     report: {
       date: formatReportDate(followUp.date),
-      rotation: rotationMeta.name?.trim() || rotation,
-      specialty: rotationMeta.specialty?.trim() || rotation,
+      rotation: normalizedName,
+      specialty: normalizedSpecialty,
       hospital: profile.institution?.trim() ?? "",
       doctor: patient.doctor,
       rotationMeta: {
-        name: rotationMeta.name?.trim() || rotation,
-        specialty: rotationMeta.specialty?.trim() || rotation,
+        name: normalizedName,
+        specialty: normalizedSpecialty,
       },
     },
     patient: {
@@ -342,7 +344,7 @@ export function validateReportTemplateDefinition(
         errors.push(`Unknown tag in ${location}: {{${tag}}}`);
         return;
       }
-      if (snapshot && !knownFieldIds.has(fieldId)) {
+      if (!snapshot || !knownFieldIds.has(fieldId)) {
         errors.push(`Unknown tag in ${location}: {{${tag}}}`);
       }
       return;
