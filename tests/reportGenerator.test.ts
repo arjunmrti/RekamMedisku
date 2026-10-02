@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildWhatsAppReport,
+  buildRenderContext,
   formatReportDate,
   formatReportRotationName,
   getReportGreeting,
@@ -432,5 +433,42 @@ test("extractTagsFromText extracts tags embedded inside surrounding text", () =>
   const text = "Info: {{ patient.name }} ada di kamar {{patient.room}} / {{patient.bed}}.";
   const tags = extractTagsFromText(text);
   assert.deepEqual(tags, ["patient.name", "patient.room", "patient.bed"]);
+});
+
+test("report formatter snapshot preserves core order, labels, and grouped GCS", () => {
+  const output = formatCoreObjective({
+    generalCondition: "Baik", consciousness: "Compos mentis", gcsEye: "4", gcsVerbal: "5", gcsMotor: "6",
+    systolic: "120", diastolic: "80", pulse: "", respiratoryRate: "", temperature: "", spo2: "",
+    oxygenVia: "", weight: "", height: "", bmi: "", nutritionStatus: "", headNeck: "", thorax: "",
+    abdomen: "", extremities: "", painNrs: "", otherFindings: "Temuan lain",
+  });
+  assert.equal(output, [
+    "GCS E/M/V: 4/5/6", "Keadaan Umum (generalCondition): Baik", "Kesadaran: Compos mentis", "TD: 120/80 mmHg", "Temuan Lain: Temuan lain",
+  ].join("\n"));
+});
+
+test("template answers snapshot preserves field order and multi-value labels", () => {
+  const definition = { schema_version: 1, sections: [{ id: "s", title: "Klinis", fields: [
+    { id: "first", label: "Keluhan", type: "text" }, { id: "multi", label: "Pilihan", type: "multiselect" },
+  ] }] } as import("../src/types/followUpTemplate").FollowUpTemplateDefinition;
+  assert.equal(formatTemplateAnswers(definition, { multi: ["A", "B"], first: "Nyeri" }), "Klinis:\nKeluhan: Nyeri\nPilihan: A, B");
+  assert.equal(formatTemplateAnswers(undefined, { first: "ignored" }), "");
+});
+
+test("render context preserves explicit specialty, metadata, doctor, admission, and core fallback", () => {
+  const context = buildRenderContext(patient, neurologyFollowUp, "Rotasi Lama", reportIdentity, { name: "Rotasi Baru", specialty: "Neurologi" });
+  assert.equal(context.report.specialty, "Neurologi");
+  assert.deepEqual(context.report.rotationMeta, { name: "Rotasi Baru", specialty: "Neurologi" });
+  assert.equal(context.report.doctor, patient.doctor);
+  assert.equal(context.admissionComplaint, patient.admissionComplaint);
+  assert.ok(context.followUp.coreObjective.length > 0);
+});
+
+test("resolver edge cases stay empty and malformed tags remain unresolved", () => {
+  const context = { report: { date: "", rotation: "", specialty: "", hospital: "", doctor: "", rotationMeta: { name: "", specialty: "" } }, patient: { name: "", age: "", rm: "", room: "", bed: "", dpjp: "" }, followUp: { subjective: "", objective: "", assessment: "", plan: "", instruction: "", supportingExams: "", coreObjective: "" }, identity: { name: "", studentId: "", program: "", institution: "" }, templateType: "Neurologi" as const, admissionDate: "", admissionComplaint: "", summary: { doctorCount: "", totalPatients: "" }, templateFields: {}, core: {} };
+  assert.equal(resolveTag("template.field.missing", context), "");
+  assert.equal(resolveTag("core.generalCondition", context), "");
+  assert.equal(resolveTag("template.field.field-1", { ...context, templateFields: { "field-1": "Jawaban label-rename" } }), "Jawaban label-rename");
+  assert.deepEqual(extractTagsFromText("{{nested.{{bad}}}} {{unclosed"), ["bad"]);
 });
 
