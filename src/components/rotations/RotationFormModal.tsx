@@ -6,6 +6,7 @@ import type {
   RotationStatus,
 } from "../../types/rotation";
 import type { FollowUpTemplateSummary } from "../../types/followUpTemplate";
+import type { ReportTemplateSummary } from "../../types/reportTemplate";
 import type { SystemFollowUpTemplateSummary } from "../../data/followUpTemplates";
 import type { SlaberanTemplateRecord } from "../../types/slaberanTemplate";
 import { loadSlaberanTemplates } from "../../data/localSlaberanTemplates";
@@ -25,9 +26,12 @@ type RotationFormModalProps = {
     status: RotationStatus;
     followUpTemplateId?: string;
     followUpTemplateVersion?: number;
+    defaultReportTemplateId?: string;
+    defaultReportTemplateVersion?: number;
     slaberanTemplateId?: string;
   }) => void | Promise<void>;
   followUpTemplates: FollowUpTemplateSummary[];
+  reportTemplates?: ReportTemplateSummary[];
   systemFollowUpTemplates?: SystemFollowUpTemplateSummary[];
   onCloneSystemTemplate?: (templateId: string, name?: string) => Promise<{ templateId: string; version: number }>;
   onDuplicateTemplate?: (templateId: string) => Promise<{ templateId: string; name: string }>;
@@ -51,6 +55,7 @@ export default function RotationFormModal({
   onClose,
   onSubmit,
   followUpTemplates,
+  reportTemplates = [],
   systemFollowUpTemplates = [],
   onCloneSystemTemplate,
   onDuplicateTemplate,
@@ -69,6 +74,8 @@ export default function RotationFormModal({
   const [status, setStatus] = useState<RotationStatus>(() => rotation?.status ?? "Mendatang");
   const [followUpTemplateId, setFollowUpTemplateId] = useState<string>(() => rotation?.followUpTemplateId ?? followUpTemplates[0]?.id ?? "");
   const [followUpTemplateVersion, setFollowUpTemplateVersion] = useState<number | undefined>(() => rotation?.followUpTemplateVersion ?? followUpTemplates[0]?.latestVersion);
+  const [defaultReportTemplateId, setDefaultReportTemplateId] = useState<string>(() => rotation?.defaultReportTemplateId ?? "");
+  const [defaultReportTemplateVersion, setDefaultReportTemplateVersion] = useState<number | undefined>(() => rotation?.defaultReportTemplateVersion);
   const [errorMessage, setErrorMessage] = useState("");
   const [slaberanTemplateId, setSlaberanTemplateId] = useState<string>(() => rotation?.slaberanTemplateId ?? "");
   const [slaberanTemplates, setSlaberanTemplates] = useState<SlaberanTemplateRecord[]>(() => loadSlaberanTemplates());
@@ -85,6 +92,8 @@ export default function RotationFormModal({
     setStatus(rotation?.status ?? "Mendatang");
     setFollowUpTemplateId(rotation?.followUpTemplateId ?? "");
     setFollowUpTemplateVersion(rotation?.followUpTemplateVersion);
+    setDefaultReportTemplateId(rotation?.defaultReportTemplateId ?? "");
+    setDefaultReportTemplateVersion(rotation?.defaultReportTemplateVersion);
     setSlaberanTemplateId(rotation?.slaberanTemplateId ?? "");
     setSlaberanTemplates(loadSlaberanTemplates());
     setErrorMessage("");
@@ -142,6 +151,8 @@ export default function RotationFormModal({
         status,
         followUpTemplateId: followUpTemplateId || undefined,
         followUpTemplateVersion: followUpTemplateVersion || undefined,
+        defaultReportTemplateId: defaultReportTemplateId || undefined,
+        defaultReportTemplateVersion: defaultReportTemplateVersion || undefined,
         slaberanTemplateId: slaberanTemplateId || undefined,
       });
 
@@ -371,6 +382,26 @@ export default function RotationFormModal({
               </div>
             ) : null}
           </div>
+
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold text-slate-700">
+              Template Report Default
+            </span>
+            <select
+              value={defaultReportTemplateId}
+              onChange={(event) => {
+                const id = event.target.value;
+                setDefaultReportTemplateId(id);
+                setDefaultReportTemplateVersion(reportTemplates.find((template) => template.id === id)?.latestVersion);
+              }}
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs text-slate-700"
+            >
+              <option value="">Tidak ada</option>
+              {reportTemplates.map((template) => (
+                <option key={template.id} value={template.id}>{template.name} · v{template.latestVersion}</option>
+              ))}
+            </select>
+          </label>
 
           <label className="block">
             <span className="mb-1.5 block text-xs font-semibold text-slate-700">

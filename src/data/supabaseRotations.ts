@@ -25,6 +25,8 @@ type RotationRow = {
   status: string;
   follow_up_template_id: string | null;
   follow_up_template_version: number | null;
+  default_report_template_id: string | null;
+  default_report_template_version: number | null;
   report_template_id: string | null;
   report_template_version: number | null;
   slaberan_template_id: string | null;
@@ -104,6 +106,8 @@ function toRotation(row: RotationRow, localId: string): Rotation {
     status: normalizeStatus(row.status),
     followUpTemplateId: row.follow_up_template_id ?? undefined,
     followUpTemplateVersion: row.follow_up_template_version ?? undefined,
+    defaultReportTemplateId: row.default_report_template_id ?? row.report_template_id ?? undefined,
+    defaultReportTemplateVersion: row.default_report_template_version ?? row.report_template_version ?? undefined,
     reportTemplateId: row.report_template_id ?? undefined,
     reportTemplateVersion: row.report_template_version ?? undefined,
     slaberanTemplateId: row.slaberan_template_id ?? undefined,
@@ -164,7 +168,7 @@ export async function syncRotationsWithSupabase(): Promise<Rotation[]> {
   const { data: remoteRows, error } = await supabase
     .from("rotations")
     .select(
-      "id,user_id,name,specialty,institution,start_date,end_date,status,follow_up_template_id,follow_up_template_version,report_template_id,report_template_version,slaberan_template_id,created_at,updated_at",
+      "id,user_id,name,specialty,institution,start_date,end_date,status,follow_up_template_id,follow_up_template_version,default_report_template_id,default_report_template_version,report_template_id,report_template_version,slaberan_template_id,created_at,updated_at",
     )
     .eq("user_id", userId)
     .order("start_date", { ascending: false })
@@ -256,6 +260,8 @@ export async function upsertRotationWithSupabase(input: {
   status: RotationStatus;
   followUpTemplateId?: string;
   followUpTemplateVersion?: number;
+  defaultReportTemplateId?: string;
+  defaultReportTemplateVersion?: number;
   reportTemplateId?: string;
   reportTemplateVersion?: number;
   slaberanTemplateId?: string;
@@ -301,6 +307,8 @@ export async function upsertRotationWithSupabase(input: {
         p_follow_up_template_version: nextRotation.followUpTemplateVersion ?? null,
         p_report_template_id: nextRotation.reportTemplateId ?? null,
         p_report_template_version: nextRotation.reportTemplateVersion ?? null,
+        p_default_report_template_id: nextRotation.defaultReportTemplateId ?? null,
+        p_default_report_template_version: nextRotation.defaultReportTemplateVersion ?? null,
         p_slaberan_template_id: nextRotation.slaberanTemplateId ?? null,
       },
     );
@@ -446,6 +454,8 @@ export async function activateRotationWithSupabase(
             end_date: target.endDate,
             follow_up_template_id: target.followUpTemplateId ?? null,
             follow_up_template_version: target.followUpTemplateVersion ?? null,
+            default_report_template_id: target.defaultReportTemplateId ?? null,
+            default_report_template_version: target.defaultReportTemplateVersion ?? null,
             report_template_id: target.reportTemplateId ?? null,
             report_template_version: target.reportTemplateVersion ?? null,
             slaberan_template_id: target.slaberanTemplateId ?? null,

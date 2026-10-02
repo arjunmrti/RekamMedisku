@@ -14,6 +14,8 @@ import {
 } from "../../data/supabaseRotations";
 import { loadPatients } from "../../data/localPatients";
 import { cloneSystemFollowUpTemplate, duplicateFollowUpTemplate, listFollowUpTemplates, listSystemFollowUpTemplates, type SystemFollowUpTemplateSummary } from "../../data/followUpTemplates";
+import { supabase } from "../../utils/supabase";
+import type { ReportTemplateSummary } from "../../types/reportTemplate";
 import { useWorkspaceSyncVersion } from "../../hooks/useWorkspaceSync";
 import type { PatientListItem } from "../../types/patient";
 import type { Rotation } from "../../types/rotation";
@@ -76,6 +78,7 @@ export default function RotationManagementPage({
   const [editingRotation, setEditingRotation] = useState<Rotation | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [followUpTemplates, setFollowUpTemplates] = useState<FollowUpTemplateSummary[]>([]);
+  const [reportTemplates, setReportTemplates] = useState<ReportTemplateSummary[]>([]);
   const [systemFollowUpTemplates, setSystemFollowUpTemplates] = useState<SystemFollowUpTemplateSummary[]>([]);
   const [templatesLoading, setTemplatesLoading] = useState(true);
   const [templateBuilderOpen, setTemplateBuilderOpen] = useState(false);
@@ -91,14 +94,36 @@ export default function RotationManagementPage({
     const loadTemplates = async () => {
       setTemplatesLoading(true);
       try {
-        const [next, starters] = await Promise.all([listFollowUpTemplates(), listSystemFollowUpTemplates()]);
+        const [followUp, starters, { data: reportData }] = await Promise.all([
+          listFollowUpTemplates(),
+          listSystemFollowUpTemplates(),
+          supabase
+            .from("templates")
+            .select("id,user_id,name,description,metadata,is_archived,created_at,updated_at")
+            .eq("type", "report")
+            .order("name"),
+        ]);
         if (!cancelled) {
-          setFollowUpTemplates(next);
+          setFollowUpTemplates(followUp);
           setSystemFollowUpTemplates(starters);
+          setReportTemplates(
+            (reportData ?? []).map((row: any) => ({
+              id: row.id,
+              userId: row.user_id,
+              name: row.name,
+              description: row.description,
+              metadata: row.metadata,
+              isArchived: row.is_archived,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+              latestVersion: 1,
+              latestSchemaVersion: 1,
+            })),
+          );
         }
       } catch (error) {
         if (!cancelled) {
-          setErrorMessage(error instanceof Error ? error.message : "Template follow-up gagal dimuat.");
+          setErrorMessage(error instanceof Error ? error.message : "Template gagal dimuat.");
         }
       } finally {
         if (!cancelled) setTemplatesLoading(false);
@@ -441,6 +466,7 @@ export default function RotationManagementPage({
       />
 
       <RotationFormModal
+        reportTemplates={reportTemplates}
         key={
           (formOpen ? "open:" : "closed:") +
           (editingRotation?.id ?? "new")

@@ -138,6 +138,8 @@ export function upsertRotation(input: {
   status: RotationStatus;
   followUpTemplateId?: string;
   followUpTemplateVersion?: number;
+  defaultReportTemplateId?: string;
+  defaultReportTemplateVersion?: number;
   reportTemplateId?: string;
   reportTemplateVersion?: number;
 }): Rotation[] {
@@ -161,6 +163,8 @@ export function upsertRotation(input: {
     status: input.status,
     followUpTemplateId: input.followUpTemplateId,
     followUpTemplateVersion: input.followUpTemplateVersion,
+    defaultReportTemplateId: input.defaultReportTemplateId,
+    defaultReportTemplateVersion: input.defaultReportTemplateVersion,
     reportTemplateId: input.reportTemplateId,
     reportTemplateVersion: input.reportTemplateVersion,
     createdAt: existing?.createdAt ?? now,

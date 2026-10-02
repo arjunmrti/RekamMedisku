@@ -18,6 +18,8 @@ export type Rotation = {
   status: RotationStatus;
   followUpTemplateId?: string;
   followUpTemplateVersion?: number;
+  defaultReportTemplateId?: string;
+  defaultReportTemplateVersion?: number;
   reportTemplateId?: string;
   reportTemplateVersion?: number;
   slaberanTemplateId?: string;
