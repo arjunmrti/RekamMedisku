@@ -1,6 +1,7 @@
 import type { FollowUpEntry } from "../types/followUp";
 import type { PatientListItem } from "../types/patient";
 import type { ReportTemplateType } from "../types/report";
+import type { ReportTemplateDefinition } from "../types/reportTemplate";
 import type { RotationSpecialty } from "../types/rotation";
 import type { ApplicationProfile } from "../types/profile";
 import { formatFollowUpTemplateAnswers } from "./followUpTemplateRuntime";
@@ -200,6 +201,29 @@ export function buildRenderContext(
   };
 }
 
+export const APPROVED_REPORT_TAGS = [
+  "report.date",
+  "report.rotation",
+  "report.hospital",
+  "report.doctor",
+  "patient.name",
+  "patient.age",
+  "patient.rm",
+  "patient.room",
+  "patient.bed",
+  "patient.dpjp",
+  "followUp.subjective",
+  "followUp.objective",
+  "followUp.assessment",
+  "followUp.plan",
+  "followUp.instruction",
+  "followUp.supportingExams",
+  "followUp.coreObjective",
+] as const;
+
+const APPROVED_REPORT_TAG_SET = new Set<string>(APPROVED_REPORT_TAGS);
+const REPORT_TAG_PATTERN = /\{\{\s*([^{}]+?)\s*\}\}/g;
+
 export function resolveTag(key: string, context: RenderContext): string {
   const values: Record<string, string> = {
     "report.date": context.report.date,
@@ -221,6 +245,52 @@ export function resolveTag(key: string, context: RenderContext): string {
     "followUp.coreObjective": context.followUp.coreObjective,
   };
   return values[key] ?? "";
+}
+
+export function extractTagsFromText(text: string): string[] {
+  const tags: string[] = [];
+  const matches = text.matchAll(REPORT_TAG_PATTERN);
+  for (const match of matches) {
+    tags.push(match[1].trim());
+  }
+  return tags;
+}
+
+export function validateReportTemplateDefinition(
+  definition: ReportTemplateDefinition,
+): void {
+  const errors: string[] = [];
+
+  if (definition.greeting) {
+    const greetingTags = extractTagsFromText(definition.greeting);
+    for (const tag of greetingTags) {
+      if (!APPROVED_REPORT_TAG_SET.has(tag)) {
+        errors.push(`Unknown tag in greeting: {{${tag}}}`);
+      }
+    }
+  }
+
+  for (const section of definition.sections) {
+    const bodyTags = extractTagsFromText(section.body);
+    for (const tag of bodyTags) {
+      if (!APPROVED_REPORT_TAG_SET.has(tag)) {
+        errors.push(`Unknown tag in section "${section.label}": {{${tag}}}`);
+      }
+    }
+  }
+
+  if (definition.closing) {
+    const closingTags = extractTagsFromText(definition.closing);
+    for (const tag of closingTags) {
+      if (!APPROVED_REPORT_TAG_SET.has(tag)) {
+        errors.push(`Unknown tag in closing: {{${tag}}}`);
+      }
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new Error("Template validation failed: " + errors.join(", "));
+  }
 }
 
 type BuildWhatsAppReportOptions = {

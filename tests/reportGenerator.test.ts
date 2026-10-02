@@ -6,9 +6,13 @@ import {
   formatReportRotationName,
   getReportGreeting,
   getReportTemplateForSpecialty,
+  APPROVED_REPORT_TAGS,
+  extractTagsFromText,
+  validateReportTemplateDefinition,
 } from "../src/utils/reportGenerator";
 import type { FollowUpEntry } from "../src/types/followUp";
 import type { PatientListItem } from "../src/types/patient";
+import type { ReportTemplateDefinition } from "../src/types/reportTemplate";
 
 const patient: PatientListItem = {
   id: "p-test",
@@ -281,3 +285,82 @@ test("tanggal kosong memakai fallback yang aman", () => {
   assert.equal(formatReportDate(""), "Tanggal belum tersedia");
   assert.equal(formatReportDate("26 September 2026"), "26 September 2026");
 });
+
+test("APPROVED_REPORT_TAGS contains whitelist of expected keys", () => {
+  assert.equal(APPROVED_REPORT_TAGS.length, 17);
+  assert.ok(APPROVED_REPORT_TAGS.includes("patient.name"));
+  assert.ok(APPROVED_REPORT_TAGS.includes("report.rotation"));
+  assert.ok(APPROVED_REPORT_TAGS.includes("followUp.coreObjective"));
+});
+
+test("validateReportTemplateDefinition accepts valid approved tags", () => {
+  const validDef: ReportTemplateDefinition = {
+    schema_version: 1,
+    greeting: "Salam {{report.doctor}}",
+    sections: [
+      {
+        id: "s1",
+        label: "Identitas Pasien",
+        enabled: true,
+        body: "Nama: {{patient.name}}, Usia: {{patient.age}}, RM: {{patient.rm}}",
+      },
+      {
+        id: "s2",
+        label: "Follow Up",
+        enabled: true,
+        body: "S: {{followUp.subjective}}\nO: {{followUp.objective}}",
+      },
+    ],
+    closing: "Terima kasih dari {{report.hospital}}.",
+  };
+
+  assert.doesNotThrow(() => validateReportTemplateDefinition(validDef));
+});
+
+test("validateReportTemplateDefinition accepts repeated tags and plain text", () => {
+  const repeatedDef: ReportTemplateDefinition = {
+    schema_version: 1,
+    sections: [
+      {
+        id: "s1",
+        label: "Summary",
+        enabled: true,
+        body: "Pasien {{patient.name}} (nama: {{patient.name}}) kamar {{patient.room}} bed {{patient.bed}}.",
+      },
+      {
+        id: "s2",
+        label: "Just text",
+        enabled: true,
+        body: "Hanya teks tanpa tag sama sekali.",
+      },
+    ],
+  };
+
+  assert.doesNotThrow(() => validateReportTemplateDefinition(repeatedDef));
+});
+
+test("validateReportTemplateDefinition rejects unknown tags in section body", () => {
+  const invalidDef: ReportTemplateDefinition = {
+    schema_version: 1,
+    sections: [
+      {
+        id: "s1",
+        label: "Test Invalid",
+        enabled: true,
+        body: "Nama: {{patient.unknown_field}}, DPJP: {{patient.dpjp}}",
+      },
+    ],
+  };
+
+  assert.throws(
+    () => validateReportTemplateDefinition(invalidDef),
+    /Unknown tag in section "Test Invalid": \{\{patient\.unknown_field\}\}/,
+  );
+});
+
+test("extractTagsFromText extracts tags embedded inside surrounding text", () => {
+  const text = "Info: {{ patient.name }} ada di kamar {{patient.room}} / {{patient.bed}}.";
+  const tags = extractTagsFromText(text);
+  assert.deepEqual(tags, ["patient.name", "patient.room", "patient.bed"]);
+});
+
