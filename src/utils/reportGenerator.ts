@@ -338,10 +338,12 @@ export function validateReportTemplateDefinition(
       ? tag.slice("template.field.".length)
       : "";
     if (fieldId) {
+      if (!/^[a-zA-Z0-9_-]+$/.test(fieldId)) {
+        errors.push(`Unknown tag in ${location}: {{${tag}}}`);
+        return;
+      }
       if (snapshot && !knownFieldIds.has(fieldId)) {
-        errors.push(`Unknown tag in ${location}: {{template.field.${fieldId}}}`);
-      } else if (!/^[a-zA-Z0-9_-]+$/.test(fieldId)) {
-        errors.push(`${location}: invalid field ID syntax {{${tag}}}`);
+        errors.push(`Unknown tag in ${location}: {{${tag}}}`);
       }
       return;
     }
@@ -375,6 +377,13 @@ export function validateReportTemplateDefinition(
   }
 }
 
+export function validateReportTemplateDefinitionWithSnapshot(
+  definition: ReportTemplateDefinition,
+  snapshot: { sections?: { fields?: { id: string }[] }[] },
+): void {
+  validateReportTemplateDefinition(definition, snapshot);
+}
+
 export type ResolveTagDiagnostics = {
   resolved: { greeting: string; sections: { id: string; body: string }[]; closing: string };
   unknown: string[];
@@ -392,9 +401,20 @@ export function renderReportTemplate(
   const replaceTag = (key: string): string => {
     const resolved = resolveTag(key, context);
     if (!resolved) {
-      if (APPROVED_REPORT_TAG_SET.has(key) || /^core\.[a-zA-Z0-9_-]+$/.test(key)) {
+      if (APPROVED_REPORT_TAG_SET.has(key)) {
         unresolved.push(key);
-      } else if (!/^template\.field\.[a-zA-Z0-9_-]+$/.test(key)) {
+      } else if (/^core\.[a-zA-Z0-9_-]+$/.test(key)) {
+        if (!APPROVED_CORE_TAGS.has(key.slice("core.".length))) {
+          unknown.push(key);
+        } else {
+          unresolved.push(key);
+        }
+      } else if (/^template\.field\./.test(key)) {
+        const fieldId = key.slice("template.field.".length);
+        if (!context.templateFields.hasOwnProperty(fieldId)) {
+          unresolved.push(key);
+        }
+      } else {
         unknown.push(key);
       }
     }
@@ -422,7 +442,7 @@ export function renderReportTemplate(
         greeting,
         sections: sections.map((s) => ({ id: s.id, body: s.body })),
         closing,
-      } as any,
+      },
       unknown,
       unresolved,
     };
@@ -435,6 +455,7 @@ type BuildWhatsAppReportOptions = {
   rotationName?: string;
   generatedAt?: Date;
   reportIdentity: ReportIdentity;
+  rotationMeta?: { name?: string; specialty?: string };
 };
 
 function formatReportIdentity(
@@ -472,6 +493,7 @@ export function buildWhatsAppReport(
     followUp,
     rotationName,
     options.reportIdentity,
+    options.rotationMeta,
   );
   const exams = followUp.supportingExams ?? [];
   const planning = context.followUp.plan;

@@ -282,6 +282,10 @@ function FollowUpReportGeneratorPage({
             ? patientRotation?.specialty
             : patientRotation?.name,
         reportIdentity,
+        rotationMeta: {
+          name: patientRotation?.name,
+          specialty: patientRotation?.specialty,
+        },
       }),
     );
     setTemplateType(nextTemplate);
